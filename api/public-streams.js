@@ -1,6 +1,5 @@
 const SOURCES=[
-  'https://iptv-org.github.io/iptv/streams/us.m3u',
-  'https://raw.githubusercontent.com/iptvjs/m3u/main/tubi_playlist.m3u'
+  'https://iptv-org.github.io/iptv/streams/us.m3u'
 ];
 
 function normalize(s){
@@ -32,7 +31,7 @@ export default async function handler(req,res){
   if(req.method!=='GET')return res.status(405).json({error:'GET only'});
   const map={};let successful=0;
   try{
-    const results=await Promise.allSettled(SOURCES.map(url=>fetch(url,{headers:{accept:'text/plain,*/*','user-agent':'FreeTVRadio/2.0'}})));
+    const results=await Promise.allSettled(SOURCES.map(async url=>{const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),8000);try{return await fetch(url,{headers:{accept:'text/plain,*/*','user-agent':'FreeTVRadio/2.0'},signal:controller.signal});}finally{clearTimeout(timer)}}));
     for(const result of results){
       if(result.status!=='fulfilled'||!result.value.ok)continue;
       successful++;
