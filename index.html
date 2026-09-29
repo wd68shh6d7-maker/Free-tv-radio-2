@@ -181,7 +181,7 @@ const LIVE_OVERRIDES={
   'tubi-livenow':{kind:'youtube',url:'https://www.youtube.com/embed/live_stream?channel=UCJg9wBPyKMNA5sRDnvzmkdg&autoplay=1&mute=0&rel=0',sourceLabel:'LiveNOW from FOX official live endpoint'},
   'ary-news':{kind:'web',url:'https://live.arynews.tv/',sourceLabel:'ARY News official live page'},
   'geo-news':{kind:'web',url:'https://live.geo.tv/',sourceLabel:'Geo News official live page'},
-  'france24-espanol':{kind:'youtube',url:'https://www.youtube.com/embed/Y-IlMeCCtIg?autoplay=1&mute=0&rel=0',sourceLabel:'France 24 Español official live source'}
+  'france24-espanol':{kind:'web',url:'https://www.france24.com/es/en-vivo',sourceLabel:'France 24 Español official live page'}
 };
 Object.entries(LIVE_OVERRIDES).forEach(([id,ov])=>{const x=[...allTV,...stations].find(a=>a.id===id);if(x)Object.assign(x,ov);});
 if(!international.some(x=>x.id==='france24-espanol')) international.push({id:'france24-espanol',name:'France 24 Español',network:'FRANCE 24',category:'Spanish • World News',language:'Spanish',culture:'Latin America',scope:'Official 24/7 live • YouTube',url:'https://www.youtube.com/embed/Y-IlMeCCtIg?autoplay=1&mute=0&rel=0',kind:'youtube',provider:'France 24 Español',sourceLabel:'France 24 Español official live source'});
