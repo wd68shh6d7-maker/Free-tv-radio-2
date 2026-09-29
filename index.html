@@ -368,6 +368,7 @@ function providerCatalogRows(){
  const rows=[];
  providerOrder.forEach(pid=>{
   const p=providerCatalogs[pid];
+  if(!p||!Array.isArray(p.channels))return;
   if(guideSource!=='All'&&guideSource!==pid)return;
   if(guideMode==='onDemand'){rows.push({id:'vod-'+pid,name:p.name+' • On Demand',network:p.name,category:'Free On Demand',scope:p.count+' • official on-demand library',url:p.vod,kind:'web',providerId:pid,provider:p.name,mode:'onDemand',playable:true});return;}
   p.channels.forEach((entry,i)=>{
@@ -545,7 +546,19 @@ function web(){
 }
 function weather(){return '<div class="section"><div><h2>🌦️ Weather</h2><span class="muted">Official National Weather Service / NOAA</span></div></div><div class="grid"><article class="card"><div class="logo">NWS</div><h3>National Weather Service</h3><p>Official U.S. forecasts, active alerts, forecast maps, radar, satellite and current conditions.</p><div class="actions"><a class="primary" href="https://www.weather.gov/" target="_blank" rel="noopener noreferrer">Open NWS</a><a class="secondary" href="https://radar.weather.gov/" target="_blank" rel="noopener noreferrer">Open Radar</a></div></article></div><div class="notice">Weather information is provided by the National Weather Service. Use your city or ZIP code on NWS for the official local forecast and alerts.</div>'}
 function render(){const view=tab==='home'?home():tab==='tv'?tv():tab==='youtube'?youtubeView():tab==='paid'?paidView():tab==='radio'?radio():tab==='web'?web():tab==='weather'?weather():tab==='favorites'?favView():tab==='stories'?stories():tab==='admin'?admin():invite();app.innerHTML=view;if(tab==='radio'&&!radioCatalog.length&&!radioLoading){loadRadioCatalog()}}
-function setTab(t){tab=t;document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));render()}
+function setTab(t){
+ tab=t;document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+ try{render()}catch(err){
+  console.error('Free TV & Radio render failed:',err);
+  if(t==='tv'){
+   const rows=(guideTV||[]).map(function(x,i){return '<div class="channel-row famelack-row" data-channel-row="'+esc(x.id)+'" data-play="'+esc(x.id)+'" role="button" tabindex="0"><div class="channel-number">'+(i+1)+'</div><div><div class="channel-name">'+esc(x.name)+'</div><div class="meta">'+esc(x.category||'Live TV')+'</div></div><div class="meta source-meta">'+esc(x.network||'Free TV')+'</div><button class="star '+(isFav(x.id)?'on':'')+'" data-fav="'+esc(x.id)+'">'+(isFav(x.id)?'★':'☆')+'</button></div>'}).join('');
+   app.innerHTML='<div class="section"><div><h2>📺 Free TV</h2><span class="muted">The guide is opening with the verified lineup.</span></div></div><div class="guide-shell easy-guide-shell"><div class="guide-head"><span>#</span><span>Channel</span><span>Source</span><span>★</span></div><div class="guide-scroll">'+rows+'</div></div>';
+   setTimeout(function(){try{render()}catch(e){console.error(e)}},250);
+  }else{
+   app.innerHTML='<div class="notice"><b>This section could not be displayed.</b> Please try again.</div>';
+  }
+ }
+}
 nav.onclick=e=>{const b=e.target.closest('[data-tab]');if(b)setTab(b.dataset.tab)}
 document.addEventListener('click',e=>{const t=e.target;const b=t.closest('[data-tab]');if(b){e.preventDefault();setTab(b.dataset.tab);return}const og=t.closest('[data-open-guide]');if(og){e.preventDefault();setTab('tv');return}},{capture:true});
 app.onclick=e=>{
