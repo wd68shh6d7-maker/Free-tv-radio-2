@@ -1,0 +1,22 @@
+{
+  "success": true,
+  "status": 200,
+  "statusText": "OK",
+  "text": "{\"name\":\"Free TV & Radio — Website 2\",\"short_name\":\"Free TV & Radio\",\"start_url\":\"./\",\"display\":\"standalone\",\"background_color\":\"#07101f\",\"theme_color\":\"#07101f\",\"icons\":[{\"src\":\"icon.svg\",\"sizes\":\"any\",\"type\":\"image/svg+xml\"}]}",
+  "headers": {
+    "accept-ranges": "bytes",
+    "access-control-allow-origin": "*",
+    "age": "12061",
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-disposition": "inline; filename=\"manifest.webmanifest\"",
+    "content-length": "230",
+    "content-type": "application/manifest+json; charset=utf-8",
+    "date": "Tue, 29 Sep 2026 06:22:43 GMT",
+    "etag": "\"e3486fdcefd9742eb90297f342f134b2\"",
+    "last-modified": "Tue, 29 Sep 2026 03:01:42 GMT",
+    "server": "Vercel",
+    "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+    "x-vercel-cache": "HIT",
+    "x-vercel-id": "iad1:iad1::fdrhp-1790662963879-901ff6d42e56"
+  }
+}
