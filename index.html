@@ -460,8 +460,10 @@ function providerCatalogRows(){
 }
 function guideRows(){
  const base=guideMode==='live'?filteredGuide():[];
- const all=base.concat(providerCatalogRows());
- const unique=guideSource==='All'&&guideMode==='live'?mergeChannelRows(all):all;
+ // Live TV is the Famelack U.S. lineup. Provider catalogs belong in Apps/provider views,
+ // not mixed into the channel dial.
+ const all=guideMode==='live'?base:base.concat(providerCatalogRows());
+ const unique=guideMode==='live'?all:guideSource==='All'?mergeChannelRows(all):all;
  const query=(guideQuery||'').trim().toLowerCase();
  return query?unique.filter(x=>[x.name,x.network,x.category,x.scope,x.provider].join(' ').toLowerCase().includes(query)):unique;
 }
