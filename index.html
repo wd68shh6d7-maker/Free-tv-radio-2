@@ -369,6 +369,27 @@ async function loadProviderCatalog(pid,force=false){
  }catch(err){console.warn('provider catalog load failed',pid,err)}
  finally{providerCatalogLoading[pid]=false;if(tab==='tv')render()}
 }
+function channelKey(name){
+ return String(name||'').toLowerCase().normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'').replace(/&/g,' and ').replace(/[^a-z0-9]+/g,' ').replace(/\\b(the)\\b/g,'').replace(/\\s+/g,' ').trim();
+}
+function mergeChannelRows(rows){
+ const map=new Map();
+ rows.forEach(row=>{
+  const key=channelKey(row.name);
+  if(!key)return;
+  const existing=map.get(key);
+  if(!existing){map.set(key,{...row,sources:[{provider:row.provider,providerId:row.providerId,url:row.url,stream:row.stream,kind:row.kind,playable:row.playable}]});return;}
+  const source={provider:row.provider,providerId:row.providerId,url:row.url,stream:row.stream,kind:row.kind,playable:row.playable};
+  if(!existing.sources.some(s=>s.providerId===source.providerId&&s.url===source.url))existing.sources.push(source);
+  const currentScore=existing.playable?2:(existing.stream?1:0);
+  const nextScore=row.playable?2:(row.stream?1:0);
+  if(nextScore>currentScore || (!existing.stream&&row.stream)){
+   existing.url=row.url;existing.stream=row.stream;existing.kind=row.kind;existing.playable=row.playable;existing.provider=row.provider;existing.providerId=row.providerId;existing.network=row.network;existing.sourceLabel=row.sourceLabel;
+  }
+  existing.scope=(existing.sources.map(s=>s.provider).filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i).join(' • '))||existing.scope;
+ });
+ return [...map.values()];
+}
 function providerCatalogRows(){
  const rows=[];
  providerOrder.forEach(pid=>{
@@ -389,8 +410,9 @@ function providerCatalogRows(){
 function guideRows(){
  const base=guideMode==='live'?filteredGuide():[];
  const all=base.concat(providerCatalogRows());
+ const unique=guideSource==='All'&&guideMode==='live'?mergeChannelRows(all):all;
  const query=(guideQuery||'').trim().toLowerCase();
- return query?all.filter(x=>[x.name,x.network,x.category,x.scope,x.provider].join(' ').toLowerCase().includes(query)):all;
+ return query?unique.filter(x=>[x.name,x.network,x.category,x.scope,x.provider].join(' ').toLowerCase().includes(query)):unique;
 }
 function platformGuides(){return '<div class="section"><div><h2>📡 Free TV Networks</h2><span class="muted">Browse providers without leaving the guide</span></div></div><div class="guide-tools"><select id="providerSelect" aria-label="Choose TV provider"><option value="">Choose a provider…</option>'+providerGuides.map(p=>'<option value="'+p.id+'">'+esc(p.name)+'</option>').join('')+'</select><button class="primary" data-open-provider>Open Provider</button></div><div class="grid">'+providerGuides.map(p=>'<article class="card"><div class="logo">'+esc(p.network.slice(0,2).toUpperCase())+'</div><h3>'+esc(p.name)+'</h3><p>'+esc(p.count)+'<br><span class="muted">'+esc(p.note)+'</span></p><div class="actions"><button class="primary" data-provider-id="'+p.id+'">▶ Browse Guide</button></div></article>').join('')+'</div>'}
 function youtubeView(){
@@ -413,7 +435,7 @@ function tv(){
  if(!publicStreamReady&&!publicStreamLoading)loadPublicUSStreams();
  if(!providerCatalogLoaded.sling&&!providerCatalogLoading.sling)loadProviderCatalog('sling');
  const visible=guideRows();
- const catalogCount=providerOrder.reduce((n,p)=>n+providerCatalogs[p].channels.length,0);
+ const catalogCount=providerCatalogRows().length;
  const providerButtons=providerOrder.map(function(pid){const p=providerCatalogs[pid];const loading=providerCatalogLoading[pid];return '<button class="provider-chip '+(guideSource===pid?'active':'')+'" data-guide-source="'+pid+'"><strong>'+esc(p.name)+'</strong><small>'+esc(loading?'Loading live catalog…':p.count)+' '+(loading?'':(guideMode==='live'?'live':'free'))+'</small></button>';}).join('');
  const rows=visible.map(function(x,i){return '<div class="channel-row '+(current&&current.id===x.id?'selected':'')+'" data-channel-row="'+esc(x.id)+'"><div class="channel-number">'+(i+1)+'</div><div><div class="channel-name">'+esc(x.name)+'</div><div class="meta">'+esc(x.network||x.provider||'TV')+'</div></div><div class="meta">'+esc(x.provider||x.scope||'Official provider')+'<br>'+esc(x.category||'')+'</div><div class="row-actions"><button class="primary" data-play="'+esc(x.id)+'">'+(guideMode==='onDemand'?'↗ Browse':'↗ Open Live')+'</button><button class="star '+(isFav(x.id)?'on':'')+'" data-fav="'+esc(x.id)+'">'+(isFav(x.id)?'★':'☆')+'</button></div></div>';}).join('');
  return '<div class="section guide-title-row"><div><h2>📺 Channel Guide</h2><span class="muted">'+visible.length+' channels shown • '+(filteredGuide().length+catalogCount)+' guide entries</span></div><span class="badge">EASY SCROLL</span></div>'+
