@@ -208,6 +208,7 @@ const stations=[
 const allTV=[...national];
 let guideTV=[...national,...international,...cityGuides].map((x,i)=>({...x,state:x.state||'NATIONWIDE',guideNo:i+1}));
 let tab='home', q='', guideQuery='', radioQuery='', webQuery='', webStatus='', webUrl='', webTitle='', network='All', city='All', cat='All', languageFilter='All', guideSource='All', guideMode='live';
+let providerCatalogLoading={}, providerCatalogLoaded={};
 let guideReady=false;
 let radioRegion='US';
 let radioCatalog=[];
@@ -306,6 +307,9 @@ function mountPlayer(x){
     setTimeout(()=>{const st=document.getElementById('playerStatus');if(st)st.textContent='Live source loaded — provider/network availability may vary.'},900);
   }else if(x.playable && x.kind==='embed'){
     stage.innerHTML=`<div class="live-frame"><iframe title="${esc(x.name)} live" src="${esc(x.url)}" loading="eager" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; picture-in-picture; geolocation; encrypted-media" allowfullscreen></iframe><div class="source-strip">${esc(x.provider||'Official provider')} • Embedded when the provider permits framing. <a href="${esc(x.url)}" target="_blank" rel="noopener noreferrer">Open provider</a></div></div>`;
+  }else if(x.kind==='web'&&x.url){
+    stage.innerHTML='<div class="live-frame"><iframe title="'+esc(x.name)+'" src="'+esc(x.url)+'" loading="eager" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen></iframe><div class="source-strip">'+esc(x.provider||'Official provider')+' • Browsing stays inside Free TV & Radio. Use the channel menu or Back to Guide if the provider blocks this frame.</div></div>';
+    setTimeout(()=>{const st=document.getElementById('playerStatus');if(st)st.textContent='Provider guide loaded inside Free TV & Radio.'},700);
   }else{stage.innerHTML=providerPanel(x)}
 }
 function showPlayer(x){
@@ -322,7 +326,7 @@ function surf(delta){const pool=(current?.kind==='radio'||current?.kind==='radio
 
 function home(){const quick=['Spanish','Urdu','Hindi','Arabic','Filipino','French'];return `<div class="section"><div><h2>Start here</h2><span class="muted">One guide. One player. No hunting.</span></div></div><div class="hero-actions"><button class="primary big" data-open-guide>📺 Open Channel Guide</button><div class="quick-languages">${quick.map(v=>`<button class="secondary" data-lang-nav="${v}">${esc(v)}</button>`).join('')}</div></div><div class="section"><h2>⭐ Quick picks</h2><span class="muted">Live sources first</span></div><div class="grid">${allTV.filter(x=>x.playable).slice(0,8).map(card).join('')}</div><div class="section"><div><h2>🔐 Paid TV Services</h2><span class="muted">Sign in directly with each provider</span></div></div><div class="grid">${streaming.map(card).join('')}</div><div class="notice"><b>Private login:</b> Free TV & Radio never collects or stores your paid-service password. Sign-in happens on the provider's own site.</div><div class="section"><h2>📻 Radio</h2><span class="muted">${stations.length} featured options</span></div><div class="grid">${stations.map(card).join('')}</div><div class="section"><h2>🌦️ Official Weather</h2><span class="muted">National Weather Service / NOAA</span></div><div class="grid"><article class="card"><div class="logo">NWS</div><h3>National Weather Service</h3><p>Official forecasts, alerts, radar and national weather information.</p><div class="actions"><a class="primary" href="https://www.weather.gov/" target="_blank" rel="noopener noreferrer">Open NWS</a><a class="secondary" href="https://radar.weather.gov/" target="_blank" rel="noopener noreferrer">Open Radar</a></div></article></div><div class="notice"><b>Global by design:</b> language and culture filters change the guide view only. They never automatically launch a provider.</div>`}
 const providerGuides=[
- {id:'sling',name:'Sling Freestream',network:'Sling',count:'600+ free channels',url:'https://watch.sling.com/',note:'Free • no account required'},
+ {id:'sling',name:'Sling Freestream',network:'Sling',count:'650+ free channels',url:'https://watch.sling.com/',note:'Free • no account required'},
  {id:'pluto',name:'Pluto TV',network:'Pluto TV',count:'Hundreds of live channels',url:'https://pluto.tv/us/watch/live-tv/',note:'Free • official live guide'},
  {id:'roku',name:'The Roku Channel',network:'Roku',count:'500+ free live channels',url:'https://www.therokuchannel.com/',note:'Free • official live guide'},
  {id:'tubi',name:'Tubi Live TV',network:'Tubi',count:'260+ US channels',url:'https://tubitv.com/live',note:'Free • US lineup'},
@@ -346,13 +350,38 @@ const providerCatalogs={
  youtube:{name:'YouTube Live',live:'https://www.youtube.com/live',vod:'https://www.youtube.com/',count:'Live channels',channels:['NBC News NOW','ABC News Live','CBS News','LiveNOW from FOX','Scripps News','Bloomberg Television','Al Jazeera English','France 24 English','France 24 Español','PBS NewsHour','Sky News','DW News','NHK WORLD-JAPAN','Euronews','NASA']}
 };
 const providerOrder=['pluto','roku','sling','tubi','plex','youtube'];
+async function loadProviderCatalog(pid,force=false){
+ if(pid!=='sling')return;
+ if(providerCatalogLoading[pid])return;
+ if(providerCatalogLoaded[pid]&&!force)return;
+ providerCatalogLoading[pid]=true;
+ try{
+  const res=await fetch('/api/provider-catalog?provider='+encodeURIComponent(pid),{headers:{Accept:'application/json'}});
+  if(!res.ok)throw new Error('Provider catalog '+res.status);
+  const data=await res.json();
+  if(Array.isArray(data.channels)&&data.channels.length){
+   providerCatalogs[pid].channels=data.channels;
+   providerCatalogs[pid].count=data.countLabel||String(data.channels.length)+' channels';
+   providerCatalogs[pid].live=data.live||providerCatalogs[pid].live;
+   providerCatalogLoaded[pid]=true;
+  }
+ }catch(err){console.warn('provider catalog load failed',pid,err)}
+ finally{providerCatalogLoading[pid]=false;if(tab==='tv')render()}
+}
 function providerCatalogRows(){
  const rows=[];
  providerOrder.forEach(pid=>{
   const p=providerCatalogs[pid];
   if(guideSource!=='All'&&guideSource!==pid)return;
   if(guideMode==='onDemand'){rows.push({id:'vod-'+pid,name:p.name+' • On Demand',network:p.name,category:'Free On Demand',scope:p.count+' • official on-demand library',url:p.vod,kind:'web',providerId:pid,provider:p.name,mode:'onDemand'});return;}
-  p.channels.forEach((name,i)=>{const stream=resolvePublicStream(name);rows.push({id:'catalog-'+pid+'-'+i,name,network:p.name,category:'Live TV',scope:p.count+' • '+p.name,url:stream||p.live,stream:stream||'',kind:stream?'stream':'web',providerId:pid,provider:p.name,mode:'live',sourceLabel:stream?'Public live source • iptv-org':'Official '+p.name+' live guide'});});
+  p.channels.forEach((entry,i)=>{
+   const name=typeof entry==='string'?entry:(entry.name||'Unnamed channel');
+   const directUrl=typeof entry==='string'?'':(entry.url||'');
+   const stream=resolvePublicStream(name);
+   const providerUrl=directUrl||p.live;
+   const isSling=pid==='sling'&&!!directUrl;
+   rows.push({id:'catalog-'+pid+'-'+i,name,network:p.name,category:(entry.category||'Live TV'),scope:p.count+' • '+p.name,url:stream||providerUrl,stream:stream||'',kind:stream?'stream':(isSling?'embed':'web'),playable:!!(stream||isSling),providerId:pid,provider:p.name,mode:'live',sourceLabel:stream?'Public live source • iptv-org':(isSling?'Official '+p.name+' channel':'Official '+p.name+' live guide')});
+  });
  });
  return rows;
 }
@@ -365,9 +394,10 @@ function guideRows(){
 function platformGuides(){return '<div class="section"><div><h2>📡 Free TV Networks</h2><span class="muted">Browse providers without leaving the guide</span></div></div><div class="guide-tools"><select id="providerSelect" aria-label="Choose TV provider"><option value="">Choose a provider…</option>'+providerGuides.map(p=>'<option value="'+p.id+'">'+esc(p.name)+'</option>').join('')+'</select><button class="primary" data-open-provider>Open Provider</button></div><div class="grid">'+providerGuides.map(p=>'<article class="card"><div class="logo">'+esc(p.network.slice(0,2).toUpperCase())+'</div><h3>'+esc(p.name)+'</h3><p>'+esc(p.count)+'<br><span class="muted">'+esc(p.note)+'</span></p><div class="actions"><button class="primary" data-provider-id="'+p.id+'">▶ Browse Guide</button></div></article>').join('')+'</div>'}
 function tv(){
  if(!publicStreamReady&&!publicStreamLoading)loadPublicUSStreams();
+ if(!providerCatalogLoaded.sling&&!providerCatalogLoading.sling)loadProviderCatalog('sling');
  const visible=guideRows();
  const catalogCount=providerOrder.reduce((n,p)=>n+providerCatalogs[p].channels.length,0);
- const providerButtons=providerOrder.map(function(pid){const p=providerCatalogs[pid];return '<button class="provider-chip '+(guideSource===pid?'active':'')+'" data-guide-source="'+pid+'"><strong>'+esc(p.name)+'</strong><small>'+esc(p.count)+' '+(guideMode==='live'?'live':'free')+'</small></button>';}).join('');
+ const providerButtons=providerOrder.map(function(pid){const p=providerCatalogs[pid];const loading=providerCatalogLoading[pid];return '<button class="provider-chip '+(guideSource===pid?'active':'')+'" data-guide-source="'+pid+'"><strong>'+esc(p.name)+'</strong><small>'+esc(loading?'Loading live catalog…':p.count)+' '+(loading?'':(guideMode==='live'?'live':'free'))+'</small></button>';}).join('');
  const rows=visible.map(function(x,i){return '<div class="channel-row '+(current&&current.id===x.id?'selected':'')+'" data-channel-row="'+esc(x.id)+'"><div class="channel-number">'+(i+1)+'</div><div><div class="channel-name">'+esc(x.name)+'</div><div class="meta">'+esc(x.network||x.provider||'TV')+'</div></div><div class="meta">'+esc(x.provider||x.scope||'Official provider')+'<br>'+esc(x.category||'')+'</div><div class="row-actions"><button class="primary" data-play="'+esc(x.id)+'">'+(guideMode==='onDemand'?'↗ Browse':'↗ Open Live')+'</button><button class="star '+(isFav(x.id)?'on':'')+'" data-fav="'+esc(x.id)+'">'+(isFav(x.id)?'★':'☆')+'</button></div></div>';}).join('');
  return '<div class="section guide-title-row"><div><h2>📺 Channel Guide</h2><span class="muted">'+visible.length+' channels shown • '+(filteredGuide().length+catalogCount)+' guide entries</span></div><span class="badge">EASY SCROLL</span></div>'+
  '<div class="guide-tools easy-guide-tools"><input id="guideSearch" class="search" value="'+esc(guideQuery)+'" placeholder="Search channels, networks or providers…" aria-label="Search channels"><button class="secondary" data-clear-guide-search>Clear</button></div>'+
@@ -498,7 +528,7 @@ app.onclick=e=>{
  if(e.target.closest('[data-prev-channel]')){surf(-1);return}
  if(e.target.closest('[data-next-channel]')){surf(1);return}
  if(e.target.closest('[data-guide-mode]')){guideMode=e.target.closest('[data-guide-mode]').dataset.guideMode;render();return}
- if(e.target.closest('[data-guide-source]')){guideSource=e.target.closest('[data-guide-source]').dataset.guideSource;render();return}
+ if(e.target.closest('[data-guide-source]')){guideSource=e.target.closest('[data-guide-source]').dataset.guideSource;render();if(guideSource!=='All')loadProviderCatalog(guideSource);return}
  if(e.target.closest('[data-provider-info]')){return}
  const back=e.target.closest('[data-back-guide]');if(back){setTab('tv');return}
  const providerCard=e.target.closest('[data-provider-id]');if(providerCard){setTab('tv');app.innerHTML=providerView(providerCard.dataset.providerId);return}
