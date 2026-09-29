@@ -566,7 +566,7 @@ app.onclick=e=>{
  if(e.target.closest('[data-provider-info]')){return}
  const back=e.target.closest('[data-back-guide]');if(back){setTab('tv');return}
  const providerCard=e.target.closest('[data-provider-id]');if(providerCard){setTab('tv');app.innerHTML=providerView(providerCard.dataset.providerId);return}
- const jump=e.target.closest('[data-player-jump]');if(jump){const v=jump.value||'';if(v.startsWith('tv:')){const item=guideRows().find(a=>a.id===v.slice(3));if(item)showPlayer(item)}else if(v.startsWith('radio:')){const item=stations.find(a=>a.id===v.slice(6));if(item)showPlayer(item)}else if(v.startsWith('provider:')){setTab('tv');app.innerHTML=providerView(v.slice(9));}return}
+ const playerJump=e.target.closest('[data-player-jump]');if(playerJump){const v=jump.value||'';if(v.startsWith('tv:')){const item=guideRows().find(a=>a.id===v.slice(3));if(item)showPlayer(item)}else if(v.startsWith('radio:')){const item=stations.find(a=>a.id===v.slice(6));if(item)showPlayer(item)}else if(v.startsWith('provider:')){setTab('tv');app.innerHTML=providerView(v.slice(9));}return}
  const providerOpen=e.target.closest('[data-open-provider]');if(providerOpen){const sel=document.getElementById('providerSelect');const p=providerGuides.find(x=>x.id===(sel?.value||'sling'))||providerGuides[0];openWebSafely(p.url,p.name);return}
  if(e.target.closest('[data-open-in-site]')){const b=e.target.closest('[data-open-in-site]');openWebSafely(b.dataset.openInSite,b.dataset.openInSiteTitle);return}
  if(e.target.closest('[data-web-back]')){webUrl='';webTitle='';setTab('tv');return}
