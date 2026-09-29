@@ -1,6 +1,11 @@
-const SOURCES=[
-  'https://iptv-org.github.io/iptv/streams/us.m3u'
-];
+const SOURCES=[];
+const STATIC_MAP={
+  'abc news live':[{url:'https://aegis-cloudfront-1.tubi.video/d6cbb0de-68e4-4f3b-82f9-bf5d526e0bde/index.m3u8',name:'ABC News Live'}],
+  'cbs news 24 7':[{url:'https://cbsn-us.cbsnstream.cbsnews.com/out/v1/55a8648e8f134e82a470f83d562deeca/master.m3u8',name:'CBS News 24/7'}],
+  'nbc news now':[{url:'https://d1bl6tskrpq9ze.cloudfront.net/hls/master.m3u8?ads.xumo_channelId=99984003',name:'NBC News NOW'}],
+  'fox weather':[{url:'https://247wlive.foxweather.com/stream/index.m3u8',name:'FOX Weather'}],
+  'livenow from fox':[{url:'https://fox-foxnewsnow-vizio.amagi.tv/playlist.m3u8',name:'LiveNOW from FOX'}]
+};
 
 function normalize(s){
   return String(s||'').toLowerCase()
@@ -29,7 +34,7 @@ async function parseM3U(body,map){
 
 export default async function handler(req,res){
   if(req.method!=='GET')return res.status(405).json({error:'GET only'});
-  const map={};let successful=0;
+  const map={...STATIC_MAP};let successful=0;
   try{
     const results=await Promise.allSettled(SOURCES.map(async url=>{const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),8000);try{return await fetch(url,{headers:{accept:'text/plain,*/*','user-agent':'FreeTVRadio/2.0'},signal:controller.signal});}finally{clearTimeout(timer)}}));
     for(const result of results){
