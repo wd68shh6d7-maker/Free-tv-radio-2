@@ -523,6 +523,26 @@ app.onclick=e=>{
 }
 app.addEventListener('input',e=>{if(e.target.id==='guideSearch'){guideQuery=e.target.value;q=guideQuery;render();const s=document.getElementById('guideSearch');s?.focus();s?.setSelectionRange(guideQuery.length,guideQuery.length);return}if(e.target.id==='radioSearch'){radioQuery=e.target.value;render();const s=document.getElementById('radioSearch');s?.focus();s?.setSelectionRange(radioQuery.length,radioQuery.length);clearTimeout(radioSearchTimer);radioSearchTimer=setTimeout(()=>loadRadioCatalog(true),420);return}})
 app.addEventListener('change',e=>{if(e.target.id==='webFilter'){toggleWebFilter();return}if(e.target.id==='providerSelect'){app.innerHTML=providerView(e.target.value||'sling');return}})
+// Player controls live outside #app, so handle their taps at document level.
+document.addEventListener('click',e=>{
+ const target=e.target;
+ if(target.closest('[data-prev-channel]')){e.preventDefault();surf(-1);return}
+ if(target.closest('[data-next-channel]')){e.preventDefault();surf(1);return}
+ if(target.closest('[data-next-radio]')){e.preventDefault();surf(1);return}
+ if(target.closest('[data-minimize]')){e.preventDefault();minimizePlayer();return}
+ if(target.closest('[data-close]')){e.preventDefault();closePlayer();render();return}
+ if(target.closest('[data-fullscreen]')){e.preventDefault();toggleFullscreen();return}
+ if(target.closest('#mini #mainPlayer')){restorePlayer();return}
+});
+document.addEventListener('change',e=>{
+ const jump=e.target.closest('[data-player-jump]');
+ if(!jump)return;
+ const v=jump.value||'';
+ if(v.startsWith('tv:')){const item=guidePool().find(a=>a.id===v.slice(3));if(item)showPlayer(item)}
+ else if(v.startsWith('radio:')){const item=radioRows().find(a=>a.id===v.slice(6))||stations.find(a=>a.id===v.slice(6));if(item)showPlayer(item)}
+ else if(v.startsWith('provider:')){setTab('tv');app.innerHTML=providerView(v.slice(9))}
+ jump.value='';
+});
 render();initAuth();
 </script>
 </body></html>
