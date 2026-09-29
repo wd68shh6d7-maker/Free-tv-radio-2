@@ -10,7 +10,17 @@ export default async function handler(req,res){
         accept:'application/json, text/plain, */*',
         origin:'https://watch.sling.com',
         referer:'https://watch.sling.com/',
-        'user-agent':'Mozilla/5.0'
+        'user-agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/150.0.0.0 Safari/537.36',
+        'client-config':'rn-client-config',
+        'client-version':'7.1.32',
+        'device-model':'Chrome',
+        'player-version':'9.1.0',
+        'response-config':'ar_browser_1_1',
+        dma:'535',
+        'geo-zipcode':'43017',
+        'time-zone-id':'America/New_York',
+        timezone:'-0500',
+        features:'enable_ad_tracking,web_browser'
       }
     });
     if(!upstream.ok) throw new Error('Sling catalog HTTP '+upstream.status);
