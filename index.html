@@ -448,10 +448,11 @@ function appsView(){
  const saved=JSON.parse(localStorage.getItem('ftvr2-my-apps')||'[]');
  const addApp=(name)=>{const a=apps.find(x=>x[0]===name);if(a&&!saved.includes(name)){saved.push(name);localStorage.setItem('ftvr2-my-apps',JSON.stringify(saved));render()}};
  const shelf=saved.map(n=>apps.find(x=>x[0]===n)).filter(Boolean);
- const cardHtml=(x)=>'<article class="card"><div class="logo">'+x[3]+'</div><h3>'+esc(x[0])+'</h3><p>'+esc(x[1])+' • '+(x[4]==='RADIO'?'Live radio and audio':'Live TV and on-demand')+'</p><div class="actions"><button class="primary" data-open-app="'+esc(x[2])+'" data-open-app-title="'+esc(x[0])+'">↗ Open</button><button class="secondary" data-add-app="'+esc(x[0])+'">＋ My Apps</button></div></article>';
+ const cardHtml=(x)=>'<article class="card"><div class="logo">'+x[3]+'</div><h3>'+esc(x[0])+'</h3><p>'+esc(x[1])+' • '+(x[4]==='RADIO'?'Live radio and audio':'Live TV and on-demand')+'</p><div class="actions"><button class="primary" data-open-app="'+esc(x[2])+'" data-open-app-title="'+esc(x[0])+'">▶ Enter App</button><button class="secondary" data-add-app="'+esc(x[0])+'">＋ My Apps</button></div></article>';
  const tvApps=apps.filter(x=>x[4]==='TV'), radioApps=apps.filter(x=>x[4]==='RADIO');
- return '<div class="section"><div><h2>📱 Apps</h2><span class="muted">Your entertainment shelf • real provider apps open in a real browser tab</span></div><span class="badge">'+apps.length+' APPS</span></div>'+
- '<div class="notice"><b>One front door.</b> Free TV & Radio organizes the services; each provider keeps control of its own player, account, ads and regional availability. Add the apps you use to <b>My Apps</b> for one-tap access.</div>'+
+ return '<div class="section"><div><h2>📱 Apps</h2><span class="muted">One hub • one provider tab • switch services without opening a pile of tabs</span></div><span class="badge">'+apps.length+' APPS</span></div>'+
+ (providerWindowUrl?'<div class="app-dock"><div><strong>▶ '+esc(appTitle||'Provider App')+'</strong><span class="muted"> is open in your single provider tab.</span></div><div class="actions"><button class="primary" data-focus-provider>↗ Return to App</button><button class="secondary" data-close-app-room>✕ Close App</button></div></div>':'')+
+ '<div class="notice"><b>One front door.</b> Free TV & Radio stays in this hub while one reusable provider tab handles services that require the provider’s own player. Choose another app and that same provider tab is reused.</div>'+
  (shelf.length?'<div class="section"><h2>⭐ My Apps</h2><span class="muted">Saved on this device</span></div><div class="grid">'+shelf.map(cardHtml).join('')+'</div>':'')+
  '<div class="section"><h2>📺 TV Apps</h2><span class="muted">Live TV + free on-demand where offered</span></div><div class="grid">'+tvApps.map(cardHtml).join('')+'</div>'+
  '<div class="section"><h2>📻 Radio Apps</h2><span class="muted">Live radio, music, news and podcasts</span></div><div class="grid">'+radioApps.map(cardHtml).join('')+'</div>'+
@@ -599,17 +600,36 @@ function toggleWebFilter(){webFilter=!webFilter;localStorage.setItem('ftvr2-web-
 function admin(){const signed=isAdmin();return `<div class="section"><h2>🔐 Admin Room</h2><span class="private">${signed?'Authenticated administrator':'Authentication required'}</span></div><div class="admin"><div class="admin-grid"><div class="admin-card"><h3>${signed?'Administrator account':'Administrator sign-in'}</h3>${signed?`<p class="private">Signed in as administrator</p><button class="secondary" data-signout>Sign out</button>`:`<div class="admin-form"><div class="notice" style="margin-top:0"><b>Website administrator account</b><br>Your website password is separate from your Gmail password. We never ask for or store your Gmail password here.</div><label>Admin email<input id="adminEmail" type="email" value="rneal4905@gmail.com" autocomplete="username"></label><label>Create website password<input id="adminPassword" type="password" autocomplete="new-password" placeholder="Create a password for this website"></label><label>Confirm website password<input id="adminConfirm" type="password" autocomplete="new-password" placeholder="Enter the same website password again"></label><button type="button" data-auth-action>Create website account</button><div class="muted" style="margin-top:10px;font-size:.84rem">Already created it? Leave “Confirm website password” blank and use the same button to sign in.</div></div><div id="authMsg" class="notice">Your administrator account is limited to the authorized email above. Email verification is required.</div>`}</div>${signed?`<div class="admin-card"><h3>🌐 Private Web Browser</h3><p class="muted">Administrator-only browser. TV/radio playback remains in Free TV & Radio while you open web results in a separate browser tab.</p><div class="toggle"><div><b>X-rated search filter</b><br><span class="muted">Blocks clearly X-rated search terms only. Normal websites and normal searches remain available.</span></div><input type="checkbox" id="webFilter" ${webFilter?'checked':''}></div><div class="browser" style="margin-top:10px"><input id="adminWeb" placeholder="Search the web or enter a website"><button data-admin-browser>Open</button></div></div>`:`<div class="admin-card"><h3>🌐 Private Web Browser</h3><p class="muted">Sign in as an administrator to unlock the private browser.</p></div>`}<div class="admin-card"><h3>📸 Photos & Writing</h3>${signed?`<div class="admin-form"><label>Title<input id="postTitle" placeholder="Photo or story title"></label><label>Writing<textarea id="postBody" rows="5" style="width:100%;padding:12px 13px;border:1px solid var(--line);border-radius:11px;background:#0b1527;color:#fff"></textarea></label><label>Photo<input id="postImage" type="file" accept="image/*"></label><button type="button" data-publish-post>Publish</button><div id="postMsg" class="notice">Published posts appear in Our Photos & Stories.</div></div>`:`<p class="muted">Admin-only publishing and editing.</p>`}</div><div class="admin-card"><h3>🛡️ Safety controls</h3><p class="muted">Curated sources, protected authentication, storage permissions, and isolated playback errors.</p></div></div></div>`}
 function invite(){return `<div class="section"><h2>🔗 Invite Friends</h2><span class="muted">One-tap sharing</span></div><div class="notice"><b>Share Website 2:</b><br><input id="inviteUrl" class="search" value="${esc(location.href.split('#')[0])}" readonly style="margin-top:10px"><div class="actions"><button class="primary" data-copy-invite>Copy invite link</button><button class="secondary" data-share-invite>Share</button></div></div><div class="notice">The public invitation link never grants admin access.</div>`}
 
+let providerWindow=null;
+let providerWindowUrl='';
 function openAppInHub(url,title){
  const u=String(url||'').trim();if(!u)return;
- appUrl='';appTitle=title||'Streaming App';tab='apps';
+ appUrl=u;appTitle=title||'Streaming App';providerWindowUrl=u;
+ tab='apps';
  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab==='apps'));
  render();
- const w=window.open(u,'_blank','noopener,noreferrer');
- if(!w){
-  webQuery=u;webStatus='POPUP BLOCKED • Tap the app button again and allow new tabs for this site.';render();
+ // Reuse one named provider tab instead of creating a new tab for every app.
+ // The Free TV & Radio hub stays open in its own tab.
+ try{
+  if(!providerWindow||providerWindow.closed){
+    providerWindow=window.open(u,'ftvr_provider_app');
+  }else{
+    providerWindow.location.href=u;
+    providerWindow.focus();
+  }
+ }catch(_){}
+ if(!providerWindow){
+  webQuery=u;webStatus='POPUP BLOCKED • Allow one app tab for provider playback.';render();
  }
 }
-function closeAppInHub(){appUrl='';appTitle='';render();window.scrollTo({top:0,behavior:'smooth'})}
+function closeAppInHub(){
+ appUrl='';appTitle='';providerWindowUrl='';
+ tab='apps';render();window.scrollTo({top:0,behavior:'smooth'});
+}
+function focusProviderApp(){
+ if(providerWindow&&!providerWindow.closed){providerWindow.focus();return true}
+ return false;
+}
 function openInSite(url,title){const u=String(url||'').trim();if(!u)return;if(!isAdmin()){tab='admin';render();return}const w=window.open(u,'_blank','noopener,noreferrer');if(!w){webStatus='POPUP BLOCKED • Allow new tabs for the provider.';tab='admin';render()}}
 function web(){
  if(!isAdmin())return '<div class="notice"><b>Private administrator browser.</b><br>The web browser is available only inside the Admin Room.</div>';
@@ -636,6 +656,8 @@ function setTab(t){
 document.getElementById('nav').onclick=e=>{const b=e.target.closest('[data-tab]');if(b)setTab(b.dataset.tab)}
 document.addEventListener('click',e=>{const t=e.target;const b=t.closest('[data-tab]');if(b){e.preventDefault();setTab(b.dataset.tab);return}const og=t.closest('[data-open-guide]');if(og){e.preventDefault();setTab('tv');return}},{capture:true});
 document.getElementById('app').onclick=e=>{
+ const focusApp=e.target.closest('[data-focus-provider]');if(focusApp){if(!focusProviderApp()&&providerWindowUrl){openAppInHub(providerWindowUrl,appTitle||'Streaming App')}return}
+ const closeApp=e.target.closest('[data-close-app-room]');if(closeApp){closeAppInHub();return}
  const tm=e.target.closest('[data-tv-menu]');if(tm){setTab('tv');return}
  const rm=e.target.closest('[data-radio-menu]');if(rm){setTab('radio');return}
  const po=e.target.closest('[data-paid-open]');if(po){const x=streaming.find(a=>a.id===po.dataset.paidOpen);if(x)openInSite(x.url,x.name);return}
