@@ -99,10 +99,10 @@ let posts=[];
 let webFilter=true;
 
 const national=[
- {id:'abc-news',name:'ABC News Live',network:'ABC',category:'News',scope:'Nationwide • official ABC News Live',url:'https://abcnews.com/live',kind:'web'},
- {id:'cbs-news',name:'CBS News 24/7',network:'CBS',category:'News',scope:'Nationwide',url:'https://www.cbsnews.com/live/',kind:'web'},
- {id:'nbc-news',name:'NBC News NOW',network:'NBC',category:'News',scope:'Nationwide • official YouTube live',url:'https://www.youtube.com/embed/live_stream?channel=UCeY0bbntWzzVIaj2z3QigXg',kind:'youtube',provider:'NBC News'},
- {id:'fox-weather',name:'FOX Weather',network:'FOX',category:'Weather',scope:'Nationwide • official provider',url:'https://www.foxweather.com/watch-live',kind:'web'},
+ {id:'abc-news',name:'ABC News Live',network:'ABC',category:'News',scope:'Nationwide • direct HLS',stream:'https://aegis-cloudfront-1.tubi.video/d6cbb0de-68e4-4f3b-82f9-bf5d526e0bde/index.m3u8',kind:'stream',playable:true,sourceLabel:'ABC News Live direct HLS'},
+ {id:'cbs-news',name:'CBS News 24/7',network:'CBS',category:'News',scope:'Nationwide • direct HLS',stream:'https://cbsn-us.cbsnstream.cbsnews.com/out/v1/55a8648e8f134e82a470f83d562deeca/master.m3u8',kind:'stream',playable:true,sourceLabel:'CBS News 24/7 direct HLS'},
+ {id:'nbc-news',name:'NBC News NOW',network:'NBC',category:'News',scope:'Nationwide • direct HLS',stream:'https://d1bl6tskrpq9ze.cloudfront.net/hls/master.m3u8?ads.xumo_channelId=99984003',kind:'stream',playable:true,sourceLabel:'NBC News NOW direct HLS'},
+ {id:'fox-weather',name:'FOX Weather',network:'FOX',category:'Weather',scope:'Nationwide • direct HLS',stream:'https://247wlive.foxweather.com/stream/index.m3u8',kind:'stream',playable:true,sourceLabel:'FOX Weather direct HLS'},
  {id:'pbs',name:'PBS Local Live',network:'PBS',category:'Local Public TV • Live',scope:'Official PBS local livestream',url:'https://www.pbs.org/livestream/',kind:'web',provider:'PBS',guideEligible:true,sourceLabel:'PBS official local live'},
  {id:'pbs-create',name:'PBS Create',network:'PBS',category:'Lifestyle • Create',scope:'Create via official PBS local livestream',url:'https://www.pbs.org/livestream/',kind:'web',provider:'PBS / Create',guideEligible:true,sourceLabel:'PBS official live route for Create'},
  {id:'pbs-kids',name:'PBS KIDS',network:'PBS',category:'Kids',scope:'Public TV',url:'https://pbskids.org/',kind:'web'},
@@ -111,7 +111,7 @@ const national=[
  {id:'tubi',name:'Tubi',network:'Tubi',category:'Live TV • Movies • Shows',scope:'Web',url:'https://tubitv.com/',kind:'web'},
  {id:'stirr',name:'STIRR',network:'STIRR',category:'Live TV • News',scope:'Web',url:'https://stirr.com/',kind:'web'},
  {id:'real-life',name:'Real Life TV',network:'Real Life',category:'Faith • Family • Live',scope:'Official Real Life TV player',url:'https://media.reallifenetwork.com/pages/home/e/real-life-tv?channel=69f929b2ee86fe953a599016',kind:'web',provider:'Real Life TV'},
- {id:'tubi-livenow',name:'LiveNOW from FOX',network:'FOX',category:'National News',scope:'Nationwide • official YouTube live',url:'https://www.youtube.com/embed/live_stream?channel=UCJg9wBPyKMNA5sRDnvzmkdg',kind:'youtube',provider:'LiveNOW from FOX'},
+ {id:'tubi-livenow',name:'LiveNOW from FOX',network:'FOX',category:'National News',scope:'Nationwide • direct HLS',stream:'https://fox-foxnewsnow-vizio.amagi.tv/playlist.m3u8',kind:'stream',playable:true,sourceLabel:'LiveNOW from FOX direct HLS'},
  {id:'tubi-today',name:'Today All Day',network:'NBC',category:'News • Lifestyle',scope:'Official NBC provider',url:'https://www.today.com/watch/today-all-day',kind:'web',provider:'NBC'},
  {id:'tubi-scripps',name:'Scripps News',network:'Scripps',category:'News',scope:'Official provider / YouTube',url:'https://www.youtube.com/@scrippsnews',kind:'web',provider:'Scripps News'},
  {id:'tubi-bloomberg',name:'Bloomberg TV+',network:'Bloomberg',category:'Business News',scope:'Official provider / YouTube',url:'https://www.youtube.com/@BloombergTelevision',kind:'web',provider:'Bloomberg'}
@@ -233,9 +233,9 @@ let radioState='All';
 
 /* Universal Guide Engine — persistent player, easy-scroll verified lineup, no accidental provider exits. */
 const LIVE_OVERRIDES={
-  'abc-news':{kind:'web',url:'https://abcnews.com/live',sourceLabel:'ABC News official live page'},
-  'nbc-news':{kind:'youtube',url:'https://www.youtube.com/embed/live_stream?channel=UCeY0bbntWzzVIaj2z3QigXg&autoplay=1&mute=0&rel=0',sourceLabel:'NBC News official live endpoint'},
-  'tubi-livenow':{kind:'youtube',url:'https://www.youtube.com/embed/live_stream?channel=UCJg9wBPyKMNA5sRDnvzmkdg&autoplay=1&mute=0&rel=0',sourceLabel:'LiveNOW from FOX official live endpoint'},
+  'abc-news':{kind:'stream',stream:'https://aegis-cloudfront-1.tubi.video/d6cbb0de-68e4-4f3b-82f9-bf5d526e0bde/index.m3u8',sourceLabel:'ABC News Live direct HLS'},
+  'nbc-news':{kind:'stream',stream:'https://d1bl6tskrpq9ze.cloudfront.net/hls/master.m3u8?ads.xumo_channelId=99984003',sourceLabel:'NBC News NOW direct HLS'},
+  'tubi-livenow':{kind:'stream',stream:'https://fox-foxnewsnow-vizio.amagi.tv/playlist.m3u8',sourceLabel:'LiveNOW from FOX direct HLS'},
   'ary-news':{kind:'web',url:'https://live.arynews.tv/',sourceLabel:'ARY News official live page'},
   'geo-news':{kind:'web',url:'https://live.geo.tv/',sourceLabel:'Geo News official live page'},
   'france24-espanol':{kind:'web',url:'https://www.france24.com/es/en-vivo',sourceLabel:'France 24 Español official live page'}
@@ -269,7 +269,7 @@ function normalizeStreamName(s){return String(s||'').toLowerCase().replace(/\[[^
 async function loadPublicUSStreams(){
  if(publicStreamLoading||publicStreamReady)return;
  publicStreamLoading=true;publicStreamError='';
- const cacheKey='ftvr2-public-streams-v3';
+ const cacheKey='ftvr2-public-streams-v4';
  try{
   const cached=JSON.parse(localStorage.getItem(cacheKey)||'null');
   if(cached&&cached.at&&Date.now()-cached.at<30*60*1000&&cached.map){publicStreamMap=cached.map;publicStreamReady=true;publicStreamLoading=false;return}
