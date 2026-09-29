@@ -51,7 +51,22 @@ body{font-size:1rem}
  .easy-guide-shell .row-actions .primary{min-width:84px}
  .guide-foot span:nth-child(2){display:none}
 }
-</style></head><body><main class="wrap"><header class="top"><div class="brand">📺 Free TV <span>&</span> 📻 Radio</div><div class="badge">Website 2 • independent</div></header><section class="hero"><h1>More TV. Less hunting.</h1><p>A clean guide to free television and radio, with a persistent player, personal favorites, big-screen friendly playback, and a private administrator room.</p></section><nav class="nav" id="nav"><button class="active" data-tab="home">Home</button><button data-tab="tv">📺 TV</button><button data-tab="radio">📻 Radio</button><button data-tab="weather">🌦️ Weather</button><button data-tab="favorites">⭐ Favorites</button><button data-tab="stories">📸 Our Photos & Stories</button><button data-tab="admin">🔐 Admin</button><button data-tab="invite">🔗 Invite</button></nav><section id="playerDock" class="player-dock" aria-live="polite"></section><section id="app"></section><section class="safety"><b>Friendly safety note:</b> We curate links and public streams, but third-party providers control their own content and availability. Keep your device/browser updated, use your normal security protections, and never enter sensitive information into an unfamiliar third-party site.</section><footer class="footer">Free TV & Radio is an independent directory and player interface. Provider names, trademarks and programming belong to their respective owners. We do not promise uninterrupted or buffer-free playback because third-party streams and internet connections vary. <b>Terms • Privacy • Safety</b></footer></main><div id="mini" class="mini"></div>
+<style>
+.radio-country-bar{display:flex;gap:7px;overflow-x:auto;padding:6px 0 10px;scrollbar-width:thin}
+.radio-country{white-space:nowrap;border:1px solid var(--line);background:#0e192c;color:#dce5f4;border-radius:999px;padding:9px 12px;min-height:42px;font-weight:700}
+.radio-country.active{background:#fff;color:#07101f;border-color:#fff}
+.radio-search{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin:8px 0}
+.radio-search input{min-height:46px}
+.radio-hub{display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid var(--line);border-radius:12px;background:#0b1525;padding:10px 12px;margin:6px 0 10px}
+.radio-hub b{display:block}.radio-hub span{display:block;color:var(--muted);font-size:.78rem;margin-top:2px}
+.radio-next-note{padding:9px 2px;color:#7f8da6;font-size:.78rem}
+.radio-player{background:#0a1422;border-radius:14px;padding:14px}
+.radio-now h3{margin:8px 0 3px}.radio-now p{margin:0;color:var(--muted)}
+.radio-live-dot{font-size:.72rem;font-weight:900;letter-spacing:.08em;color:#9ee7bc}
+.radio-audio-wrap{margin:14px 0}.radio-audio-wrap audio{width:100%}
+.radio-player-actions{display:flex;gap:8px;flex-wrap:wrap}.radio-stream-status{margin-top:10px;color:#9eabc1;font-size:.82rem;line-height:1.35}
+@media(max-width:760px){.radio-hub{align-items:flex-start}.radio-hub .primary{min-height:44px;padding:9px 10px}.radio-search{grid-template-columns:minmax(0,1fr) auto}}
+</style></style></head><body><main class="wrap"><header class="top"><div class="brand">📺 Free TV <span>&</span> 📻 Radio</div><div class="badge">Website 2 • independent</div></header><section class="hero"><h1>More TV. Less hunting.</h1><p>A clean guide to free television and radio, with a persistent player, personal favorites, big-screen friendly playback, and a private administrator room.</p></section><nav class="nav" id="nav"><button class="active" data-tab="home">Home</button><button data-tab="tv">📺 TV</button><button data-tab="radio">📻 Radio</button><button data-tab="weather">🌦️ Weather</button><button data-tab="favorites">⭐ Favorites</button><button data-tab="stories">📸 Our Photos & Stories</button><button data-tab="admin">🔐 Admin</button><button data-tab="invite">🔗 Invite</button></nav><section id="playerDock" class="player-dock" aria-live="polite"></section><section id="app"></section><section class="safety"><b>Friendly safety note:</b> We curate links and public streams, but third-party providers control their own content and availability. Keep your device/browser updated, use your normal security protections, and never enter sensitive information into an unfamiliar third-party site.</section><footer class="footer">Free TV & Radio is an independent directory and player interface. Provider names, trademarks and programming belong to their respective owners. We do not promise uninterrupted or buffer-free playback because third-party streams and internet connections vary. <b>Terms • Privacy • Safety</b></footer></main><div id="mini" class="mini"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2"></script>
 <script>
 const SUPABASE_URL="https://doxzuuzzcxaozkyojybu.supabase.co";
@@ -188,6 +203,12 @@ const allTV=[...national];
 let guideTV=[...national,...international,...cityGuides].map((x,i)=>({...x,state:x.state||'NATIONWIDE',guideNo:i+1}));
 let tab='home', q='', guideQuery='', radioQuery='', network='All', city='All', cat='All', languageFilter='All', guideSource='All', guideMode='live';
 let guideReady=false;
+let radioRegion='US';
+let radioCatalog=[];
+let radioLoading=false;
+let radioError='';
+let radioSearchTimer=null;
+const RADIO_COUNTRIES=[['US','🇺🇸 United States'],['CA','🇨🇦 Canada'],['GB','🇬🇧 United Kingdom'],['AU','🇦🇺 Australia'],['IE','🇮🇪 Ireland'],['IN','🇮🇳 India'],['PK','🇵🇰 Pakistan'],['PH','🇵🇭 Philippines'],['MX','🇲🇽 Mexico'],['DE','🇩🇪 Germany'],['FR','🇫🇷 France'],['ES','🇪🇸 Spain'],['BR','🇧🇷 Brazil']];
 
 /* Universal Guide Engine — persistent player, easy-scroll verified lineup, no accidental provider exits. */
 const LIVE_OVERRIDES={
@@ -245,9 +266,23 @@ function playerShell(x){const channels=guidePool().map(a=>`<option value="tv:${e
 function providerPanel(x){const isWeb=x.kind==='web'&&x.url;return `<div class="provider-panel"><div class="provider-badge">OFFICIAL PROVIDER</div><h3>${esc(x.name)}</h3><p>${esc(x.scope||'This service controls its own playback.')} Playback is handled by the official provider. Nothing is routed through a hidden player.</p><div class="provider-actions">${isWeb?`<a class="primary" href="${esc(x.url)}" target="_blank" rel="noopener noreferrer">▶ Open official live</a>`:''}<button class="secondary" type="button" data-close>Stay in Guide</button></div><small class="muted">The provider controls playback, ads, regional rules, and account access.</small></div>`}
 function mountPlayer(x){
   const host=document.getElementById('mainPlayer'); if(!host)return; const stage=host.querySelector('#playerStage');stage.innerHTML='';
-  if(x.kind==='radio'){
+  if(x.kind==='radio-direct'){
+    if(x.stream){
+      stage.innerHTML='<div class="radio-player"><div class="radio-now"><div class="radio-live-dot">● LIVE RADIO</div><h3>'+esc(x.name)+'</h3><p>'+esc([x.state||x.country||x.network,x.category].filter(Boolean).join(' • '))+'</p><div class="radio-audio-wrap"><audio id="radioAudio" controls autoplay playsinline preload="none"></audio></div><div class="radio-player-actions"><button class="secondary" data-next-radio>Next station →</button>'+(x.homepage?'<a class="primary" href="'+esc(x.homepage)+'" target="_blank" rel="noopener noreferrer">↗ Station site</a>':'')+'</div><div id="radioStreamStatus" class="radio-stream-status">Connecting…</div></div></div>';
+      const audio=document.getElementById('radioAudio');
+      if(audio){
+        audio.src=x.stream;
+        const fail=()=>{const st=document.getElementById('radioStreamStatus');if(st)st.innerHTML='<b>Not available right now.</b> Move to the next station — no need to wait here.';audio.pause();};
+        audio.addEventListener('error',fail,{once:true});
+        setTimeout(()=>{if(audio.readyState===0&&!audio.paused){fail()}},8500);
+        audio.play?.().catch(()=>{});
+      }
+    }else{
+      stage.innerHTML=providerPanel(x).replace('OFFICIAL PROVIDER','OFFICIAL RADIO PROVIDER');
+    }
+    setTimeout(()=>{const st=document.getElementById('playerStatus');if(st)st.textContent='If this stream is unavailable, use Next station.'},300);
+  }else if(x.kind==='radio'){
     stage.innerHTML=providerPanel(x).replace('OFFICIAL PROVIDER','OFFICIAL RADIO PROVIDER');
-    setTimeout(()=>{const st=document.getElementById('playerStatus');if(st)st.textContent='Official radio site opened on demand — no broken embedded player.'},300);
   }else if(x.playable && x.kind==='youtube'){
     const src=x.url.includes('?')?x.url+'&autoplay=1':x.url+'?autoplay=1';
     stage.innerHTML=`<div class="live-frame"><iframe title="${esc(x.name)} live" src="${esc(src)}" loading="eager" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; picture-in-picture; geolocation; encrypted-media" allowfullscreen></iframe><div class="source-strip">${esc(x.sourceLabel||'Official live source')} • Playback stays inside Free TV & Radio.</div></div>`;
@@ -266,7 +301,7 @@ function minimizePlayer(){const main=document.getElementById('mainPlayer');if(!m
 function restorePlayer(){const mini=document.getElementById('mini');const main=mini.querySelector('#mainPlayer');if(!main)return;document.getElementById('playerDock').appendChild(main);main.classList.remove('mini-mode');mini.classList.remove('show');document.getElementById('playerDock').classList.add('show');window.scrollTo({top:0,behavior:'smooth'})}
 function closePlayer(){const mini=document.getElementById('mini');mini.innerHTML='';mini.classList.remove('show');document.getElementById('playerDock').innerHTML='';document.getElementById('playerDock').classList.remove('show');current=null}
 function toggleFullscreen(){const main=document.getElementById('mainPlayer')||document.querySelector('#mini #mainPlayer');if(!main)return;if(document.fullscreenElement){document.exitFullscreen?.()}else{(main.querySelector('iframe')||main).requestFullscreen?.()}}
-function surf(delta){const pool=current?.kind==='radio'?radioRows():guidePool();if(!pool.length)return;const i=pool.findIndex(a=>a.id===current?.id);const next=Math.min(pool.length-1,Math.max(0,(i<0?0:i)+delta));if(next!==i)showPlayer(pool[next])}
+function surf(delta){const pool=(current?.kind==='radio'||current?.kind==='radio-direct')?radioRows():guidePool();if(!pool.length)return;const i=pool.findIndex(a=>a.id===current?.id);const next=Math.min(pool.length-1,Math.max(0,(i<0?0:i)+delta));if(next!==i){const item=pool[next];if(item.type==='directory'||(item.kind==='web'&&!item.stream)){openExternal(item)}else showPlayer(item)}}
 
 function home(){const quick=['Spanish','Urdu','Hindi','Arabic','Filipino','French'];return `<div class="section"><div><h2>Start here</h2><span class="muted">One guide. One player. No hunting.</span></div></div><div class="hero-actions"><button class="primary big" data-open-guide>📺 Open Channel Guide</button><div class="quick-languages">${quick.map(v=>`<button class="secondary" data-lang-nav="${v}">${esc(v)}</button>`).join('')}</div></div><div class="section"><h2>⭐ Quick picks</h2><span class="muted">Live sources first</span></div><div class="grid">${allTV.filter(x=>x.playable).slice(0,8).map(card).join('')}</div><div class="section"><div><h2>🔐 Paid TV Services</h2><span class="muted">Sign in directly with each provider</span></div></div><div class="grid">${streaming.map(card).join('')}</div><div class="notice"><b>Private login:</b> Free TV & Radio never collects or stores your paid-service password. Sign-in happens on the provider's own site.</div><div class="section"><h2>📻 Radio</h2><span class="muted">${stations.length} featured options</span></div><div class="grid">${stations.map(card).join('')}</div><div class="section"><h2>🌦️ Official Weather</h2><span class="muted">National Weather Service / NOAA</span></div><div class="grid"><article class="card"><div class="logo">NWS</div><h3>National Weather Service</h3><p>Official forecasts, alerts, radar and national weather information.</p><div class="actions"><a class="primary" href="https://www.weather.gov/" target="_blank" rel="noopener noreferrer">Open NWS</a><a class="secondary" href="https://radar.weather.gov/" target="_blank" rel="noopener noreferrer">Open Radar</a></div></article></div><div class="notice"><b>Global by design:</b> language and culture filters change the guide view only. They never automatically launch a provider.</div>`}
 const providerGuides=[
@@ -325,25 +360,91 @@ function tv(){
  '<div class="guide-foot"><span>Swipe / scroll</span><span>One continuous channel list.</span><span>Live + On Demand use the same guide.</span></div>';
 }
 const radioDirectories=[
- {id:'iheartradio',name:'iHeartRadio',count:'1,000+ U.S. stations',url:'https://www.iheart.com/live/country/US/',search:'https://www.iheart.com/live/country/US/'},
+ {id:'iheartradio',name:'iHeartRadio',count:'1,000+ U.S. stations',url:'https://www.iheart.com/live/country/US/'},
  {id:'klove-dir',name:'K-LOVE',count:'Station finder + live',url:'https://www.klove.com/music/station-finder'},
  {id:'air1-dir',name:'Air1',count:'Live radio',url:'https://www.air1.com/?channel=live'},
  {id:'npr-dir',name:'NPR',count:'Member-station directory',url:'https://www.npr.org/stations/'},
  {id:'grace-dir',name:'GraceFM',count:'Live radio',url:'https://gracefm.com/'}
 ];
+const RADIO_API='https://de1.api.radio-browser.info/json/stations/search';
+function radioApiUrl(){
+ const params=new URLSearchParams();
+ if(radioRegion)params.set('countrycode',radioRegion);
+ const term=(radioQuery||'').trim();
+ if(term)params.set('name',term);
+ params.set('limit','160');
+ params.set('hidebroken','true');
+ params.set('is_https','true');
+ params.set('order',term?'name':'clickcount');
+ params.set('reverse',term?'false':'true');
+ return RADIO_API+'?'+params.toString();
+}
+function normalizeRadioStation(s){
+ const tags=Array.isArray(s.tags)?s.tags.join(', '):(s.tags||'');
+ const languages=Array.isArray(s.language)?s.language.join(', '):(s.language||'');
+ return {
+  id:'rb-'+(s.stationuuid||s.changeuuid||Math.random().toString(36).slice(2)),
+  name:s.name||'Unnamed station',
+  network:s.country||'Radio',
+  category:tags||'Radio',
+  scope:[s.state,languages].filter(Boolean).join(' • ')||'Internet radio',
+  url:s.url_resolved||s.url||s.homepage,
+  homepage:s.homepage||'',
+  favicon:s.favicon||'',
+  country:s.country||'',
+  countrycode:s.countrycode||'',
+  state:s.state||'',
+  tags,
+  language:languages,
+  kind:'radio-direct',
+  type:'station',
+  stream:s.url_resolved||s.url||'',
+  codec:s.codec||'',
+  bitrate:s.bitrate||0
+ };
+}
+async function loadRadioCatalog(force=false){
+ const cacheKey='ftvr2-radio-'+radioRegion+'-'+(radioQuery||'').trim().toLowerCase();
+ if(!force&&!radioQuery){
+  try{const cached=JSON.parse(localStorage.getItem(cacheKey)||'null');if(cached&&Date.now()-cached.at<15*60*1000&&Array.isArray(cached.rows)){radioCatalog=cached.rows;radioError='';return}}catch(_){}
+ }
+ radioLoading=true;radioError='';render();
+ try{
+  const res=await fetch(radioApiUrl(),{headers:{'Accept':'application/json'}});
+  if(!res.ok)throw new Error('Radio directory returned '+res.status);
+  const data=await res.json();
+  radioCatalog=(Array.isArray(data)?data:[]).map(normalizeRadioStation).filter(x=>x.stream);
+  if(!radioQuery)localStorage.setItem(cacheKey,JSON.stringify({at:Date.now(),rows:radioCatalog}));
+ }catch(err){
+  radioError='The live directory could not be refreshed. Showing the stations already available.';
+ }finally{radioLoading=false;render()}
+}
 function radioRows(){
  const qv=(radioQuery||'').trim().toLowerCase();
- const featured=stations.filter(function(x){return !qv||JSON.stringify(x).toLowerCase().includes(qv);}).map(function(x,i){return {id:x.id,name:x.name,network:x.network,category:x.category,scope:x.scope,url:x.url,kind:'radio',type:'station'};});
+ const dynamic=radioCatalog.filter(function(x){return !qv||[x.name,x.network,x.category,x.scope,x.country,x.state,x.language].join(' ').toLowerCase().includes(qv);});
+ const featured=stations.filter(function(x){return !qv||JSON.stringify(x).toLowerCase().includes(qv);}).map(function(x){return {...x,type:'featured',kind:'radio-direct',stream:''};});
  const dirs=radioDirectories.filter(function(x){return !qv||JSON.stringify(x).toLowerCase().includes(qv);}).map(function(x){return {id:'dir-'+x.id,name:x.name+' • Directory',network:x.name,category:'Radio Directory',scope:x.count,url:x.url,kind:'web',type:'directory'};});
- return featured.concat(dirs);
+ const seen=new Set();
+ return featured.concat(dynamic,dirs).filter(x=>{if(seen.has(x.id))return false;seen.add(x.id);return true;});
+}
+function radioCountryBar(){
+ return '<div class="radio-country-bar">'+RADIO_COUNTRIES.map(function(pair){return '<button class="radio-country '+(radioRegion===pair[0]?'active':'')+'" data-radio-region="'+pair[0]+'">'+pair[1]+'</button>';}).join('')+'</div>';
 }
 function radio(){
  const rows=radioRows();
- const html=rows.map(function(x,i){return '<div class="channel-row" data-channel-row="'+esc(x.id)+'"><div class="channel-number">'+(i+1)+'</div><div><div class="channel-name">'+esc(x.name)+'</div><div class="meta">'+esc(x.network||'Radio')+'</div></div><div class="meta">'+esc(x.scope||'Official radio')+'<br>'+esc(x.category||'Radio')+'</div><div class="row-actions"><button class="primary" data-play="'+esc(x.id)+'">'+(x.type==='directory'?'↗ Browse':'▶ Listen Live')+'</button><button class="star '+(isFav(x.id)?'on':'')+'" data-fav="'+esc(x.id)+'">'+(isFav(x.id)?'★':'☆')+'</button></div></div>';}).join('');
- return '<div class="section guide-title-row"><div><h2>📻 Radio Guide</h2><span class="muted">'+rows.length+' featured/directories • easy scroll</span></div><span class="badge">EASY SCROLL</span></div>'+
- '<div class="guide-tools easy-guide-tools"><input id="radioSearch" class="search" value="'+esc(radioQuery)+'" placeholder="Search stations, genres or providers…" aria-label="Search radio"><button class="secondary" data-clear-radio-search>Clear</button></div>'+
- '<div class="guide-shell easy-guide-shell"><div class="guide-head"><span>#</span><span>Station</span><span>Source</span><span></span></div><div class="guide-scroll">'+html+'</div></div>'+
- '<div class="notice"><b>Large radio directories:</b> the same guide gives you direct access to iHeart, K-LOVE, Air1, NPR and GraceFM without fragile embedded players.</div>';
+ const html=rows.map(function(x,i){
+  const playable=!!x.stream;
+  const action=playable?'▶ Listen':'↗ Browse';
+  const meta=[x.state||x.country||x.network,x.category||'Radio'].filter(Boolean).join(' • ');
+  return '<div class="channel-row" data-channel-row="'+esc(x.id)+'"><div class="channel-number">'+(i+1)+'</div><div><div class="channel-name">'+esc(x.name)+'</div><div class="meta">'+esc(x.network||x.country||'Radio')+'</div></div><div class="meta">'+esc(meta)+'</div><div class="row-actions"><button class="primary" data-play="'+esc(x.id)+'">'+action+'</button><button class="star '+(isFav(x.id)?'on':'')+'" data-fav="'+esc(x.id)+'">'+(isFav(x.id)?'★':'☆')+'</button></div></div>';
+ }).join('');
+ const status=radioLoading?'Loading live stations…':radioError?radioError:(radioCatalog.length?radioCatalog.length+' stations in this view':'Preparing station list…');
+ return '<div class="section guide-title-row"><div><h2>📻 Radio Guide</h2><span class="muted">'+esc(status)+' • one continuous list</span></div><span class="badge">EASY SCROLL</span></div>'+
+ '<div class="radio-search"><input id="radioSearch" class="search" value="'+esc(radioQuery)+'" placeholder="Search stations, city, genre or language…" aria-label="Search radio"><button class="secondary" data-clear-radio-search>Clear</button></div>'+
+ radioCountryBar()+
+ '<div class="radio-hub"><div><b>iHeartRadio</b><span>Separate directory • 1,000+ U.S. stations</span></div><button class="primary" data-open-iheart>↗ Open iHeart</button></div>'+
+ '<div class="guide-shell easy-guide-shell"><div class="guide-head"><span>#</span><span>Station</span><span>Region / Format</span><span></span></div><div class="guide-scroll">'+html+'</div></div>'+
+ '<div class="radio-next-note">If a station does not come in, don’t fight it. Use the next station. The guide stays here.</div>';
 }
 function favView(){const items=[...allTV,...stations,...streaming].filter(x=>isFav(x.id));return `<div class="section"><h2>⭐ My Favorites</h2><span class="muted">${authUser?'Synced to your account':'Saved on this device'}</span></div>${items.length?`<div class="grid">${items.map(card).join('')}</div>`:'<div class="notice">Tap ☆ Favorite on any channel or radio station to build your list.</div>'}`}
 function stories(){return `<div class="section"><h2>📸 Our Photos & Stories</h2><span class="muted">Admin-published • visitor view only</span></div>${posts.length?`<div class="gallery">${posts.map(p=>`<article class="item">${p.image_url?`<img src="${esc(p.image_url)}" alt="" style="width:100%;aspect-ratio:4/3;object-fit:cover">`:'<div class="ph">✍️</div>'}<div class="copy"><h3>${esc(p.title||'Untitled')}</h3><p class="muted">${esc(p.body||'')}</p></div></article>`).join('')}</div>`:'<div class="notice">No stories have been published yet.</div>'}`}
@@ -353,13 +454,13 @@ function admin(){const signed=isAdmin();return `<div class="section"><h2>🔐 Ad
 function invite(){return `<div class="section"><h2>🔗 Invite Friends</h2><span class="muted">One-tap sharing</span></div><div class="notice"><b>Share Website 2:</b><br><input id="inviteUrl" class="search" value="${esc(location.href.split('#')[0])}" readonly style="margin-top:10px"><div class="actions"><button class="primary" data-copy-invite>Copy invite link</button><button class="secondary" data-share-invite>Share</button></div></div><div class="notice">The public invitation link never grants admin access.</div>`}
 
 function weather(){return '<div class="section"><div><h2>🌦️ Weather</h2><span class="muted">Official National Weather Service / NOAA</span></div></div><div class="grid"><article class="card"><div class="logo">NWS</div><h3>National Weather Service</h3><p>Official U.S. forecasts, active alerts, forecast maps, radar, satellite and current conditions.</p><div class="actions"><a class="primary" href="https://www.weather.gov/" target="_blank" rel="noopener noreferrer">Open NWS</a><a class="secondary" href="https://radar.weather.gov/" target="_blank" rel="noopener noreferrer">Open Radar</a></div></article></div><div class="notice">Weather information is provided by the National Weather Service. Use your city or ZIP code on NWS for the official local forecast and alerts.</div>'}
-function render(){const view=tab==='home'?home():tab==='tv'?tv():tab==='radio'?radio():tab==='weather'?weather():tab==='favorites'?favView():tab==='stories'?stories():tab==='admin'?admin():invite();app.innerHTML=view}
+function render(){const view=tab==='home'?home():tab==='tv'?tv():tab==='radio'?radio():tab==='weather'?weather():tab==='favorites'?favView():tab==='stories'?stories():tab==='admin'?admin():invite();app.innerHTML=view;if(tab==='radio'&&!radioCatalog.length&&!radioLoading){loadRadioCatalog()}}
 function setTab(t){tab=t;document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));render()}
 nav.onclick=e=>{const b=e.target.closest('[data-tab]');if(b)setTab(b.dataset.tab)}
 app.onclick=e=>{
  const openGuide=e.target.closest('[data-open-guide]');if(openGuide){languageFilter='All';setTab('tv');return}
  const langNav=e.target.closest('[data-lang-nav]');if(langNav){languageFilter=langNav.dataset.langNav;setTab('tv');return}
- const p=e.target.closest('[data-play]');if(p){const id=p.dataset.play;const x=[...allTV,...stations,...streaming].find(a=>a.id===id)||guideRows().find(a=>a.id===id)||radioRows().find(a=>a.id===id);if(x){if(x.kind==='web'&&x.url){window.open(x.url,'_blank','noopener,noreferrer')}else showPlayer(x)}return}
+ const p=e.target.closest('[data-play]');if(p){const id=p.dataset.play;const x=[...allTV,...stations,...streaming].find(a=>a.id===id)||guideRows().find(a=>a.id===id)||radioRows().find(a=>a.id===id);if(x){if(x.type==='directory'||(x.kind==='web'&&x.url)){window.open(x.url,'_blank','noopener,noreferrer')}else showPlayer(x)}return}
  const f=e.target.closest('[data-fav]');if(f){toggleFav(f.dataset.fav);return}
  const lang=e.target.closest('[data-lang]');if(lang){languageFilter=lang.dataset.lang;render();return}
  if(e.target.closest('[data-clear-lang]')){languageFilter='All';render();return}
@@ -379,7 +480,10 @@ app.onclick=e=>{
  if(e.target.closest('#mini #mainPlayer')){restorePlayer();return}
  if(e.target.closest('[data-copy-invite]')){(navigator.clipboard?.writeText(location.href.split('#')[0])||Promise.resolve());e.target.textContent='Copied ✓';setTimeout(()=>e.target.textContent='Copy invite link',1200);return}
  if(e.target.closest('[data-clear-guide-search]')){guideQuery='';q='';render();return}
- if(e.target.closest('[data-clear-radio-search]')){radioQuery='';render();return}
+ if(e.target.closest('[data-clear-radio-search]')){radioQuery='';loadRadioCatalog(true);return}
+ if(e.target.closest('[data-radio-region]')){radioRegion=e.target.closest('[data-radio-region]').dataset.radioRegion;radioQuery='';loadRadioCatalog(true);return}
+ if(e.target.closest('[data-open-iheart]')){window.open('https://www.iheart.com/live/country/US/','_blank','noopener,noreferrer');return}
+ if(e.target.closest('[data-next-radio]')){surf(1);return}
  if(e.target.closest('[data-iheart-search]')){const v=(document.getElementById('iheartSearch')?.value||'').trim();const u=v?'https://www.iheart.com/live/country/US/?q='+encodeURIComponent(v):'https://www.iheart.com/live/country/US/';window.open(u,'_blank','noopener,noreferrer');return}
  if(e.target.closest('[data-share-invite]')){navigator.share?.({title:'Free TV & Radio',text:'Come check out Free TV & Radio',url:location.href.split('#')[0]})||navigator.clipboard?.writeText(location.href.split('#')[0]);return}
  if(e.target.closest('[data-auth-action]')){authAction();return}
@@ -387,7 +491,7 @@ app.onclick=e=>{
  if(e.target.closest('[data-admin-browser]')){if(!isAdmin()){alert('Administrator sign-in is required.');return}let u=document.getElementById('adminWeb').value.trim();if(!u)return;const blocked=webFilter&&/(porn|xxx|sexcam|sex-chat|pornhub|xvideos|xnxx|xhamster|redtube|brazzers|onlyfans|chaturbate|stripchat|nsfw|adult[-_ ]?content|explicit[-_ ]?content|escort|hookup|fetish|cam[-_ ]?girl|cam[-_ ]?boy)/i.test(u);if(blocked){alert('Web safety filter blocked this adult-content request.');return}if(!/^https?:\/\//i.test(u)){const query=u;u='https://www.google.com/search?q='+encodeURIComponent(query)+(webFilter?'&safe=active':'')}window.open(u,'_blank','noopener,noreferrer');return}
  if(e.target.closest('[data-publish-post]')){publishPost();return}
 }
-app.addEventListener('input',e=>{if(e.target.id==='guideSearch'){guideQuery=e.target.value;q=guideQuery;render();const s=document.getElementById('guideSearch');s?.focus();s?.setSelectionRange(guideQuery.length,guideQuery.length);return}if(e.target.id==='radioSearch'){radioQuery=e.target.value;render();const s=document.getElementById('radioSearch');s?.focus();s?.setSelectionRange(radioQuery.length,radioQuery.length);return}})
+app.addEventListener('input',e=>{if(e.target.id==='guideSearch'){guideQuery=e.target.value;q=guideQuery;render();const s=document.getElementById('guideSearch');s?.focus();s?.setSelectionRange(guideQuery.length,guideQuery.length);return}if(e.target.id==='radioSearch'){radioQuery=e.target.value;render();const s=document.getElementById('radioSearch');s?.focus();s?.setSelectionRange(radioQuery.length,radioQuery.length);clearTimeout(radioSearchTimer);radioSearchTimer=setTimeout(()=>loadRadioCatalog(true),420);return}})
 app.addEventListener('change',e=>{if(e.target.id==='webFilter'){toggleWebFilter();return}if(e.target.id==='providerSelect'){app.innerHTML=providerView(e.target.value||'sling');return}})
 render();initAuth();
 </script>
