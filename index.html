@@ -344,7 +344,7 @@ const providerCatalogs={
 const providerOrder=['pluto','roku','sling','tubi','plex'];
 const youtubeProviderId='youtube';
 async function loadProviderCatalog(pid,force=false){
- if(pid!=='sling')return;
+ if(!['sling','pluto'].includes(pid))return;
  if(providerCatalogLoading[pid])return;
  if(providerCatalogLoaded[pid]&&!force)return;
  providerCatalogLoading[pid]=true;
@@ -392,10 +392,12 @@ function providerCatalogRows(){
   p.channels.forEach((entry,i)=>{
    const name=typeof entry==='string'?entry:(entry.name||'Unnamed channel');
    const directUrl=typeof entry==='string'?'':(entry.url||'');
-   const streamCandidates=resolvePublicStreams(name);const stream=streamCandidates[0]||'';
+   const providerStream=typeof entry==='string'?'':(entry.stream||'');
+   const streamCandidates=[...resolvePublicStreams(name),providerStream].filter(Boolean).filter((v,j,a)=>a.indexOf(v)===j);
+   const stream=streamCandidates[0]||'';
    const providerUrl=directUrl||p.live;
-   const isSling=pid==='sling'&&!!directUrl;
-   rows.push({id:'catalog-'+pid+'-'+i,name,network:p.name,category:(entry.category||'Live TV'),scope:p.count+' • '+p.name,url:stream||providerUrl,stream:stream||'',streamCandidates:streamCandidates,kind:stream?'stream':(isSling?'embed':'web'),playable:!!(stream||isSling),providerId:pid,provider:p.name,mode:'live',sourceLabel:stream?'Public live source • iptv-org':(isSling?'Official '+p.name+' channel':'Official '+p.name+' live guide')});
+   const isEmbed=pid==='sling'&&!!directUrl;
+   rows.push({id:'catalog-'+pid+'-'+i,name,network:p.name,category:(entry.category||'Live TV'),scope:p.count+' • '+p.name,url:stream||providerUrl,stream:stream||'',streamCandidates,kind:stream?'stream':(isEmbed?'embed':'web'),playable:!!(stream||isEmbed),providerId:pid,provider:p.name,mode:'live',sourceLabel:stream?(providerStream?'Official '+p.name+' HLS':'Public live source • iptv-org'):(isEmbed?'Official '+p.name+' embedded channel':'Official '+p.name+' live guide')});
   });
  });
  return rows;
@@ -427,6 +429,7 @@ function paidView(){
 function tv(){
  if(!publicStreamReady&&!publicStreamLoading)loadPublicUSStreams();
  if(!providerCatalogLoaded.sling&&!providerCatalogLoading.sling)loadProviderCatalog('sling');
+ if(!providerCatalogLoaded.pluto&&!providerCatalogLoading.pluto)loadProviderCatalog('pluto');
  const visible=guideRows();
  const rows=visible.map(function(x,i){
   const sources=(x.sources||[]).map(s=>s.provider).filter(Boolean).filter((v,j,a)=>a.indexOf(v)===j);
