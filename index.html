@@ -52,7 +52,7 @@ body{font-size:1rem}
  .guide-foot span:nth-child(2){display:none}
 }
 <style>
-.radio-country-bar{display:flex;gap:7px;overflow-x:auto;padding:6px 0 10px;scrollbar-width:thin}
+.radio-country-bar{display:flex;gap:7px;overflow-x:auto;padding:6px 0 10px;scrollbar-width:thin}.radio-country-label{font-size:.72rem;font-weight:800;color:#8f9db5;text-transform:uppercase;letter-spacing:.08em;margin:7px 0 3px}.radio-state-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;max-height:180px;overflow:auto;padding:3px 0 9px}.radio-state{min-height:38px;border:1px solid var(--line);background:#0e192c;color:#dce5f4;border-radius:9px;padding:7px 6px;font-weight:650;font-size:.76rem}.radio-state.active{background:#fff;color:#07101f;border-color:#fff}@media(min-width:700px){.radio-state-grid{grid-template-columns:repeat(6,minmax(0,1fr));max-height:210px}}
 .radio-country{white-space:nowrap;border:1px solid var(--line);background:#0e192c;color:#dce5f4;border-radius:999px;padding:9px 12px;min-height:42px;font-weight:700}
 .radio-country.active{background:#fff;color:#07101f;border-color:#fff}
 .radio-search{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin:8px 0}
@@ -209,6 +209,8 @@ let radioLoading=false;
 let radioError='';
 let radioSearchTimer=null;
 const RADIO_COUNTRIES=[['US','🇺🇸 United States'],['CA','🇨🇦 Canada'],['GB','🇬🇧 United Kingdom'],['AU','🇦🇺 Australia'],['IE','🇮🇪 Ireland'],['IN','🇮🇳 India'],['PK','🇵🇰 Pakistan'],['PH','🇵🇭 Philippines'],['MX','🇲🇽 Mexico'],['DE','🇩🇪 Germany'],['FR','🇫🇷 France'],['ES','🇪🇸 Spain'],['BR','🇧🇷 Brazil']];
+const US_STATES=[['All','All States'],['AL','Alabama'],['AK','Alaska'],['AZ','Arizona'],['AR','Arkansas'],['CA','California'],['CO','Colorado'],['CT','Connecticut'],['DE','Delaware'],['FL','Florida'],['GA','Georgia'],['HI','Hawaii'],['ID','Idaho'],['IL','Illinois'],['IN','Indiana'],['IA','Iowa'],['KS','Kansas'],['KY','Kentucky'],['LA','Louisiana'],['ME','Maine'],['MD','Maryland'],['MA','Massachusetts'],['MI','Michigan'],['MN','Minnesota'],['MS','Mississippi'],['MO','Missouri'],['MT','Montana'],['NE','Nebraska'],['NV','Nevada'],['NH','New Hampshire'],['NJ','New Jersey'],['NM','New Mexico'],['NY','New York'],['NC','North Carolina'],['ND','North Dakota'],['OH','Ohio'],['OK','Oklahoma'],['OR','Oregon'],['PA','Pennsylvania'],['RI','Rhode Island'],['SC','South Carolina'],['SD','South Dakota'],['TN','Tennessee'],['TX','Texas'],['UT','Utah'],['VT','Vermont'],['VA','Virginia'],['WA','Washington'],['WV','West Virginia'],['WI','Wisconsin'],['WY','Wyoming'],['DC','District of Columbia']];
+let radioState='All';
 
 /* Universal Guide Engine — persistent player, easy-scroll verified lineup, no accidental provider exits. */
 const LIVE_OVERRIDES={
@@ -369,7 +371,7 @@ const radioDirectories=[
 const RADIO_API='https://de1.api.radio-browser.info/json/stations/search';
 function radioApiUrl(){
  const params=new URLSearchParams();
- if(radioRegion)params.set('countrycode',radioRegion);
+ if(radioRegion)params.set('countrycode',radioRegion);\n if(radioRegion==='US'&&radioState!=='All')params.set('state',US_STATES.find(x=>x[0]===radioState)?.[1]||radioState);
  const term=(radioQuery||'').trim();
  if(term)params.set('name',term);
  params.set('limit','160');
@@ -428,7 +430,9 @@ function radioRows(){
  return featured.concat(dynamic,dirs).filter(x=>{if(seen.has(x.id))return false;seen.add(x.id);return true;});
 }
 function radioCountryBar(){
- return '<div class="radio-country-bar">'+RADIO_COUNTRIES.map(function(pair){return '<button class="radio-country '+(radioRegion===pair[0]?'active':'')+'" data-radio-region="'+pair[0]+'">'+pair[1]+'</button>';}).join('')+'</div>';
+ const countries='<div class="radio-country-label">Countries</div><div class="radio-country-bar">'+RADIO_COUNTRIES.map(function(pair){return '<button class="radio-country '+(radioRegion===pair[0]?'active':'')+'" data-radio-region="'+pair[0]+'">'+pair[1]+'</button>';}).join('')+'</div>';
+ const states=radioRegion==='US'?'<div class="radio-country-label">United States • States</div><div class="radio-state-grid">'+US_STATES.map(function(pair){return '<button class="radio-state '+(radioState===pair[0]?'active':'')+'" data-radio-state="'+pair[0]+'">'+pair[1]+'</button>';}).join('')+'</div>':'';
+ return countries+states;
 }
 function radio(){
  const rows=radioRows();
@@ -481,7 +485,7 @@ app.onclick=e=>{
  if(e.target.closest('[data-copy-invite]')){(navigator.clipboard?.writeText(location.href.split('#')[0])||Promise.resolve());e.target.textContent='Copied ✓';setTimeout(()=>e.target.textContent='Copy invite link',1200);return}
  if(e.target.closest('[data-clear-guide-search]')){guideQuery='';q='';render();return}
  if(e.target.closest('[data-clear-radio-search]')){radioQuery='';loadRadioCatalog(true);return}
- if(e.target.closest('[data-radio-region]')){radioRegion=e.target.closest('[data-radio-region]').dataset.radioRegion;radioQuery='';loadRadioCatalog(true);return}
+ if(e.target.closest('[data-radio-region]')){radioRegion=e.target.closest('[data-radio-region]').dataset.radioRegion;radioState='All';radioQuery='';loadRadioCatalog(true);return}\n if(e.target.closest('[data-radio-state]')){radioState=e.target.closest('[data-radio-state]').dataset.radioState;radioQuery='';loadRadioCatalog(true);return}
  if(e.target.closest('[data-open-iheart]')){window.open('https://www.iheart.com/live/country/US/','_blank','noopener,noreferrer');return}
  if(e.target.closest('[data-next-radio]')){surf(1);return}
  if(e.target.closest('[data-iheart-search]')){const v=(document.getElementById('iheartSearch')?.value||'').trim();const u=v?'https://www.iheart.com/live/country/US/?q='+encodeURIComponent(v):'https://www.iheart.com/live/country/US/';window.open(u,'_blank','noopener,noreferrer');return}
