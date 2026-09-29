@@ -207,7 +207,7 @@ const stations=[
 ];
 const allTV=[...national];
 let guideTV=[...national,...international,...cityGuides].map((x,i)=>({...x,state:x.state||'NATIONWIDE',guideNo:i+1}));
-let tab='home', q='', guideQuery='', radioQuery='', webQuery='', webStatus='', webUrl='', webTitle='', network='All', city='All', cat='All', languageFilter='All', guideSource='All', guideMode='live';
+let tab='home', q='', guideQuery='', radioQuery='', webQuery='', webStatus='', webUrl='', webTitle='', network='All', city='All', cat='All', guideSource='All', guideMode='live';
 let providerCatalogLoading={}, providerCatalogLoaded={};
 let guideReady=false;
 let radioRegion='US';
@@ -234,21 +234,7 @@ if(!international.some(x=>x.id==='france24-espanol')) international.push({id:'fr
 // provider-controlled channels such as PBS remain visible and use their official live route.
 
 
-const CANONICAL_LANGS=[
-  ['Spanish','Español','Spanish'],['Urdu','اردو','Urdu'],['Hindi','हिन्दी','Hindi'],['Arabic','العربية','Arabic'],
-  ['Filipino','Filipino','Filipino'],['Chinese','中文','Chinese'],['Korean','한국어','Korean'],['Japanese','日本語','Japanese'],
-  ['French','Français','French'],['German','Deutsch','German'],['Portuguese','Português','Portuguese'],['Italian','Italiano','Italian'],
-  ['Polish','Polski','Polish'],['English','English','English']
-];
-function languageGroup(x){
-  const l=String(x.language||'').toLowerCase();
-  if(l.includes('spanish'))return 'Spanish'; if(l.includes('urdu'))return 'Urdu'; if(l.includes('hindi'))return 'Hindi';
-  if(l.includes('arabic'))return 'Arabic'; if(l.includes('filipino'))return 'Filipino'; if(l.includes('chinese')||l.includes('mandarin'))return 'Chinese';
-  if(l.includes('korean'))return 'Korean'; if(l.includes('japanese'))return 'Japanese'; if(l.includes('french'))return 'French';
-  if(l.includes('german'))return 'German'; if(l.includes('portuguese'))return 'Portuguese'; if(l.includes('italian'))return 'Italian';
-  if(l.includes('polish'))return 'Polish'; if(l.includes('english'))return 'English'; return x.language?'Other':'English';
-}
-function enrich(x){return {...x,langGroup:languageGroup(x),playable:(x.kind==='youtube'||x.kind==='embed'||x.kind==='radio'),guideEligible:(x.guideEligible===true)||(x.kind==='youtube'||x.kind==='embed'||x.kind==='radio')};}
+function enrich(x){return {...x,playable:(x.kind==='youtube'||x.kind==='embed'||x.kind==='radio'),guideEligible:(x.guideEligible===true)||(x.kind==='youtube'||x.kind==='embed'||x.kind==='radio')};}
 allTV.splice(0,allTV.length,...allTV.map(enrich));
 stations.splice(0,stations.length,...stations.map(enrich));
 guideTV.splice(0,guideTV.length,...[...allTV,...international,...cityGuides].map(enrich).map((x,i)=>({...x,guideNo:i+1,state:x.state||'NATIONWIDE'})));
@@ -270,7 +256,7 @@ function normalizeStreamName(s){return String(s||'').toLowerCase().replace(/\[[^
 async function loadPublicUSStreams(){if(publicStreamLoading||publicStreamReady)return;publicStreamLoading=true;publicStreamError='';try{const cached=JSON.parse(localStorage.getItem('ftvr2-public-us-streams')||'null');if(cached&&cached.at&&Date.now()-cached.at<30*60*1000&&cached.map){publicStreamMap=cached.map;publicStreamReady=true;publicStreamLoading=false;return}}catch(_){}try{const res=await fetch(PUBLIC_US_M3U,{cache:'no-store'});if(!res.ok)throw new Error('stream directory '+res.status);const body=await res.text();const lines=body.split(/\r?\n/);const map={};for(let i=0;i<lines.length;i++){const line=lines[i]||'';if(!line.startsWith('#EXTINF'))continue;const comma=line.indexOf(',');if(comma<0)continue;const name=line.slice(comma+1).trim();const url=(lines[i+1]||'').trim();if(!/^https:\/\//i.test(url))continue;const key=normalizeStreamName(name);if(!key||map[key])continue;if(/\b(xxx|adult|explicit|nsfw)\b/i.test(key))continue;map[key]={url,name}}publicStreamMap=map;publicStreamReady=true;try{localStorage.setItem('ftvr2-public-us-streams',JSON.stringify({at:Date.now(),map}))}catch(_){}}catch(err){publicStreamError='Public live stream directory could not be refreshed.'}finally{publicStreamLoading=false}}
 function resolvePublicStream(name){return publicStreamMap[normalizeStreamName(name)]?.url||'';}
 function guidePool(){return guideTV;}
-function filteredGuide(){const pool=guidePool();if(languageFilter==='All')return pool;return pool.filter(x=>x.langGroup===languageFilter||x.culture===languageFilter)}
+function filteredGuide(){return guidePool()}
 function guidePosition(x){const pool=guidePool();const i=pool.findIndex(a=>a.id===x.id);return i<0?'—':String(i+1)}
 function languageButtons(){return CANONICAL_LANGS.map(([key,label])=>`<button type="button" class="lang-chip ${languageFilter===key?'active':''}" data-lang="${esc(key)}"><span>${label}</span></button>`).join('')}
 function cultureButtons(){const cultures=[...new Set(guideTV.map(x=>x.culture).filter(Boolean))];return cultures.map(v=>`<button type="button" class="culture-chip ${languageFilter===v?'active':''}" data-lang="${esc(v)}">${esc(v)}</button>`).join('')}
@@ -324,7 +310,7 @@ function closePlayer(){const mini=document.getElementById('mini');mini.innerHTML
 function toggleFullscreen(){const main=document.getElementById('mainPlayer')||document.querySelector('#mini #mainPlayer');if(!main)return;if(document.fullscreenElement){document.exitFullscreen?.()}else{(main.querySelector('iframe')||main).requestFullscreen?.()}}
 function surf(delta){const pool=(current?.kind==='radio'||current?.kind==='radio-direct')?radioRows():guideRows();if(!pool.length)return;const i=pool.findIndex(a=>a.id===current?.id);const base=i<0?(delta>0?0:pool.length-1):i;const next=Math.min(pool.length-1,Math.max(0,base+delta));if(next!==i){const item=pool[next];if(item.type==='directory'||(item.kind==='web'&&!item.stream)){showPlayer(item)}else showPlayer(item)}}
 
-function home(){const quick=['Spanish','Urdu','Hindi','Arabic','Filipino','French'];return `<div class="section"><div><h2>Start here</h2><span class="muted">One guide. One player. No hunting.</span></div></div><div class="hero-actions"><button class="primary big" data-open-guide>📺 Open Channel Guide</button><div class="quick-languages">${quick.map(v=>`<button class="secondary" data-lang-nav="${v}">${esc(v)}</button>`).join('')}</div></div><div class="section"><h2>⭐ Quick picks</h2><span class="muted">Live sources first</span></div><div class="grid">${allTV.filter(x=>x.playable).slice(0,8).map(card).join('')}</div><div class="section"><div><h2>🔐 Paid TV Services</h2><span class="muted">Sign in directly with each provider</span></div></div><div class="grid">${streaming.map(card).join('')}</div><div class="notice"><b>Private login:</b> Free TV & Radio never collects or stores your paid-service password. Sign-in happens on the provider's own site.</div><div class="section"><h2>📻 Radio</h2><span class="muted">${stations.length} featured options</span></div><div class="grid">${stations.map(card).join('')}</div><div class="section"><h2>🌦️ Official Weather</h2><span class="muted">National Weather Service / NOAA</span></div><div class="grid"><article class="card"><div class="logo">NWS</div><h3>National Weather Service</h3><p>Official forecasts, alerts, radar and national weather information.</p><div class="actions"><a class="primary" href="https://www.weather.gov/" target="_blank" rel="noopener noreferrer">Open NWS</a><a class="secondary" href="https://radar.weather.gov/" target="_blank" rel="noopener noreferrer">Open Radar</a></div></article></div><div class="notice"><b>Global by design:</b> language and culture filters change the guide view only. They never automatically launch a provider.</div>`}
+function home(){const quick=['Spanish','Urdu','Hindi','Arabic','Filipino','French'];return `<div class="section"><div><h2>Start here</h2><span class="muted">One guide. One player. No hunting.</span></div></div><div class="hero-actions"><button class="primary big" data-open-guide>📺 Open Channel Guide</button></div><div class="section"><h2>⭐ Quick picks</h2><span class="muted">Live sources first</span></div><div class="grid">${allTV.filter(x=>x.playable).slice(0,8).map(card).join('')}</div><div class="section"><div><h2>🔐 Paid TV Services</h2><span class="muted">Sign in directly with each provider</span></div></div><div class="grid">${streaming.map(card).join('')}</div><div class="notice"><b>Private login:</b> Free TV & Radio never collects or stores your paid-service password. Sign-in happens on the provider's own site.</div><div class="section"><h2>📻 Radio</h2><span class="muted">${stations.length} featured options</span></div><div class="grid">${stations.map(card).join('')}</div><div class="section"><h2>🌦️ Official Weather</h2><span class="muted">National Weather Service / NOAA</span></div><div class="grid"><article class="card"><div class="logo">NWS</div><h3>National Weather Service</h3><p>Official forecasts, alerts, radar and national weather information.</p><div class="actions"><a class="primary" href="https://www.weather.gov/" target="_blank" rel="noopener noreferrer">Open NWS</a><a class="secondary" href="https://radar.weather.gov/" target="_blank" rel="noopener noreferrer">Open Radar</a></div></article></div>`}
 const providerGuides=[
  {id:'sling',name:'Sling Freestream',network:'Sling',count:'650+ free channels',url:'https://watch.sling.com/',note:'Free • no account required'},
  {id:'pluto',name:'Pluto TV',network:'Pluto TV',count:'Hundreds of live channels',url:'https://pluto.tv/us/watch/live-tv/',note:'Free • official live guide'},
@@ -553,16 +539,13 @@ function weather(){return '<div class="section"><div><h2>🌦️ Weather</h2><sp
 function render(){const view=tab==='home'?home():tab==='tv'?tv():tab==='youtube'?youtubeView():tab==='paid'?paidView():tab==='radio'?radio():tab==='web'?web():tab==='weather'?weather():tab==='favorites'?favView():tab==='stories'?stories():tab==='admin'?admin():invite();app.innerHTML=view;if(tab==='radio'&&!radioCatalog.length&&!radioLoading){loadRadioCatalog()}}
 function setTab(t){tab=t;document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));render()}
 nav.onclick=e=>{const b=e.target.closest('[data-tab]');if(b)setTab(b.dataset.tab)}
-document.addEventListener('click',e=>{const t=e.target;const b=t.closest('[data-tab]');if(b){e.preventDefault();setTab(b.dataset.tab);return}const og=t.closest('[data-open-guide]');if(og){e.preventDefault();languageFilter='All';setTab('tv');return}const ln=t.closest('[data-lang-nav]');if(ln){e.preventDefault();languageFilter=ln.dataset.langNav;setTab('tv');return}const lc=t.closest('[data-lang]');if(lc){e.preventDefault();languageFilter=lc.dataset.lang;render();return}},{capture:true});
+document.addEventListener('click',e=>{const t=e.target;const b=t.closest('[data-tab]');if(b){e.preventDefault();setTab(b.dataset.tab);return}const og=t.closest('[data-open-guide]');if(og){e.preventDefault();setTab('tv');return}},{capture:true});
 app.onclick=e=>{
  const po=e.target.closest('[data-paid-open]');if(po){const x=streaming.find(a=>a.id===po.dataset.paidOpen);if(x)openInSite(x.url,x.name);return}
  const ya=e.target.closest('[data-youtube-app]');if(ya){openYouTubeApp('https://www.youtube.com/');return}const yl=e.target.closest('[data-youtube-live]');if(yl){openYouTubeApp('https://www.youtube.com/live');return}const yo=e.target.closest('[data-youtube-open]');if(yo){openYouTubeApp(yo.dataset.youtubeOpen||'https://www.youtube.com/live');return}
- const openGuide=e.target.closest('[data-open-guide]');if(openGuide){languageFilter='All';setTab('tv');return}
- const langNav=e.target.closest('[data-lang-nav]');if(langNav){languageFilter=langNav.dataset.langNav;setTab('tv');return}
+ const openGuide=e.target.closest('[data-open-guide]');if(openGuide){setTab('tv');return}
  const p=e.target.closest('[data-play]');if(p){const id=p.dataset.play;const x=[...allTV,...stations,...streaming,...(providerCatalogs.youtube.channels||[]).map((a,i)=>({id:'yt-'+i,name:typeof a==='string'?a:(a.name||'YouTube live channel'),url:typeof a==='string'?'https://www.youtube.com/live':(a.url||'https://www.youtube.com/live'),kind:'web',provider:'YouTube'}))].find(a=>a.id===id)||guideRows().find(a=>a.id===id)||radioRows().find(a=>a.id===id);if(x){if(x.type==='directory'){window.open(x.url,'_blank','noopener,noreferrer')}else showPlayer(x)}return}
  const f=e.target.closest('[data-fav]');if(f){toggleFav(f.dataset.fav);return}
- const lang=e.target.closest('[data-lang]');if(lang){languageFilter=lang.dataset.lang;render();return}
- if(e.target.closest('[data-clear-lang]')){languageFilter='All';render();return}
  if(e.target.closest('[data-minimize]')){minimizePlayer();return}
  if(e.target.closest('[data-close]')){closePlayer();render();return}
  if(e.target.closest('[data-fullscreen]')){toggleFullscreen();return}
