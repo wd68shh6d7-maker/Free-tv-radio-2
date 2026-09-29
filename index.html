@@ -371,7 +371,8 @@ const radioDirectories=[
 const RADIO_API='https://de1.api.radio-browser.info/json/stations/search';
 function radioApiUrl(){
  const params=new URLSearchParams();
- if(radioRegion)params.set('countrycode',radioRegion);\n if(radioRegion==='US'&&radioState!=='All')params.set('state',US_STATES.find(x=>x[0]===radioState)?.[1]||radioState);
+ if(radioRegion)params.set('countrycode',radioRegion);
+ if(radioRegion==='US'&&radioState!=='All')params.set('state',US_STATES.find(x=>x[0]===radioState)?.[1]||radioState);
  const term=(radioQuery||'').trim();
  if(term)params.set('name',term);
  params.set('limit','160');
@@ -485,7 +486,8 @@ app.onclick=e=>{
  if(e.target.closest('[data-copy-invite]')){(navigator.clipboard?.writeText(location.href.split('#')[0])||Promise.resolve());e.target.textContent='Copied ✓';setTimeout(()=>e.target.textContent='Copy invite link',1200);return}
  if(e.target.closest('[data-clear-guide-search]')){guideQuery='';q='';render();return}
  if(e.target.closest('[data-clear-radio-search]')){radioQuery='';loadRadioCatalog(true);return}
- if(e.target.closest('[data-radio-region]')){radioRegion=e.target.closest('[data-radio-region]').dataset.radioRegion;radioState='All';radioQuery='';loadRadioCatalog(true);return}\n if(e.target.closest('[data-radio-state]')){radioState=e.target.closest('[data-radio-state]').dataset.radioState;radioQuery='';loadRadioCatalog(true);return}
+ if(e.target.closest('[data-radio-region]')){radioRegion=e.target.closest('[data-radio-region]').dataset.radioRegion;radioState='All';radioQuery='';loadRadioCatalog(true);return}
+ if(e.target.closest('[data-radio-state]')){radioState=e.target.closest('[data-radio-state]').dataset.radioState;radioQuery='';loadRadioCatalog(true);return}
  if(e.target.closest('[data-open-iheart]')){window.open('https://www.iheart.com/live/country/US/','_blank','noopener,noreferrer');return}
  if(e.target.closest('[data-next-radio]')){surf(1);return}
  if(e.target.closest('[data-iheart-search]')){const v=(document.getElementById('iheartSearch')?.value||'').trim();const u=v?'https://www.iheart.com/live/country/US/?q='+encodeURIComponent(v):'https://www.iheart.com/live/country/US/';window.open(u,'_blank','noopener,noreferrer');return}
