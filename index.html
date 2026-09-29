@@ -441,12 +441,32 @@ function youtubeView(){
  '</div></div>';
 }
 function appsView(){
- const apps=[['Roku Channel','Roku','https://www.therokuchannel.com/','📺'],['Pluto TV','Pluto','https://pluto.tv/us/watch/live-tv/','🪐'],['Tubi','Tubi','https://tubitv.com/live','▶️'],['Plex','Plex','https://watch.plex.tv/live-tv/channel','🎬'],['PBS','PBS','https://www.pbs.org/livestream/','📚'],['STIRR','STIRR','https://stirr.com/','📡'],['YouTube','YouTube','https://www.youtube.com/live','▶️'],['Sling Freestream','Sling','https://watch.sling.com/','🟠']];
- return '<div class="section"><div><h2>📱 Streaming Apps</h2><span class="muted">Your entertainment shelf • each service opens in its own browser tab</span></div><span class="badge">8 SERVICES</span></div>'+
- '<div class="notice"><b>Reliable app handoff.</b> Provider sites control their own players and many block embedded frames. We do not put a fake blank player inside this hub. Opening an app uses a real browser tab, while this Free TV & Radio hub stays open so you can come back and choose another service.</div>'+
- '<div class="grid">'+apps.map(function(x){return '<article class="card"><div class="logo">'+x[3]+'</div><h3>'+esc(x[0])+'</h3><p>'+esc(x[1])+' • Free/live content available from the service.</p><div class="actions"><button class="primary" data-open-app="'+esc(x[2])+'" data-open-app-title="'+esc(x[0])+'">↗ Open '+esc(x[0])+'</button><button class="secondary" data-open-guide>Guide</button></div></article>';}).join('')+'</div>'+
- '<div class="section"><h2>📺 Live sources in our guide</h2><span class="muted">The guide is the main TV experience</span></div><div class="grid">'+providerGuides.map(function(p){return '<article class="card"><div class="logo">TV</div><h3>'+esc(p.name)+'</h3><p>'+esc(p.note||'Official provider')+'</p><div class="actions"><button class="primary" data-open-guide>Open Guide</button><button class="secondary" data-open-in-site="'+esc(p.url)+'" data-open-in-site-title="'+esc(p.name)+'">Provider</button></div></article>';}).join('')+'</div>'+
- '<div class="notice"><b>Switching is safe:</b> use the browser tab switcher to return here, then pick another app. The hub itself never gets replaced by the provider website.</div>';
+ const apps=[
+  ['The Roku Channel','Roku','https://www.therokuchannel.com/','📺','TV'],
+  ['Pluto TV','Pluto','https://pluto.tv/us/watch/live-tv/','🪐','TV'],
+  ['Tubi','Tubi','https://tubitv.com/','▶️','TV'],
+  ['Sling Freestream','Sling','https://watch.sling.com/','🟠','TV'],
+  ['Plex','Plex','https://watch.plex.tv/','🎬','TV'],
+  ['PBS','PBS','https://www.pbs.org/','📚','TV'],
+  ['STIRR','STIRR','https://stirr.com/','📡','TV'],
+  ['YouTube','YouTube','https://www.youtube.com/','▶️','TV'],
+  ['Real Life Network','Real Life Network','https://reallifenetwork.com/','❤️','TV'],
+  ['Fandango at Home','Fandango','https://athome.fandango.com/','🍿','TV'],
+  ['iHeartRadio','iHeart','https://www.iheart.com/live/','❤️','RADIO'],
+  ['TuneIn','TuneIn','https://tunein.com/radio/home/','🎙️','RADIO'],
+  ['KXGR GraceFM','GraceFM','https://kxgr.com/','✝️','RADIO']
+ ];
+ const saved=JSON.parse(localStorage.getItem('ftvr2-my-apps')||'[]');
+ const addApp=(name)=>{const a=apps.find(x=>x[0]===name);if(a&&!saved.includes(name)){saved.push(name);localStorage.setItem('ftvr2-my-apps',JSON.stringify(saved));render()}};
+ const shelf=saved.map(n=>apps.find(x=>x[0]===n)).filter(Boolean);
+ const cardHtml=(x)=>'<article class="card"><div class="logo">'+x[3]+'</div><h3>'+esc(x[0])+'</h3><p>'+esc(x[1])+' • '+(x[4]==='RADIO'?'Live radio and audio':'Live TV and on-demand')+'</p><div class="actions"><button class="primary" data-open-app="'+esc(x[2])+'" data-open-app-title="'+esc(x[0])+'">↗ Open</button><button class="secondary" data-add-app="'+esc(x[0])+'">＋ My Apps</button></div></article>';
+ const tvApps=apps.filter(x=>x[4]==='TV'), radioApps=apps.filter(x=>x[4]==='RADIO');
+ return '<div class="section"><div><h2>📱 Apps</h2><span class="muted">Your entertainment shelf • real provider apps open in a real browser tab</span></div><span class="badge">'+apps.length+' APPS</span></div>'+
+ '<div class="notice"><b>One front door.</b> Free TV & Radio organizes the services; each provider keeps control of its own player, account, ads and regional availability. Add the apps you use to <b>My Apps</b> for one-tap access.</div>'+
+ (shelf.length?'<div class="section"><h2>⭐ My Apps</h2><span class="muted">Saved on this device</span></div><div class="grid">'+shelf.map(cardHtml).join('')+'</div>':'')+
+ '<div class="section"><h2>📺 TV Apps</h2><span class="muted">Live TV + free on-demand where offered</span></div><div class="grid">'+tvApps.map(cardHtml).join('')+'</div>'+
+ '<div class="section"><h2>📻 Radio Apps</h2><span class="muted">Live radio, music, news and podcasts</span></div><div class="grid">'+radioApps.map(cardHtml).join('')+'</div>'+
+ '<div class="notice"><b>International-friendly.</b> We show the service and let the provider determine what is available in the listener or viewer’s country. No fake playback, no shared third-party passwords.</div>';
 }
 function paidView(){
  const rows=streaming.map((x,i)=>'<div class="channel-row"><div class="channel-number">'+(i+1)+'</div><div><div class="channel-name">'+esc(x.name)+'</div><div class="meta">'+esc(x.network||'Paid TV')+'</div></div><div class="meta">Provider login</div><div class="row-actions"><button class="primary" data-paid-open="'+esc(x.id)+'">Sign in / Watch</button></div></div>').join('');
@@ -646,7 +666,7 @@ document.getElementById('app').onclick=e=>{
  const playerJump=e.target.closest('[data-player-jump]');if(playerJump){const v=jump.value||'';if(v.startsWith('tv:')){const item=guideRows().find(a=>a.id===v.slice(3));if(item)showPlayer(item)}else if(v.startsWith('radio:')){const item=stations.find(a=>a.id===v.slice(6));if(item)showPlayer(item)}else if(v.startsWith('provider:')){setTab('tv');app.innerHTML=providerView(v.slice(9));}return}
  const providerOpen=e.target.closest('[data-open-provider]');if(providerOpen){const sel=document.getElementById('providerSelect');const p=providerGuides.find(x=>x.id===(sel?.value||'sling'))||providerGuides[0];openWebSafely(p.url,p.name);return}
  if(e.target.closest('[data-open-external]')){const b=e.target.closest('[data-open-external]');if(b.dataset.openExternal)window.open(b.dataset.openExternal,'_blank','noopener,noreferrer');return}
- if(e.target.closest('[data-open-app]')){const b=e.target.closest('[data-open-app]');openAppInHub(b.dataset.openApp,b.dataset.openAppTitle);return}
+ if(e.target.closest('[data-open-app]')){const b=e.target.closest('[data-open-app]');openAppInHub(b.dataset.openApp,b.dataset.openAppTitle);return} if(e.target.closest('[data-add-app]')){const n=e.target.closest('[data-add-app]').dataset.addApp;const a=JSON.parse(localStorage.getItem('ftvr2-my-apps')||'[]');if(n&&!a.includes(n)){a.push(n);localStorage.setItem('ftvr2-my-apps',JSON.stringify(a));render()}return}
  if(e.target.closest('[data-app-close]')){closeAppInHub();return}
  if(e.target.closest('[data-open-in-site]')){const b=e.target.closest('[data-open-in-site]');openWebSafely(b.dataset.openInSite,b.dataset.openInSiteTitle);return}
  if(e.target.closest('[data-web-back]')){webUrl='';webTitle='';setTab('tv');return}
