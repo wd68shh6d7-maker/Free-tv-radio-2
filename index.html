@@ -258,35 +258,23 @@ async function loadFavorites(){if(!authUser){favorites=JSON.parse(localStorage.g
 async function toggleFav(id){const was=isFav(id);favorites=was?favorites.filter(x=>x!==id):[...favorites,id];localStorage.setItem('ftvr2-favorites',JSON.stringify(favorites));if(authUser){const item=[...allTV,...stations].find(x=>x.id===id);if(item){if(was)await supabaseClient.from('favorites').delete().eq('item_key',id);else await supabaseClient.from('favorites').upsert({item_type:stations.some(x=>x.id===id)?'radio':'tv',item_key:id},{onConflict:'user_id,item_type,item_key'});}}render()}
 async function loadPosts(){if(!supabaseClient)return;const {data,error}=await supabaseClient.from('posts').select('id,title,body,image_url,created_at').eq('published',true).order('created_at',{ascending:false}).limit(30);if(!error)posts=data||[]}
 async function initAuth(){if(!supabaseClient){await loadFavorites();render();return}const {data}=await supabaseClient.auth.getUser();authUser=data?.user||null;await loadFavorites();await loadPosts();render();supabaseClient.auth.onAuthStateChange(async(_event,session)=>{authUser=session?.user||null;await loadFavorites();await loadPosts();render();})}
-async function authAction(){const email=(document.querySelector('#adminEmail')?.value||'').trim().toLowerCase();const password=document.querySelector('#adminPassword')?.value||'';const confirm=document.querySelector('#adminConfirm')?.value||'';const msg=document.getElementById('authMsg');if(!supabaseClient){msg.textContent='Administrator authentication is not available right now.';return}if(!email||!password){msg.textContent='Enter your email and website password.';return}if(!ADMIN_EMAILS.includes(email)){msg.textContent='That email is not authorized for administrator access.';return}if(confirm){if(password!==confirm){msg.textContent='The two website passwords do not match.';return}if(password.length<8){msg.textContent='Your website password must be at least 8 characters.';return}msg.textContent='Creating your separate website account…';const {error}=await supabaseClient.auth.signUp({email,password,options:{emailRedirectTo:'https://free-tv-radio-website-2-universal-g.vercel.app/'}});msg.textContent=error?error.message:'Account created. Check this email for the verification message, then return here and sign in. This website password is separate from your Gmail password.'}else{msg.textContent='Signing in…';const {error}=await supabaseClient.auth.signInWithPassword({email,password});msg.textContent=error?error.message:'Signed in.'}}
+function authRedirectUrl(){const base=(location.origin||'https://free-tv-radio-website-2-universal-g.vercel.app').replace(/\\/$/,'');return base+'/'}
+async function authAction(){const email=(document.querySelector('#adminEmail')?.value||'').trim().toLowerCase();const password=document.querySelector('#adminPassword')?.value||'';const confirm=document.querySelector('#adminConfirm')?.value||'';const msg=document.getElementById('authMsg');if(!supabaseClient){msg.textContent='Administrator authentication is not available right now.';return}if(!email||!password){msg.textContent='Enter your email and website password.';return}if(!ADMIN_EMAILS.includes(email)){msg.textContent='That email is not authorized for administrator access.';return}if(confirm){if(password!==confirm){msg.textContent='The two website passwords do not match.';return}if(password.length<8){msg.textContent='Your website password must be at least 8 characters.';return}msg.textContent='Creating your separate website account…';const {error}=await supabaseClient.auth.signUp({email,password,options:{emailRedirectTo:authRedirectUrl()}});msg.textContent=error?error.message:'Account created. Check this email for the verification message, then return here and sign in. This website password is separate from your Gmail password.'}else{msg.textContent='Signing in…';const {error}=await supabaseClient.auth.signInWithPassword({email,password});msg.textContent=error?error.message:'Signed in.'}}
 async function signOutAdmin(){await supabaseClient.auth.signOut()}
 function openExternal(item){window.open(item.url,'_blank','noopener,noreferrer')}
 function openYouTubeApp(webUrl='https://www.youtube.com/'){const u=String(webUrl||'https://www.youtube.com/');const path=u.replace(/^https?:\/\/www\.youtube\.com/i,'')||'/';const appUrl='youtube://'+path;try{window.location.href=appUrl}catch(_){ }setTimeout(()=>{if(document.visibilityState==='visible')window.location.href=u},900)}
 
-let publicStreamMap={};let publicStreamLoading=false;let publicStreamReady=false;let publicStreamError='';
-const PUBLIC_US_M3U='https://iptv-org.github.io/iptv/streams/us.m3u';
+let publicStreamMap={};let publicStreamLoading=false;let publicStreamReady=true;let publicStreamError='';
 function normalizeStreamName(s){return String(s||'').toLowerCase().replace(/\[[^\]]+\]/g,' ').replace(/\([^)]*(?:\d{3,4}p|sd|hd|fhd|uhd|\d{3,4}i)[^)]*\)/gi,' ').replace(/\b(?:eng|spa|fra|deu|ita|por|ara|fas|urd|hin|jpn|kor|zho|rus|tur|pol|ukr|tha|vie)\b/gi,' ').replace(/[^a-z0-9]+/g,' ').trim();}
-async function loadPublicUSStreams(){
- if(publicStreamLoading||publicStreamReady)return;
- publicStreamLoading=true;publicStreamError='';
- const cacheKey='ftvr2-public-streams-v4';
- try{
-  const cached=JSON.parse(localStorage.getItem(cacheKey)||'null');
-  if(cached&&cached.at&&Date.now()-cached.at<30*60*1000&&cached.map){publicStreamMap=cached.map;publicStreamReady=true;publicStreamLoading=false;return}
- }catch(_){}
- try{
-  const res=await fetch('/api/public-streams',{cache:'no-store',headers:{Accept:'application/json'}});
-  if(!res.ok)throw new Error('public streams '+res.status);
-  const data=await res.json();
-  publicStreamMap=(data&&data.map)||{};
-  publicStreamReady=true;
-  publicStreamError='';
-  try{localStorage.setItem(cacheKey,JSON.stringify({at:Date.now(),map:publicStreamMap}))}catch(_){}
- }catch(err){
-  publicStreamError='Live source directory could not be refreshed.';
- }finally{publicStreamLoading=false;if(tab==='tv')render()}
-}
-function resolvePublicStreams(name){const value=publicStreamMap[normalizeStreamName(name)];if(Array.isArray(value))return value.map(v=>v.url).filter(Boolean);if(value?.url)return [value.url];return []}
+const VERIFIED_STREAMS={
+ 'abc news live':['https://aegis-cloudfront-1.tubi.video/d6cbb0de-68e4-4f3b-82f9-bf5d526e0bde/index.m3u8'],
+ 'cbs news 24 7':['https://cbsn-us.cbsnstream.cbsnews.com/out/v1/55a8648e8f134e82a470f83d562deeca/master.m3u8'],
+ 'nbc news now':['https://d1bl6tskrpq9ze.cloudfront.net/hls/master.m3u8?ads.xumo_channelId=99984003'],
+ 'fox weather':['https://247wlive.foxweather.com/stream/index.m3u8'],
+ 'livenow from fox':['https://fox-foxnewsnow-vizio.amagi.tv/playlist.m3u8']
+};
+function loadPublicUSStreams(){publicStreamReady=true;publicStreamLoading=false;publicStreamError='';return Promise.resolve(VERIFIED_STREAMS)}
+function resolvePublicStreams(name){return VERIFIED_STREAMS[normalizeStreamName(name)]||[]}
 function resolvePublicStream(name){return resolvePublicStreams(name)[0]||'';}
 function guidePool(){return guideTV;}
 function filteredGuide(){return guidePool()}
@@ -305,8 +293,9 @@ function mountPlayer(x){
     const video=document.getElementById('liveVideo');let index=0,hls=null,settled=false,timer=null;
     const cleanup=()=>{if(timer)clearTimeout(timer);if(hls)try{hls.destroy()}catch(_){}};
     const failover=()=>{if(settled)return;cleanup();index++;if(index<candidates.length){status('Trying alternate live source '+(index+1)+' of '+candidates.length+'…');setTimeout(startCandidate,120)}else{settled=true;fail('No working live source was found for this channel.')}};
-    const connected=()=>{if(settled)return;cleanup();settled=true;status('LIVE • Source connected')};
-    const startCandidate=()=>{if(!video||!candidates[index])return failover();if(hls)try{hls.destroy()}catch(_){}hls=null;video.removeAttribute('src');video.load();video.addEventListener('playing',connected,{once:true});video.addEventListener('error',failover,{once:true});timer=setTimeout(failover,6500);const url=candidates[index];if(video.canPlayType('application/vnd.apple.mpegurl')){video.src=url;video.load();video.play?.().catch(()=>{})}else if(window.Hls&&window.Hls.isSupported()){hls=new Hls({enableWorker:true,maxBufferLength:12,backBufferLength:30,liveSyncDurationCount:3,liveMaxLatencyDurationCount:6,maxLiveSyncPlaybackRate:1.15});hls.loadSource(url);hls.attachMedia(video);hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play?.().catch(()=>{}));hls.on(Hls.Events.ERROR,(_,data)=>{if(data?.fatal){if(data.type==='networkError'){try{hls.startLoad()}catch(_){}}else failover()}})}else fail('This browser does not support this live format.')};
+    const connected=()=>{if(settled)return;cleanup();settled=true;status('LIVE • Source ready — use the player controls for sound')};
+    const markReady=()=>{if(settled)return;cleanup();settled=true;status('LIVE • Source ready — press Play if needed')};
+    const startCandidate=()=>{if(!video||!candidates[index])return failover();if(hls)try{hls.destroy()}catch(_){}hls=null;video.removeAttribute('src');video.load();video.muted=true;video.addEventListener('playing',connected,{once:true});video.addEventListener('loadedmetadata',markReady,{once:true});video.addEventListener('canplay',markReady,{once:true});video.addEventListener('error',failover,{once:true});timer=setTimeout(failover,12000);const url=candidates[index];if(video.canPlayType('application/vnd.apple.mpegurl')){video.src=url;video.load();video.play?.().catch(()=>{})}else if(window.Hls&&window.Hls.isSupported()){hls=new Hls({enableWorker:true,maxBufferLength:12,backBufferLength:30,liveSyncDurationCount:3,liveMaxLatencyDurationCount:6,maxLiveSyncPlaybackRate:1.15});hls.loadSource(url);hls.attachMedia(video);hls.on(Hls.Events.MANIFEST_PARSED,()=>{status('LIVE • Stream loaded — press Play if needed');video.play?.().catch(()=>{})});hls.on(Hls.Events.ERROR,(_,data)=>{if(data?.fatal){if(data.type==='networkError'){try{hls.startLoad()}catch(_){}}else failover()}})}else fail('This browser does not support this live format.')};
     startCandidate();
   }else if(x.kind==='radio-direct'){
     stage.innerHTML='<div class="radio-player"><div class="radio-now"><div class="radio-live-dot">● LIVE RADIO</div><h3>'+esc(x.name)+'</h3><p>'+esc([x.state||x.country||x.network,x.category].filter(Boolean).join(' • '))+'</p><div class="radio-audio-wrap"><audio id="radioAudio" controls autoplay playsinline preload="none"></audio></div><div class="radio-player-actions"><button class="secondary" data-next-radio>Next station →</button></div><div id="radioStreamStatus" class="radio-stream-status">Connecting…</div></div></div>';
@@ -475,7 +464,7 @@ function paidView(){
  '<div class="guide-shell easy-guide-shell"><div class="guide-head"><span>#</span><span>Service</span><span>Access</span><span></span></div><div class="guide-scroll">'+rows+'</div></div>';
 }
 function tv(){
- if(!publicStreamReady&&!publicStreamLoading)loadPublicUSStreams();
+ // Core live TV is self-contained: no dependency on the failing public-stream serverless endpoint.
  if(!providerCatalogLoaded.sling&&!providerCatalogLoading.sling)loadProviderCatalog('sling');
  if(!providerCatalogLoaded.pluto&&!providerCatalogLoading.pluto)loadProviderCatalog('pluto');
  const visible=guideRows();
