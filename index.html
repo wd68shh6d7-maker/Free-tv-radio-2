@@ -220,6 +220,7 @@ const stations=[
 const allTV=[...national];
 let guideTV=[...national,...international,...cityGuides].map((x,i)=>({...x,state:x.state||'NATIONWIDE',guideNo:i+1}));
 let tab='home', q='', guideQuery='', radioQuery='', webQuery='', webStatus='', webUrl='', webTitle='', appUrl='', appTitle='', network='All', city='All', cat='All', guideSource='All', guideMode='live';
+let famelackGuideLoading=false, famelackGuideError='';
 let providerCatalogLoading={}, providerCatalogLoaded={};
 let guideReady=false;
 let radioRegion='US';
@@ -245,6 +246,52 @@ if(!international.some(x=>x.id==='france24-espanol')) international.push({id:'fr
 // Keep the complete editorial lineup in the guide. In-site playback is limited to verified streams;
 // provider-controlled channels such as PBS remain visible and use their official live route.
 
+const FAMELACK_US_GUIDE_URL='https://raw.githubusercontent.com/OwnerPlugins/famelack-data/main/tv/raw/countries/us.json';
+
+function normalizeFamelackChannel(x,i){
+ const streams=[...(x?.sources?.streams||[]),...(x?.stream_urls||[])].filter(u=>/^https?:\\/\\//i.test(String(u||'')));
+ const youtube=[...(x?.sources?.youtube||[]),...(x?.youtube_urls||[])].filter(u=>/^https?:\\/\\//i.test(String(u||'')));
+ const source=streams[0]||youtube[0]||'';
+ const kind=streams.length?'stream':youtube.length?'youtube':'web';
+ return {
+  id:'famelack-'+String(x.nanoid||x.id||i),
+  name:x.name||'Unnamed channel',
+  network:x.network||'Free TV',
+  category:(x.categories||x.category||['Live TV']).join ? (x.categories||x.category||['Live TV']).join(' • ') : String(x.categories||x.category||'Live TV'),
+  scope:'United States • Famelack lineup',
+  country:x.country||'us',
+  language:Array.isArray(x.languages)?x.languages.join(', '):(x.languages||''),
+  stream:streams[0]||'',
+  streamCandidates:streams,
+  url:source,
+  kind,
+  playable:!!source,
+  guideEligible:true,
+  sourceLabel:'Famelack public live source',
+  isGeoBlocked:x.isGeoBlocked===true
+ };
+}
+
+async function loadFamelackUSGuide(){
+ famelackGuideLoading=true;famelackGuideError='';
+ try{
+  const res=await fetch(FAMELACK_US_GUIDE_URL,{cache:'no-store'});
+  if(!res.ok)throw new Error('Famelack dataset returned '+res.status);
+  const data=await res.json();
+  const rows=(Array.isArray(data)?data:[]).map(normalizeFamelackChannel);
+  if(!rows.length)throw new Error('Famelack dataset was empty');
+  guideTV=rows.map((x,i)=>({...x,guideNo:i+1,state:'NATIONWIDE'}));
+  // Keep the existing small, verified editorial list as a fallback only; the TV tab now follows
+  // the public Famelack U.S. lineup and order.
+  if(tab==='tv')render();
+ }catch(err){
+  famelackGuideError='The Famelack U.S. lineup could not be refreshed. Showing the built-in fallback lineup.';
+  console.error('Famelack guide load failed:',err);
+ }finally{
+  famelackGuideLoading=false;
+  if(tab==='tv')render();
+ }
+}
 
 function enrich(x){return {...x,playable:(x.kind==='youtube'||x.kind==='embed'||x.kind==='radio'),guideEligible:(x.guideEligible===true)||(x.kind==='youtube'||x.kind==='embed'||x.kind==='radio')};}
 allTV.splice(0,allTV.length,...allTV.map(enrich));
@@ -465,7 +512,8 @@ function paidView(){
  '<div class="guide-shell easy-guide-shell"><div class="guide-head"><span>#</span><span>Service</span><span>Access</span><span></span></div><div class="guide-scroll">'+rows+'</div></div>';
 }
 function tv(){
- // Core live TV is self-contained: no dependency on the failing public-stream serverless endpoint.
+ // The TV tab follows Famelack's public U.S. lineup. Provider catalogs remain available below the dial.
+ if(!famelackGuideLoading&&!guideTV.some(x=>String(x.id).startsWith('famelack-'))&&!famelackGuideError)loadFamelackUSGuide();
  if(!providerCatalogLoaded.sling&&!providerCatalogLoading.sling)loadProviderCatalog('sling');
  if(!providerCatalogLoaded.pluto&&!providerCatalogLoading.pluto)loadProviderCatalog('pluto');
  const visible=guideRows();
@@ -482,11 +530,11 @@ function tv(){
   '</div>';
  }).join('');
  const status=guideMode==='live'?'Live channels':'Free on-demand libraries';
- return '<div class="section guide-title-row famelack-title"><div><h2>📺 Free TV</h2><span class="muted">'+esc(String(visible.length))+' unique '+esc(status.toLowerCase())+' • scroll and choose a channel</span></div></div>'+
+ return '<div class="section guide-title-row famelack-title"><div><h2>📺 Live TV</h2><span class="muted">'+esc(famelackGuideLoading?'Loading the Famelack U.S. lineup…':String(visible.length)+' channels from the Famelack U.S. lineup')+' • scroll and choose a channel</span></div></div>'+
  '<div class="famelack-search"><input id="guideSearch" class="search" value="'+esc(guideQuery)+'" placeholder="Search channels…" aria-label="Search channels"><button class="secondary" data-clear-guide-search>Clear</button></div>'+
  '<div class="provider-modebar famelack-modebar"><button class="'+(guideMode==='live'?'active':'')+'" data-guide-mode="live">LIVE TV</button><button class="'+(guideMode==='onDemand'?'active':'')+'" data-guide-mode="onDemand">ON DEMAND</button></div>'+ (guideMode==='onDemand'?'<div class="vod-note">Choose a library, then use the dropdown on each row to move between platforms without leaving this guide.</div>':'')+
  '<div class="guide-shell famelack-shell"><div class="guide-head"><span>#</span><span>Channel</span><span>Source</span><span>★</span></div><div class="guide-scroll famelack-scroll" id="guideScroll">'+rows+'</div></div>'+
- '<div class="guide-foot"><span>Scroll the list</span><span>Tap a channel to watch</span><span>One channel appears once</span></div>';
+ '<div class="guide-foot"><span>Scroll the list</span><span>Tap a channel to watch</span><span>Channel + / − surfs one at a time</span></div>'+ (famelackGuideError?'<div class="notice">'+esc(famelackGuideError)+'</div>':'');
 }
 const radioDirectories=[
  {id:'iheartradio',name:'iHeartRadio',count:'1,000+ U.S. stations',url:'https://www.iheart.com/live/country/US/'},
