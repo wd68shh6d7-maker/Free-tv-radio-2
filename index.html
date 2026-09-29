@@ -480,7 +480,7 @@ nav.onclick=e=>{const b=e.target.closest('[data-tab]');if(b)setTab(b.dataset.tab
 app.onclick=e=>{
  const openGuide=e.target.closest('[data-open-guide]');if(openGuide){languageFilter='All';setTab('tv');return}
  const langNav=e.target.closest('[data-lang-nav]');if(langNav){languageFilter=langNav.dataset.langNav;setTab('tv');return}
- const p=e.target.closest('[data-play]');if(p){const id=p.dataset.play;const x=[...allTV,...stations,...streaming].find(a=>a.id===id)||guideRows().find(a=>a.id===id)||radioRows().find(a=>a.id===id);if(x){if(x.type==='directory'||(x.kind==='web'&&x.url)){window.open(x.url,'_blank','noopener,noreferrer')}else showPlayer(x)}return}
+ const p=e.target.closest('[data-play]');if(p){const id=p.dataset.play;const x=[...allTV,...stations,...streaming].find(a=>a.id===id)||guideRows().find(a=>a.id===id)||radioRows().find(a=>a.id===id);if(x){if(x.type==='directory'){window.open(x.url,'_blank','noopener,noreferrer')}else showPlayer(x)}return}
  const f=e.target.closest('[data-fav]');if(f){toggleFav(f.dataset.fav);return}
  const lang=e.target.closest('[data-lang]');if(lang){languageFilter=lang.dataset.lang;render();return}
  if(e.target.closest('[data-clear-lang]')){languageFilter='All';render();return}
