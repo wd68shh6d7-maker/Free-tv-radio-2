@@ -91,7 +91,7 @@ body{font-size:1rem}
 const SUPABASE_URL="https://doxzuuzzcxaozkyojybu.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY="sb_publishable_U2DbudIt9o0D8UO1R0hWuw_yTsJBPFq";
 const supabaseClient=window.supabase?window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
-const ADMIN_EMAILS=['rneal1776j@gmail.com'];
+const ADMIN_EMAILS=['rneal1776j@gmail.com','christinanealeditor@gmail.com'];
 const nav=document.getElementById('nav');
 const app=document.getElementById('app');
 let authUser=null;
@@ -809,7 +809,7 @@ document.getElementById('app').onclick=e=>{
  if(e.target.closest('[data-web-quick]')){const u=e.target.closest('[data-web-quick]').dataset.webQuick;webQuery=u;openWebSafely(u);return}
  if(e.target.closest('[data-web-open]')){openWebSafely((document.getElementById('webQuery')?.value||'').trim());return}
  if(e.target.closest('[data-auth-action]')){authAction();return}
- if(e.target.closest('[data-create-account]')){const x=document.getElementById('adminConfirm');if(x){x.value=document.getElementById('adminPassword')?.value||'';x.focus()}return}
+ if(e.target.closest('[data-create-account]')){authAction();return}
  if(e.target.closest('[data-resend-verification]')){resendVerification();return}
  if(e.target.closest('[data-signout]')){signOutAdmin();return}
  if(e.target.closest('[data-admin-browser]')){if(!isAdmin()){alert('Administrator sign-in is required.');return}let u=document.getElementById('adminWeb').value.trim();if(!u)return;if(!/^https?:\/\//i.test(u)){const query=u;if(webFilter&&isXRatedRequest(query)){alert('Web safety filter blocked this X-rated search.');return}u='https://www.google.com/search?safe=active&q='+encodeURIComponent(query)}window.open(u,'_blank','noopener,noreferrer');return}
