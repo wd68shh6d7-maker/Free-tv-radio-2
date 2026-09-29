@@ -394,7 +394,7 @@ function platformGuides(){return '<div class="section"><div><h2>📡 Free TV Net
 function youtubeView(){
  const p=providerCatalogs[youtubeProviderId]||{channels:[]};
  return '<div class="section guide-title-row"><div><h2>▶️ YouTube</h2><span class="muted">Separate from the Free TV dial — use YouTube as YouTube.</span></div><div class="hero-actions"><select class="site-return-menu" data-youtube-site-menu aria-label="Return to Free TV & Radio"><option value="">▼ Free TV & Radio</option><option value="home">Home</option><option value="tv">📺 Free TV</option><option value="radio">📻 Radio</option><option value="favorites">⭐ Favorites</option><option value="paid">🔐 Paid TV</option></select><span class="badge">YOUTUBE APP</span></div></div>'+
- '<div class="youtube-app-card"><div class="youtube-app-icon">▶</div><h2>Open YouTube</h2><p>When the YouTube app is installed on your device, this opens YouTube there. When you return to this browser, the Free TV & Radio guide is still here — use the menu above to jump back in.</p><div class="actions"><button class="primary big" data-youtube-app>▶ Open YouTube</button><button class="secondary" data-youtube-live>Open YouTube Live</button><button class="secondary" data-youtube-return>← Back to Free TV</button></div></div>'+
+ '<div class="youtube-app-card"><div class="youtube-app-icon">▶</div><h2>Open YouTube</h2><p>When the YouTube app is installed on your device, this opens YouTube there. When you return to this browser, the Free TV & Radio guide is still here.</p><div class="actions"><button class="primary big" data-youtube-app>▶ Open YouTube</button><button class="secondary" data-youtube-live>Open YouTube Live</button></div></div>'+
  '<div class="notice"><b>No embedded YouTube player here.</b> YouTube is its own destination, just like an installed app. The Free TV channel dial stays separate. iOS controls the handoff to the YouTube app; the website cannot place its own controls over the native YouTube app.</div>'+
  '<div class="section"><div><h2>Live YouTube channels</h2><span class="muted">'+esc(String(p.channels.length))+' featured official destinations</span></div></div>'+
  '<div class="guide-shell easy-guide-shell"><div class="guide-head"><span>#</span><span>Channel</span><span>Destination</span><span></span></div><div class="guide-scroll">'+
@@ -606,7 +606,7 @@ app.onclick=e=>{
  if(e.target.closest('[data-publish-post]')){publishPost();return}
 }
 app.addEventListener('input',e=>{if(e.target.id==='guideSearch'){guideQuery=e.target.value;q=guideQuery;render();const s=document.getElementById('guideSearch');s?.focus();s?.setSelectionRange(guideQuery.length,guideQuery.length);return}if(e.target.id==='radioSearch'){radioQuery=e.target.value;render();const s=document.getElementById('radioSearch');s?.focus();s?.setSelectionRange(radioQuery.length,radioQuery.length);clearTimeout(radioSearchTimer);radioSearchTimer=setTimeout(()=>loadRadioCatalog(true),420);return}})
-app.addEventListener('change',e=>{if(e.target.id==='webFilter'){toggleWebFilter();return}if(e.target.id==='providerSelect'){app.innerHTML=providerView(e.target.value||'sling');return}if(e.target.matches('[data-youtube-site-menu]')){const v=e.target.value;if(v)setTab(v);e.target.value='';return}})
+app.addEventListener('change',e=>{if(e.target.id==='webFilter'){toggleWebFilter();return}if(e.target.id==='providerSelect'){app.innerHTML=providerView(e.target.value||'sling');return}})
 function hydrateRowSurf(select){
  const kind=select?.dataset.rowSurfKind;
  if(!kind)return;
