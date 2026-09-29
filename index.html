@@ -221,6 +221,7 @@ const stations=[
 const allTV=[...national];
 let guideTV=[...national,...international,...cityGuides].map((x,i)=>({...x,state:x.state||'NATIONWIDE',guideNo:i+1}));
 let tab='home', q='', guideQuery='', radioQuery='', webQuery='', webStatus='', webUrl='', webTitle='', appUrl='', appTitle='', network='All', city='All', cat='All', guideSource='All', guideMode='live';
+let passwordRecovery=false;
 let famelackGuideLoading=false, famelackGuideError='';
 let providerCatalogLoading={}, providerCatalogLoaded={};
 let guideReady=false;
@@ -302,6 +303,45 @@ guideTV.splice(0,guideTV.length,...[...allTV,...international,...cityGuides].map
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function isFav(id){return favorites.includes(id)}
 function isAdmin(){return !!authUser && ADMIN_EMAILS.includes((authUser.email||'').toLowerCase())}
+function passwordRecoveryView(){
+ return `<div class="section"><div><h2>🔐 Reset your website password</h2><span class="muted">Choose a new password for Free TV & Radio.</span></div></div>
+ <div class="admin"><div class="admin-grid"><div class="admin-card">
+ <div class="notice" style="margin-top:0"><b>Password reset</b><br>This is your Free TV & Radio website password. It is separate from your Gmail password.</div>
+ <div class="admin-form">
+ <label>New website password<input id="recoveryPassword" type="password" autocomplete="new-password" placeholder="Enter your new password"></label>
+ <label>Confirm new password<input id="recoveryConfirm" type="password" autocomplete="new-password" placeholder="Enter it again"></label>
+ <button type="button" data-update-password>Update Password</button>
+ <div id="recoveryMsg" class="notice">Enter the new password twice, then tap Update Password.</div>
+ </div></div></div></div>`
+}
+async function updateRecoveredPassword(){
+ const password=document.getElementById('recoveryPassword')?.value||'';
+ const confirm=document.getElementById('recoveryConfirm')?.value||'';
+ const msg=document.getElementById('recoveryMsg');
+ if(!msg)return;
+ if(password.length<8){msg.textContent='Your website password must be at least 8 characters.';return}
+ if(password!==confirm){msg.textContent='The two new passwords do not match.';return}
+ if(!supabaseClient){msg.textContent='Password reset is not available right now.';return}
+ msg.textContent='Updating your website password…';
+ const {error}=await supabaseClient.auth.updateUser({password});
+ if(error){msg.textContent=error.message;return}
+ passwordRecovery=false;
+ tab='admin';
+ await initAuth();
+ const done=document.getElementById('authMsg');
+ if(done)done.textContent='Password updated. You are signed in as administrator.';
+}
+async function checkPasswordRecovery(){
+ if(!supabaseClient)return;
+ const hash=String(location.hash||'');
+ const hashParams=new URLSearchParams(hash.replace(/^#/,''));
+ if(hashParams.get('type')==='recovery'){
+  passwordRecovery=true;
+  tab='admin';
+  render();
+ }
+}
+
 async function loadFavorites(){if(!authUser){favorites=JSON.parse(localStorage.getItem('ftvr2-favorites')||'[]');return}const {data,error}=await supabaseClient.from('favorites').select('item_key');if(!error)favorites=(data||[]).map(x=>x.item_key)}
 async function toggleFav(id){const was=isFav(id);favorites=was?favorites.filter(x=>x!==id):[...favorites,id];localStorage.setItem('ftvr2-favorites',JSON.stringify(favorites));if(authUser){const item=[...allTV,...stations].find(x=>x.id===id);if(item){if(was)await supabaseClient.from('favorites').delete().eq('item_key',id);else await supabaseClient.from('favorites').upsert({item_type:stations.some(x=>x.id===id)?'radio':'tv',item_key:id},{onConflict:'user_id,item_type,item_key'});}}render()}
 async function loadPosts(){if(!supabaseClient)return;const {data,error}=await supabaseClient.from('posts').select('id,title,body,image_url,created_at').eq('published',true).order('created_at',{ascending:false}).limit(30);if(!error)posts=data||[]}
@@ -738,7 +778,7 @@ function web(){
  return '<div class="section"><div><h2>🌐 Web Browser</h2><span class="muted">Normal websites and searches • X-rated searches blocked</span></div><div class="hero-actions"><span class="badge">SEARCH SAFETY ON</span></div></div><div class="web-shell"><div class="web-rating"><div><strong>🌐 Your web browser</strong><br><span class="muted">Search the web or enter any normal website. It opens in a separate browser tab so sites that block embedded browsers still work. Your Free TV & Radio hub remains open in this tab.</span></div><span class="pill">🛡️ SafeSearch</span></div><div class="web-toolbar"><input id="webQuery" class="search" value="'+esc(webQuery)+'" placeholder="Search the web or enter a website…" aria-label="Web search"><button class="primary" data-web-open>Open</button><button class="secondary" data-web-clear>Clear</button></div><div class="web-quick">'+safeSites.map(x=>'<button class="secondary" data-web-quick="'+esc(x[1])+'">'+esc(x[0])+'</button>').join('')+'</div>'+(webStatus?'<div class="web-status '+(webStatus.startsWith('BLOCKED')?'blocked':'allowed')+'">'+esc(webStatus)+'</div>':'')+'<div class="notice"><b>Browser rule:</b> normal website URLs are allowed. Normal searches use Google SafeSearch. Only clearly X-rated search terms are blocked.</div></div>';
 }
 function weather(){return '<div class="section"><div><h2>🌦️ Weather</h2><span class="muted">Official National Weather Service / NOAA</span></div></div><div class="grid"><article class="card"><div class="logo">NWS</div><h3>National Weather Service</h3><p>Official U.S. forecasts, active alerts, forecast maps, radar, satellite and current conditions.</p><div class="actions"><a class="primary" href="https://www.weather.gov/" target="_blank" rel="noopener noreferrer">Open NWS</a><a class="secondary" href="https://radar.weather.gov/" target="_blank" rel="noopener noreferrer">Open Radar</a></div></article></div><div class="notice">Weather information is provided by the National Weather Service. Use your city or ZIP code on NWS for the official local forecast and alerts.</div>'}
-function render(){const view=tab==='home'?home():tab==='info'?information():tab==='tv'?tv():tab==='radio'?radio():tab==='apps'?appsView():tab==='youtube'?youtubeView():tab==='paid'?paidView():tab==='web'?web():tab==='weather'?weather():tab==='favorites'?favView():tab==='stories'?stories():tab==='admin'?admin():invite();app.innerHTML=view;if(tab==='radio'&&!radioCatalog.length&&!radioLoading){loadRadioCatalog()}}
+function render(){const view=passwordRecovery?passwordRecoveryView():(tab==='home'?home():tab==='info'?information():tab==='tv'?tv():tab==='radio'?radio():tab==='apps'?appsView():tab==='youtube'?youtubeView():tab==='paid'?paidView():tab==='web'?web():tab==='weather'?weather():tab==='favorites'?favView():tab==='stories'?stories():tab==='admin'?admin():invite());app.innerHTML=view;if(tab==='radio'&&!radioCatalog.length&&!radioLoading){loadRadioCatalog()}}
 function setTab(t){
  const switchingMode=(t==='tv'||t==='radio')&&current&&((t==='tv'&&(current.kind==='radio'||current.kind==='radio-direct'))||(t==='radio'&&(current.kind!=='radio'&&current.kind!=='radio-direct')));
  if(switchingMode)closePlayer();
@@ -809,6 +849,7 @@ document.getElementById('app').onclick=e=>{
  if(e.target.closest('[data-web-quick]')){const u=e.target.closest('[data-web-quick]').dataset.webQuick;webQuery=u;openWebSafely(u);return}
  if(e.target.closest('[data-web-open]')){openWebSafely((document.getElementById('webQuery')?.value||'').trim());return}
  if(e.target.closest('[data-auth-action]')){authAction();return}
+ if(e.target.closest('[data-update-password]')){updateRecoveredPassword();return}
  if(e.target.closest('[data-create-account]')){const x=document.getElementById('adminConfirm');if(x){x.value=document.getElementById('adminPassword')?.value||'';x.focus()}return}
  if(e.target.closest('[data-resend-verification]')){resendVerification();return}
  if(e.target.closest('[data-signout]')){signOutAdmin();return}
@@ -861,6 +902,6 @@ document.addEventListener('change',e=>{
  else if(v.startsWith('provider:')){setTab('tv');app.innerHTML=providerView(v.slice(9))}
  jump.value='';
 });
-render();initAuth();
+render();initAuth();checkPasswordRecovery();
 </script>
 </body></html>
