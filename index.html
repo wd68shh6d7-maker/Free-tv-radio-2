@@ -579,9 +579,9 @@ function setTab(t){
   }
  }
 }
-nav.onclick=e=>{const b=e.target.closest('[data-tab]');if(b)setTab(b.dataset.tab)}
+document.getElementById('nav').onclick=e=>{const b=e.target.closest('[data-tab]');if(b)setTab(b.dataset.tab)}
 document.addEventListener('click',e=>{const t=e.target;const b=t.closest('[data-tab]');if(b){e.preventDefault();setTab(b.dataset.tab);return}const og=t.closest('[data-open-guide]');if(og){e.preventDefault();setTab('tv');return}},{capture:true});
-app.onclick=e=>{
+document.getElementById('app').onclick=e=>{
  const tm=e.target.closest('[data-tv-menu]');if(tm){setTab('tv');return}
  const rm=e.target.closest('[data-radio-menu]');if(rm){setTab('radio');return}
  const po=e.target.closest('[data-paid-open]');if(po){const x=streaming.find(a=>a.id===po.dataset.paidOpen);if(x)openInSite(x.url,x.name);return}
