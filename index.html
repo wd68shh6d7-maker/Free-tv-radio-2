@@ -186,7 +186,7 @@ const stations=[
 ];
 const allTV=[...national];
 let guideTV=[...national,...international,...cityGuides].map((x,i)=>({...x,state:x.state||'NATIONWIDE',guideNo:i+1}));
-let tab='home', q='', guideQuery='', radioQuery='', network='All', city='All', cat='All', languageFilter='All';
+let tab='home', q='', guideQuery='', radioQuery='', network='All', city='All', cat='All', languageFilter='All', guideSource='All', guideMode='live';
 let guideReady=false;
 
 /* Universal Guide Engine — persistent player, easy-scroll verified lineup, no accidental provider exits. */
@@ -285,17 +285,45 @@ function providerView(id){
  <div class="provider-panel"><div class="provider-badge">OFFICIAL PROVIDER</div><h3>${esc(p.name)} is provider-controlled</h3><p>We will not fake playback or force a redirect. This provider controls its own player, login, ads and regional rules.</p><div class="provider-actions"><button class="primary" data-open-provider>↗ Open ${esc(p.name)} in New Tab</button><button class="secondary" data-back-guide>← Keep Browsing Here</button></div><small class="muted">Your Free TV & Radio guide stays open in its original tab.</small></div>
  <div class="notice"><b>Next provider:</b> change the Provider menu above. No automatic launch. No dead embedded player.</div>`;
 }
+const providerCatalogs={
+ pluto:{name:'Pluto TV',live:'https://pluto.tv/us/watch/live-tv/',vod:'https://pluto.tv/us/on-demand',count:'Hundreds',channels:['CBS News 24/7','Comedy Central','CSI: Miami','COPS','Doctor Who Classic','Family Feud Classic','FBI Files','Forensic Files','Frasier','Game Show Central','Gunsmoke','I Love Lucy','NCIS','Pluto TV Action','Pluto TV Comedy','Pluto TV Drama','Pluto TV Movies','Pluto TV Romance','Star Trek','The Walking Dead','Top Gear','World Poker Tour']},
+ roku:{name:'The Roku Channel',live:'https://www.therokuchannel.com/live-tv',vod:'https://www.therokuchannel.com/',count:'500+',channels:['ABC News Live','NBC News NOW','CBS News 24/7','LiveNOW from FOX','Court TV','Dateline 24/7','ION','ION Mystery','Family Feud','The Price Is Right','Laff More','BUZZR','Law & Crime','WeatherNation','Fubo Sports Network','The NBA Channel','MLB Channel','PBS Antiques Roadshow','Nick Jr. Pluto TV','The Walking Dead Universe','Modern Marvels','BBC News','Al Jazeera English']},
+ sling:{name:'Sling Freestream',live:'https://watch.sling.com/',vod:'https://watch.sling.com/',count:'600+',channels:['ABC News Live','BBC News','CBS News 24/7','NBC News NOW','Scripps News','Newsmax2','LiveNOW from FOX','ION','ION Mystery','Dateline 24/7','Laff More','A&E Crime 360','Al Jazeera English','PBS Antiques Roadshow','BUZZR','Court TV','Family Feud','The Price Is Right','Best of Dr. Phil','ION Plus','Law & Crime Rewind','The Walking Dead Universe','Modern Marvels','Nick Jr. Pluto TV']},
+ tubi:{name:'Tubi',live:'https://tubitv.com/live',vod:'https://tubitv.com/',count:'260+',channels:['ABC News Live','NBC News NOW','LiveNOW from FOX','FOX Weather','FOX Sports on Tubi','NFL Channel','NBA Channel','MLB','Fubo Sports Network','ION','ION Mystery','ION Plus','Dateline 24/7','TV One Crime & Justice','Law&Crime','Forensic Files','Fear Factor USA','Cheaters','Duck Dynasty','Game Show Central','The Bob Ross Channel','The Carol Burnett Show','Kartoon Channel!','Nosey','The Conners','Cold Case Files','TMZ','UFC','NASCAR','Discovery Turbo TV']},
+ plex:{name:'Plex',live:'https://watch.plex.tv/live-tv/channel',vod:'https://watch.plex.tv/',count:'600+',channels:['ION Mystery','National Lampoon','CBS Sports Golazo Network','Bones','Scorpion','Love Island: UK','The Walking Dead','Million Dollar Listing Los Angeles','Deadliest Catch','The First 48','Worst Cooks in America','La Femme Nikita','Stargate SG1','Dateline NBC','Family Feud','MythBusters','Top Gear UK','Charmed','Nip/Tuck','The Terror','Power','Leverage','ALF','Z Nation','Red Dwarf','Nurse Jackie','Anger Management']},
+ youtube:{name:'YouTube Live',live:'https://www.youtube.com/live',vod:'https://www.youtube.com/',count:'Live channels',channels:['NBC News NOW','ABC News Live','CBS News','LiveNOW from FOX','Scripps News','Bloomberg Television','Al Jazeera English','France 24 English','France 24 Español','PBS NewsHour','Sky News','DW News','NHK WORLD-JAPAN','Euronews','NASA']}
+};
+const providerOrder=['pluto','roku','sling','tubi','plex','youtube'];
+function providerCatalogRows(){
+ const rows=[];
+ providerOrder.forEach(pid=>{
+  const p=providerCatalogs[pid];
+  if(guideSource!=='All'&&guideSource!==pid)return;
+  if(guideMode==='onDemand'){rows.push({id:'vod-'+pid,name:p.name+' • On Demand',network:p.name,category:'Free On Demand',scope:p.count+' • official on-demand library',url:p.vod,kind:'web',providerId:pid,provider:p.name,mode:'onDemand'});return;}
+  p.channels.forEach((name,i)=>rows.push({id:'catalog-'+pid+'-'+i,name,network:p.name,category:'Live TV',scope:p.count+' • '+p.name,url:p.live,kind:'web',providerId:pid,provider:p.name,mode:'live'}));
+ });
+ return rows;
+}
+function guideRows(){
+ const base=guideMode==='live'?filteredGuide():[];
+ const all=base.concat(providerCatalogRows());
+ const query=(guideQuery||'').trim().toLowerCase();
+ return query?all.filter(x=>[x.name,x.network,x.category,x.scope,x.provider].join(' ').toLowerCase().includes(query)):all;
+}
 function platformGuides(){return '<div class="section"><div><h2>📡 Free TV Networks</h2><span class="muted">Browse providers without leaving the guide</span></div></div><div class="guide-tools"><select id="providerSelect" aria-label="Choose TV provider"><option value="">Choose a provider…</option>'+providerGuides.map(p=>'<option value="'+p.id+'">'+esc(p.name)+'</option>').join('')+'</select><button class="primary" data-open-provider>Open Provider</button></div><div class="grid">'+providerGuides.map(p=>'<article class="card"><div class="logo">'+esc(p.network.slice(0,2).toUpperCase())+'</div><h3>'+esc(p.name)+'</h3><p>'+esc(p.count)+'<br><span class="muted">'+esc(p.note)+'</span></p><div class="actions"><button class="primary" data-provider-id="'+p.id+'">▶ Browse Guide</button></div></article>').join('')+'</div>'}
 function tv(){
- const filtered=filteredGuide();
- const query=(guideQuery||'').trim().toLowerCase();
- const visible=query?filtered.filter(x=>[x.name,x.network,x.category,x.scope,x.langGroup,x.culture].join(' ').toLowerCase().includes(query)):filtered;
- return `<div class="section guide-title-row"><div><h2>📺 Channel Guide</h2><span class="muted">${visible.length} channels • swipe/scroll to browse</span></div><span class="badge">EASY SCROLL</span></div>
- <div class="guide-tools easy-guide-tools"><input id="guideSearch" class="search" value="${esc(guideQuery)}" placeholder="Search channels… (NBC, Urdu, Pluto, etc.)" aria-label="Search channels"><button class="secondary" data-clear-guide-search>Clear</button><button class="secondary" data-clear-lang>All channels</button></div>
- <div class="provider-hub"><div class="provider-hub-head"><strong>📡 Hundreds of free channels live at the source</strong><span>tap a provider to browse its full official lineup</span></div><div class="provider-strip">${providerGuides.map(p=>`<button class="provider-chip" data-provider-id="${p.id}"><strong>${esc(p.name)}</strong><small>${esc(p.count)}</small></button>`).join('')}</div></div>
- <div class="guide-language-bar compact-language"><button type="button" class="lang-chip ${languageFilter==='All'?'active':''}" data-lang="All">All</button>${languageButtons()}</div>
- <div class="guide-shell easy-guide-shell"><div class="guide-head"><span>#</span><span>Channel</span><span>Details</span><span></span></div><div class="guide-scroll" id="guideScroll">${visible.map(x=>`<div class="channel-row ${current?.id===x.id?'selected':''}" data-channel-row="${esc(x.id)}"><div class="channel-number">${guidePosition(x)}</div><div><div class="channel-name">${esc(x.name)}</div><div class="meta">${esc(x.langGroup||'English')}${x.culture?' • '+esc(x.culture):''}</div></div><div class="meta">${esc(x.scope||'')}<br>${esc(x.category||'')}</div><div class="row-actions"><button class="primary" data-play="${esc(x.id)}">${x.playable?'▶ Play Live':'↗ Open Live'}</button><button class="star ${isFav(x.id)?'on':''}" data-fav="${esc(x.id)}">${isFav(x.id)?'★':'☆'}</button></div></div>`).join('')}</div></div>
- <div class="guide-foot"><span>↑↓ / swipe</span><span>Tap a row to play or open the official provider.</span><span>Radio stays in the same guide system.</span></div>`}
+ const visible=guideRows();
+ const catalogCount=providerOrder.reduce((n,p)=>n+providerCatalogs[p].channels.length,0);
+ const providerButtons=providerOrder.map(function(pid){const p=providerCatalogs[pid];return '<button class="provider-chip '+(guideSource===pid?'active':'')+'" data-guide-source="'+pid+'"><strong>'+esc(p.name)+'</strong><small>'+esc(p.count)+' '+(guideMode==='live'?'live':'free')+'</small></button>';}).join('');
+ const rows=visible.map(function(x,i){return '<div class="channel-row '+(current&&current.id===x.id?'selected':'')+'" data-channel-row="'+esc(x.id)+'"><div class="channel-number">'+(i+1)+'</div><div><div class="channel-name">'+esc(x.name)+'</div><div class="meta">'+esc(x.network||x.provider||'TV')+'</div></div><div class="meta">'+esc(x.provider||x.scope||'Official provider')+'<br>'+esc(x.category||'')+'</div><div class="row-actions"><button class="primary" data-play="'+esc(x.id)+'">'+(guideMode==='onDemand'?'↗ Browse':'↗ Open Live')+'</button><button class="star '+(isFav(x.id)?'on':'')+'" data-fav="'+esc(x.id)+'">'+(isFav(x.id)?'★':'☆')+'</button></div></div>';}).join('');
+ return '<div class="section guide-title-row"><div><h2>📺 Channel Guide</h2><span class="muted">'+visible.length+' channels shown • '+(filteredGuide().length+catalogCount)+' guide entries</span></div><span class="badge">EASY SCROLL</span></div>'+
+ '<div class="guide-tools easy-guide-tools"><input id="guideSearch" class="search" value="'+esc(guideQuery)+'" placeholder="Search channels, networks or providers…" aria-label="Search channels"><button class="secondary" data-clear-guide-search>Clear</button></div>'+
+ '<div class="provider-modebar"><button class="'+(guideMode==='live'?'active':'')+'" data-guide-mode="live">▶ Live TV</button><button class="'+(guideMode==='onDemand'?'active':'')+'" data-guide-mode="onDemand">▣ On Demand</button></div>'+
+ '<div class="provider-strip guide-provider-strip"><button class="provider-chip '+(guideSource==='All'?'active':'')+'" data-guide-source="All"><strong>All</strong><small>Every provider</small></button>'+providerButtons+'</div>'+
+ (guideMode==='live'?'<div class="guide-language-bar compact-language"><button type="button" class="lang-chip '+(languageFilter==='All'?'active':'')+'" data-lang="All">All</button>'+languageButtons()+'</div>':'')+
+ '<div class="guide-shell easy-guide-shell"><div class="guide-head"><span>#</span><span>Channel</span><span>Source</span><span></span></div><div class="guide-scroll" id="guideScroll">'+rows+'</div></div>'+
+ '<div class="guide-foot"><span>Swipe / scroll</span><span>One continuous channel list.</span><span>Live + On Demand use the same guide.</span></div>';
+}
 function radio(){const list=stations.filter(x=>!radioQuery||JSON.stringify(x).toLowerCase().includes(radioQuery));return `<div class="section"><h2>📻 Radio</h2><span class="muted">Featured sources + direct access to large official directories</span></div>
  <div class="notice"><b>Radio rule:</b> I removed fragile embedded radio pages. When a provider does not permit reliable embedding, the guide now takes you directly to its official live player instead of showing a dead/black box.</div>
  <div class="radio-search"><input id="iheartSearch" class="search" placeholder="Search iHeart stations or genres…" aria-label="Search iHeart stations"><button class="primary" data-iheart-search>Search iHeart</button></div>
@@ -321,7 +349,7 @@ nav.onclick=e=>{const b=e.target.closest('[data-tab]');if(b)setTab(b.dataset.tab
 app.onclick=e=>{
  const openGuide=e.target.closest('[data-open-guide]');if(openGuide){languageFilter='All';setTab('tv');return}
  const langNav=e.target.closest('[data-lang-nav]');if(langNav){languageFilter=langNav.dataset.langNav;setTab('tv');return}
- const p=e.target.closest('[data-play]');if(p){const x=[...allTV,...stations,...streaming].find(a=>a.id===p.dataset.play);if(x){if(x.kind==='web'&&x.url){window.open(x.url,'_blank','noopener,noreferrer')}else showPlayer(x)}return}
+ const p=e.target.closest('[data-play]');if(p){const id=p.dataset.play;const x=[...allTV,...stations,...streaming].find(a=>a.id===id)||guideRows().find(a=>a.id===id);if(x){if(x.kind==='web'&&x.url){window.open(x.url,'_blank','noopener,noreferrer')}else showPlayer(x)}return}
  const f=e.target.closest('[data-fav]');if(f){toggleFav(f.dataset.fav);return}
  const lang=e.target.closest('[data-lang]');if(lang){languageFilter=lang.dataset.lang;render();return}
  if(e.target.closest('[data-clear-lang]')){languageFilter='All';render();return}
@@ -330,7 +358,9 @@ app.onclick=e=>{
  if(e.target.closest('[data-fullscreen]')){toggleFullscreen();return}
  if(e.target.closest('[data-prev-channel]')){surf(-1);return}
  if(e.target.closest('[data-next-channel]')){surf(1);return}
- if(e.target.closest('[data-provider-info]')){alert('This channel is provider-controlled. It is not part of the active playable lineup unless it has a verified in-site player.');return}
+ if(e.target.closest('[data-guide-mode]')){guideMode=e.target.closest('[data-guide-mode]').dataset.guideMode;render();return}
+ if(e.target.closest('[data-guide-source]')){guideSource=e.target.closest('[data-guide-source]').dataset.guideSource;render();return}
+ if(e.target.closest('[data-provider-info]')){return}
  const back=e.target.closest('[data-back-guide]');if(back){setTab('tv');return}
  const providerCard=e.target.closest('[data-provider-id]');if(providerCard){setTab('tv');app.innerHTML=providerView(providerCard.dataset.providerId);return}
  const jump=e.target.closest('[data-player-jump]');if(jump){const v=jump.value||'';if(v.startsWith('tv:')){const item=guidePool().find(a=>a.id===v.slice(3));if(item)showPlayer(item)}else if(v.startsWith('radio:')){const item=stations.find(a=>a.id===v.slice(6));if(item)showPlayer(item)}else if(v.startsWith('provider:')){setTab('tv');app.innerHTML=providerView(v.slice(9));}return}
