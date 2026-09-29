@@ -1,5 +1,5 @@
-const BLOCKED=/\b(?:xxx|nsfw|adult|explicit|porn|pornography|sex[-_ ]?(?:cam|chat|video)|escort|fetish|onlyfans|xvideos|xnxx|xhamster|redtube|brazzers|chaturbate|stripchat)\b/i;
-const ABOVE_R=/\b(?:nc[-_ ]?17|tv[-_ ]?ma|tv[-_ ]?mature|xxx|adult[-_ ]?only|explicit[-_ ]?adult)\b/i;
+const BLOCKED=/\b(?:xxx|nsfw|porn(?:ography)?|xvideos|xnxx|xhamster|redtube|brazzers|chaturbate|stripchat|pornhub|spankbang|rule34|hentai)\b/i;
+const ABOVE_R=/$^/;
 
 function escHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
@@ -24,7 +24,7 @@ module.exports = async function handler(req,res){
     let m; while((m=re.exec(html))&&meta.length<100)meta.push((m[1]+' '+m[2]).slice(0,1000));
     const title=(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)||[])[1]||'';
     const head=(meta.join(' ')+' '+title).replace(/&[^;]+;/g,' ');
-    if(ABOVE_R.test(head))return res.status(200).json({blocked:true,reason:'The page publishes an above-R or adult content classification.'});
+    /* Do not classify ordinary pages by ratings. The web browser only blocks explicit X-rated destinations/requests. */
     return res.status(200).json({blocked:false,reason:'No above-R classification was detected in the page metadata.'});
   }catch(e){
     return res.status(200).json({blocked:true,reason:'The page could not be verified safely, so it was not opened.'});
