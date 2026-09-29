@@ -432,7 +432,7 @@ function tv(){
    '<div class="channel-number">'+(i+1)+'</div>'+
    '<div><div class="channel-name">'+esc(x.name)+'</div><div class="meta">'+esc(x.category||'Live TV')+'</div></div>'+
    '<div class="meta source-meta">'+esc(sourceText)+(playable?' • LIVE':'')+'</div>'+
-   '<select class="row-jump" data-row-jump="tv:'+esc(x.id)+'" aria-label="Surf from '+esc(x.name)+'"><option value="tv:'+esc(x.id)+'">▼</option>'+visible.map(v=>'<option value="tv:'+esc(v.id)+'">'+esc(v.name)+'</option>').join('')+'</select>'+
+   '<select class="row-jump" data-row-jump="tv:'+esc(x.id)+'" data-row-surf-kind="tv" data-row-surf-id="'+esc(x.id)+'" aria-label="Surf channels from '+esc(x.name)+'"><option value="tv:'+esc(x.id)+'">▼</option></select>'+
    '<button class="star '+(isFav(x.id)?'on':'')+'" data-fav="'+esc(x.id)+'" aria-label="'+(isFav(x.id)?'Remove favorite':'Add favorite')+'">'+(isFav(x.id)?'★':'☆')+'</button>'+
   '</div>';
  }).join('');
@@ -523,7 +523,7 @@ function radio(){
   const playable=!!x.stream;
   const action=playable?'▶ Listen':'↗ Browse';
   const meta=[x.state||x.country||x.network,x.category||'Radio'].filter(Boolean).join(' • ');
-  return '<div class="channel-row famelack-row radio-famelack-row" data-channel-row="'+esc(x.id)+'" data-play="'+esc(x.id)+'" role="button" tabindex="0"><div class="channel-number">'+(i+1)+'</div><div><div class="channel-name">'+esc(x.name)+'</div><div class="meta">'+esc(x.network||x.country||'Radio')+'</div></div><div class="meta source-meta">'+esc(meta)+'</div><select class="row-jump" data-row-jump="radio:'+esc(x.id)+'" aria-label="Surf from '+esc(x.name)+'"><option value="radio:'+esc(x.id)+'">▼</option>'+rows.map(v=>'<option value="radio:'+esc(v.id)+'">'+esc(v.name)+'</option>').join('')+'</select><button class="star '+(isFav(x.id)?'on':'')+'" data-fav="'+esc(x.id)+'">'+(isFav(x.id)?'★':'☆')+'</button></div>';
+  return '<div class="channel-row famelack-row radio-famelack-row" data-channel-row="'+esc(x.id)+'" data-play="'+esc(x.id)+'" role="button" tabindex="0"><div class="channel-number">'+(i+1)+'</div><div><div class="channel-name">'+esc(x.name)+'</div><div class="meta">'+esc(x.network||x.country||'Radio')+'</div></div><div class="meta source-meta">'+esc(meta)+'</div><select class="row-jump" data-row-jump="radio:'+esc(x.id)+'" data-row-surf-kind="radio" data-row-surf-id="'+esc(x.id)+'" aria-label="Surf radio stations from '+esc(x.name)+'"><option value="radio:'+esc(x.id)+'">▼</option></select><button class="star '+(isFav(x.id)?'on':'')+'" data-fav="'+esc(x.id)+'">'+(isFav(x.id)?'★':'☆')+'</button></div>';
  }).join('');
  const status=radioLoading?'Loading live stations…':radioError?radioError:(radioCatalog.length?radioCatalog.length+' stations in this view':'Preparing station list…');
  return '<div class="section guide-title-row"><div><h2>📻 Radio Guide</h2><span class="muted">'+esc(status)+' • one continuous list</span></div><span class="badge">EASY SCROLL</span></div>'+
@@ -556,7 +556,7 @@ app.onclick=e=>{
  const ya=e.target.closest('[data-youtube-app]');if(ya){openYouTubeApp('https://www.youtube.com/');return}const yl=e.target.closest('[data-youtube-live]');if(yl){openYouTubeApp('https://www.youtube.com/live');return}const yo=e.target.closest('[data-youtube-open]');if(yo){openYouTubeApp(yo.dataset.youtubeOpen||'https://www.youtube.com/live');return}
  const openGuide=e.target.closest('[data-open-guide]');if(openGuide){setTab('tv');return}
  const p=e.target.closest('[data-play]');if(p){const id=p.dataset.play;const x=[...allTV,...stations,...streaming,...(providerCatalogs.youtube.channels||[]).map((a,i)=>({id:'yt-'+i,name:typeof a==='string'?a:(a.name||'YouTube live channel'),url:typeof a==='string'?'https://www.youtube.com/live':(a.url||'https://www.youtube.com/live'),kind:'web',provider:'YouTube'}))].find(a=>a.id===id)||guideRows().find(a=>a.id===id)||radioRows().find(a=>a.id===id);if(x){if(x.type==='directory'){window.open(x.url,'_blank','noopener,noreferrer')}else showPlayer(x)}return}
- const jump=e.target.closest('[data-row-jump]');if(jump){e.stopPropagation();const v=jump.value||'';const [kind,id]=v.split(':');const list=kind==='radio'?radioRows():guideRows();const x=list.find(a=>a.id===id);if(x)showPlayer(x);return} const f=e.target.closest('[data-fav]');if(f){e.stopPropagation();toggleFav(f.dataset.fav);return} const row=e.target.closest('[data-channel-row][data-play]');if(row){const id=row.dataset.play;const x=guideRows().find(a=>a.id===id)||radioRows().find(a=>a.id===id);if(x)showPlayer(x);return}
+ const jump=e.target.closest('[data-row-jump]');if(jump){e.stopPropagation();return} const f=e.target.closest('[data-fav]');if(f){e.stopPropagation();toggleFav(f.dataset.fav);return} const row=e.target.closest('[data-channel-row][data-play]');if(row){const id=row.dataset.play;const x=guideRows().find(a=>a.id===id)||radioRows().find(a=>a.id===id);if(x)showPlayer(x);return}
  if(e.target.closest('[data-minimize]')){minimizePlayer();return}
  if(e.target.closest('[data-close]')){closePlayer();render();return}
  if(e.target.closest('[data-fullscreen]')){toggleFullscreen();return}
@@ -592,6 +592,29 @@ app.onclick=e=>{
 }
 app.addEventListener('input',e=>{if(e.target.id==='guideSearch'){guideQuery=e.target.value;q=guideQuery;render();const s=document.getElementById('guideSearch');s?.focus();s?.setSelectionRange(guideQuery.length,guideQuery.length);return}if(e.target.id==='radioSearch'){radioQuery=e.target.value;render();const s=document.getElementById('radioSearch');s?.focus();s?.setSelectionRange(radioQuery.length,radioQuery.length);clearTimeout(radioSearchTimer);radioSearchTimer=setTimeout(()=>loadRadioCatalog(true),420);return}})
 app.addEventListener('change',e=>{if(e.target.id==='webFilter'){toggleWebFilter();return}if(e.target.id==='providerSelect'){app.innerHTML=providerView(e.target.value||'sling');return}})
+function hydrateRowSurf(select){
+ const kind=select?.dataset.rowSurfKind;
+ if(!kind)return;
+ const list=kind==='radio'?radioRows():guideRows();
+ if(!list.length)return;
+ const frag=document.createDocumentFragment();
+ const current=document.createElement('option');
+ current.value=kind+':'+(select.dataset.rowSurfId||'');
+ current.textContent='▼';
+ frag.appendChild(current);
+ list.forEach(item=>{
+  const opt=document.createElement('option');
+  opt.value=kind+':'+item.id;
+  opt.textContent=item.name;
+  frag.appendChild(opt);
+ });
+ select.replaceChildren(frag);
+}
+document.addEventListener('pointerdown',e=>{
+ const select=e.target.closest?.('[data-row-jump]');
+ if(select)hydrateRowSurf(select);
+},{capture:true});
+
 // Player controls live outside #app, so handle their taps at document level.
 document.addEventListener('click',e=>{
  const target=e.target;
