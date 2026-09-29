@@ -249,8 +249,9 @@ function openYouTubeApp(webUrl='https://www.youtube.com/'){const u=String(webUrl
 let publicStreamMap={};let publicStreamLoading=false;let publicStreamReady=false;let publicStreamError='';
 const PUBLIC_US_M3U='https://iptv-org.github.io/iptv/streams/us.m3u';
 function normalizeStreamName(s){return String(s||'').toLowerCase().replace(/\[[^\]]+\]/g,' ').replace(/\([^)]*(?:\d{3,4}p|sd|hd|fhd|uhd|\d{3,4}i)[^)]*\)/gi,' ').replace(/\b(?:eng|spa|fra|deu|ita|por|ara|fas|urd|hin|jpn|kor|zho|rus|tur|pol|ukr|tha|vie)\b/gi,' ').replace(/[^a-z0-9]+/g,' ').trim();}
-async function loadPublicUSStreams(){if(publicStreamLoading||publicStreamReady)return;publicStreamLoading=true;publicStreamError='';try{const cached=JSON.parse(localStorage.getItem('ftvr2-public-us-streams')||'null');if(cached&&cached.at&&Date.now()-cached.at<30*60*1000&&cached.map){publicStreamMap=cached.map;publicStreamReady=true;publicStreamLoading=false;return}}catch(_){}try{const res=await fetch(PUBLIC_US_M3U,{cache:'no-store'});if(!res.ok)throw new Error('stream directory '+res.status);const body=await res.text();const lines=body.split(/\r?\n/);const map={};for(let i=0;i<lines.length;i++){const line=lines[i]||'';if(!line.startsWith('#EXTINF'))continue;const comma=line.indexOf(',');if(comma<0)continue;const name=line.slice(comma+1).trim();const url=(lines[i+1]||'').trim();if(!/^https:\/\//i.test(url))continue;const key=normalizeStreamName(name);if(!key||map[key])continue;if(/\b(xxx|adult|explicit|nsfw)\b/i.test(key))continue;map[key]={url,name}}publicStreamMap=map;publicStreamReady=true;try{localStorage.setItem('ftvr2-public-us-streams',JSON.stringify({at:Date.now(),map}))}catch(_){}}catch(err){publicStreamError='Public live stream directory could not be refreshed.'}finally{publicStreamLoading=false}}
-function resolvePublicStream(name){return publicStreamMap[normalizeStreamName(name)]?.url||'';}
+async function loadPublicUSStreams(){if(publicStreamLoading||publicStreamReady)return;publicStreamLoading=true;publicStreamError='';try{const cached=JSON.parse(localStorage.getItem('ftvr2-public-us-streams')||'null');if(cached&&cached.at&&Date.now()-cached.at<30*60*1000&&cached.map){publicStreamMap=cached.map;publicStreamReady=true;publicStreamLoading=false;return}}catch(_){}try{const res=await fetch(PUBLIC_US_M3U,{cache:'no-store'});if(!res.ok)throw new Error('stream directory '+res.status);const body=await res.text();const lines=body.split(/\r?\n/);const map={};for(let i=0;i<lines.length;i++){const line=lines[i]||'';if(!line.startsWith('#EXTINF'))continue;const comma=line.indexOf(',');if(comma<0)continue;const name=line.slice(comma+1).trim();const url=(lines[i+1]||'').trim();if(!/^https:\/\//i.test(url))continue;const key=normalizeStreamName(name);if(!key||/\b(xxx|adult|explicit|nsfw)\b/i.test(key))continue;if(!map[key])map[key]=[];if(!map[key].some(v=>v.url===url))map[key].push({url,name})}publicStreamMap=map;publicStreamReady=true;try{localStorage.setItem('ftvr2-public-us-streams',JSON.stringify({at:Date.now(),map}))}catch(_){}}catch(err){publicStreamError='Public live stream directory could not be refreshed.'}finally{publicStreamLoading=false}}
+function resolvePublicStreams(name){const value=publicStreamMap[normalizeStreamName(name)];if(Array.isArray(value))return value.map(v=>v.url).filter(Boolean);if(value?.url)return [value.url];return []}
+function resolvePublicStream(name){return resolvePublicStreams(name)[0]||'';}
 function guidePool(){return guideTV;}
 function filteredGuide(){return guidePool()}
 function guidePosition(x){const pool=guidePool();const i=pool.findIndex(a=>a.id===x.id);return i<0?'—':String(i+1)}
@@ -258,48 +259,32 @@ function card(x){const playable=x.playable===true;const isRadio=x.kind==='radio'
 function playerShell(x){const channels=guideRows().map(a=>`<option value="tv:${esc(a.id)}" ${a.id===x.id?'selected':''}>TV • ${esc(a.name)}</option>`).join('');const radios=stations.map(a=>`<option value="radio:${esc(a.id)}" ${a.id===x.id?'selected':''}>Radio • ${esc(a.name)}</option>`).join('');const providers=providerGuides.map(a=>`<option value="provider:${esc(a.id)}">Provider • ${esc(a.name)}</option>`).join('');return `<div class="player" id="mainPlayer"><div id="playerStage"></div><div class="player-bar"><div class="player-title"><strong>${esc(x.kind==='radio'?`RADIO • ${x.name}`:`CHANNEL ${guidePosition(x)} • ${x.name}`)}</strong><small>${esc(x.scope||'')} • ${esc(x.category||'')} <span id="playerStatus" class="muted">${(x.playable||x.kind==='radio')?'Preparing live source…':'Guide information'}</span></small></div><div class="player-actions"><select data-player-jump aria-label="Channel and station menu"><option value="">Channels / stations…</option>${channels}${radios}${providers}</select><button data-prev-channel>− Ch</button><button data-next-channel>Ch +</button><button data-minimize>↓ Minimize</button><button data-fullscreen>⛶ Full</button><button data-close>× Close</button></div></div></div>`}
 function providerPanel(x){const isWeb=x.kind==='web'&&x.url;return `<div class="provider-panel"><div class="provider-badge">OFFICIAL PROVIDER</div><h3>${esc(x.name)}</h3><p>${esc(x.scope||'This service controls its own playback.')} The provider controls its own player, login, ads and regional rules. We keep you inside Free TV & Radio while you browse it.</p><div class="provider-actions">${isWeb?`<button class="primary" type="button" data-open-in-site="${esc(x.url)}" data-open-in-site-title="${esc(x.name)}">▶ Open inside Free TV & Radio</button>`:''}<button class="secondary" type="button" data-close>← Back to Channel Guide</button></div><small class="muted">If this provider refuses embedded viewing, you remain here with the guide controls available.</small></div>`}
 function mountPlayer(x){
-  const host=document.getElementById('mainPlayer'); if(!host)return;
-  const stage=host.querySelector('#playerStage'); if(!stage)return;
+  const host=document.getElementById('mainPlayer');if(!host)return;const stage=host.querySelector('#playerStage');if(!stage)return;
   stage.innerHTML='<div class="player-loading"><div class="spinner"></div><b>Connecting…</b><span>Finding the best available source.</span></div>';
-  const status=(msg)=>{const el=document.getElementById('playerStatus');if(el)el.textContent=msg};
-  const fail=(msg='Source unavailable — use the next channel.')=>{status(msg);stage.innerHTML='<div class="player-error"><b>Couldn’t start this source.</b><span>'+esc(msg)+'</span><div class="player-error-actions"><button class="primary" data-next-channel>Next channel →</button><button class="secondary" data-close>Back to guide</button></div></div>'};
+  const status=msg=>{const el=document.getElementById('playerStatus');if(el)el.textContent=msg};
+  const fail=msg=>{status(msg||'Source unavailable — use the next channel.');stage.innerHTML='<div class="player-error"><b>Couldn’t start this source.</b><span>'+esc(msg||'Source unavailable.')+'</span><div class="player-error-actions"><button class="primary" data-next-channel>Next channel →</button><button class="secondary" data-close>Back to guide</button></div></div>'};
   if(x.kind==='stream'){
-    stage.innerHTML='<div class="live-frame"><video id="liveVideo" controls autoplay playsinline preload="auto"></video><div class="source-strip">'+esc(x.sourceLabel||'Live source')+' • Automatic failure detection enabled.</div></div>';
-    const video=document.getElementById('liveVideo');
-    let settled=false, hls=null;
-    const ok=()=>{if(settled)return;settled=true;status('LIVE • Source connected')};
-    const bad=()=>{if(settled)return;settled=true;if(hls)try{hls.destroy()}catch(e){};fail()};
-    if(video&&x.stream){
-      video.addEventListener('playing',ok,{once:true}); video.addEventListener('error',bad,{once:true});
-      const timer=setTimeout(()=>{if(!settled)bad()},9000);
-      video.addEventListener('playing',()=>clearTimeout(timer),{once:true});
-      if(video.canPlayType('application/vnd.apple.mpegurl')){video.src=x.stream;video.load();video.play?.().catch(()=>{})}
-      else if(window.Hls&&window.Hls.isSupported()){
-        hls=new Hls({enableWorker:true,maxBufferLength:12,backBufferLength:30,liveSyncDurationCount:3,liveMaxLatencyDurationCount:6,maxLiveSyncPlaybackRate:1.15});
-        hls.loadSource(x.stream);hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play?.().catch(()=>{}));
-        hls.on(Hls.Events.ERROR,(_,data)=>{if(data?.fatal){if(data.type===Hls.ErrorTypes.NETWORK_ERROR){try{hls.startLoad()}catch(e){}}else bad()}});
-      }else bad('This browser does not support this live format.');
-    }else bad();
-  }else if(x.kind==='radio-direct'&&x.stream){
+    const candidates=[...(Array.isArray(x.streamCandidates)?x.streamCandidates:[]),x.stream].filter(Boolean).filter((u,i,a)=>a.indexOf(u)===i);
+    stage.innerHTML='<div class="live-frame"><video id="liveVideo" controls autoplay playsinline preload="auto"></video><div class="source-strip">'+esc(x.sourceLabel||'Live source')+' • Automatic source failover enabled.</div></div>';
+    const video=document.getElementById('liveVideo');let index=0,hls=null,settled=false,timer=null;
+    const cleanup=()=>{if(timer)clearTimeout(timer);if(hls)try{hls.destroy()}catch(_){}};
+    const failover=()=>{if(settled)return;cleanup();index++;if(index<candidates.length){status('Trying alternate live source '+(index+1)+' of '+candidates.length+'…');setTimeout(startCandidate,120)}else{settled=true;fail('No working live source was found for this channel.')}};
+    const connected=()=>{if(settled)return;cleanup();settled=true;status('LIVE • Source connected')};
+    const startCandidate=()=>{if(!video||!candidates[index])return failover();if(hls)try{hls.destroy()}catch(_){}hls=null;video.removeAttribute('src');video.load();video.addEventListener('playing',connected,{once:true});video.addEventListener('error',failover,{once:true});timer=setTimeout(failover,6500);const url=candidates[index];if(video.canPlayType('application/vnd.apple.mpegurl')){video.src=url;video.load();video.play?.().catch(()=>{})}else if(window.Hls&&window.Hls.isSupported()){hls=new Hls({enableWorker:true,maxBufferLength:12,backBufferLength:30,liveSyncDurationCount:3,liveMaxLatencyDurationCount:6,maxLiveSyncPlaybackRate:1.15});hls.loadSource(url);hls.attachMedia(video);hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play?.().catch(()=>{}));hls.on(Hls.Events.ERROR,(_,data)=>{if(data?.fatal){if(data.type==='networkError'){try{hls.startLoad()}catch(_){}}else failover()}})}else fail('This browser does not support this live format.')};
+    startCandidate();
+  }else if(x.kind==='radio-direct'){
     stage.innerHTML='<div class="radio-player"><div class="radio-now"><div class="radio-live-dot">● LIVE RADIO</div><h3>'+esc(x.name)+'</h3><p>'+esc([x.state||x.country||x.network,x.category].filter(Boolean).join(' • '))+'</p><div class="radio-audio-wrap"><audio id="radioAudio" controls autoplay playsinline preload="none"></audio></div><div class="radio-player-actions"><button class="secondary" data-next-radio>Next station →</button></div><div id="radioStreamStatus" class="radio-stream-status">Connecting…</div></div></div>';
-    const audio=document.getElementById('radioAudio'); let settled=false;
-    const ok=()=>{if(settled)return;settled=true;status('LIVE • Station connected');const st=document.getElementById('radioStreamStatus');if(st)st.textContent='Live • connected'};
-    const bad=()=>{if(settled)return;settled=true;audio?.pause();status('Station unavailable — use Next station.');const st=document.getElementById('radioStreamStatus');if(st)st.innerHTML='<b>Not available right now.</b> Move to the next station — no waiting.'};
-    if(audio){audio.src=x.stream;audio.addEventListener('playing',ok,{once:true});audio.addEventListener('error',bad,{once:true});setTimeout(()=>{if(!settled&&audio.readyState===0)bad()},8500);audio.play?.().catch(()=>{})}else bad();
-  }else if(x.playable&&x.kind==='embed'){
-    stage.innerHTML='<div class="live-frame"><iframe title="'+esc(x.name)+' live" src="'+esc(x.url)+'" loading="eager" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; picture-in-picture; geolocation; encrypted-media" allowfullscreen></iframe><div class="source-strip">'+esc(x.provider||'Official provider')+' • Provider playback remains inside the guide.</div></div>';
-    status('Provider player loading…');
-    setTimeout(()=>status('If playback does not start, use the next channel.'),5000);
-  }else if(x.kind==='web'&&x.url){
-    stage.innerHTML='<div class="live-frame"><iframe title="'+esc(x.name)+'" src="'+esc(x.url)+'" loading="eager" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen></iframe><div class="source-strip">'+esc(x.provider||'Official provider')+' • Browsing stays inside the guide.</div></div>';
-    status('Provider page loading…');
-  }else if(x.kind==='radio'){
-    stage.innerHTML=providerPanel(x).replace('OFFICIAL PROVIDER','OFFICIAL RADIO PROVIDER');
-    status('Station page ready');
-  }else{
-    fail('No playable source is currently available for this channel.');
-  }
+    const audio=document.getElementById('radioAudio');let settled=false,candidates=[x.stream].filter(Boolean),attempt=0;
+    const setStatus=msg=>{const st=document.getElementById('radioStreamStatus');if(st)st.textContent=msg};
+    const failRadioFinal=()=>{if(settled)return;settled=true;status('Station unavailable — use Next station.');setStatus('Not available right now. Move to the next station — no waiting.')};
+    const playCandidate=()=>{if(!audio||!candidates[attempt])return failRadioFinal();audio.src=candidates[attempt];audio.load();audio.play?.().catch(()=>{});setStatus(attempt?'Trying another station stream…':'Connecting…');setTimeout(()=>{if(!settled&&audio.readyState===0)tryAlternate()},5500)};
+    const tryAlternate=async()=>{if(settled)return;try{const params=new URLSearchParams({name:x.name,hidebroken:'true',order:'lastcheckok',reverse:'true',limit:'12'});if(x.countrycode)params.set('countrycode',x.countrycode);if(x.state)params.set('state',x.state);const res=await fetch('https://de1.api.radio-browser.info/json/stations/search?'+params.toString(),{headers:{Accept:'application/json','User-Agent':'FreeTVRadio/2.0'}});const data=await res.json();const alternates=(Array.isArray(data)?data:[]).flatMap(s=>[s.url_resolved,s.url]).filter(u=>/^https:\/\//i.test(u||''));candidates=[...candidates,...alternates].filter((u,i,a)=>u&&a.indexOf(u)===i)}catch(_){}attempt++;if(candidates[attempt])playCandidate();else failRadioFinal()};
+    const ok=()=>{if(settled)return;settled=true;status('LIVE • Station connected');setStatus('Live • connected')};
+    if(audio&&x.stream){audio.addEventListener('playing',ok,{once:true});audio.addEventListener('error',tryAlternate);playCandidate()}else tryAlternate();
+  }else if(x.playable&&x.kind==='embed'){stage.innerHTML='<div class="live-frame"><iframe title="'+esc(x.name)+' live" src="'+esc(x.url)+'" loading="eager" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; picture-in-picture; geolocation; encrypted-media" allowfullscreen></iframe><div class="source-strip">'+esc(x.provider||'Official provider')+' • Provider playback remains inside the guide.</div></div>';status('Provider player loading…');setTimeout(()=>status('If playback does not start, use the next channel.'),5000)}
+  else if(x.kind==='web'&&x.url){stage.innerHTML='<div class="live-frame"><iframe title="'+esc(x.name)+'" src="'+esc(x.url)+'" loading="eager" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen></iframe><div class="source-strip">'+esc(x.provider||'Official provider')+' • Browsing stays inside the guide.</div></div>';status('Provider page loading…')}
+  else if(x.kind==='radio'){stage.innerHTML=providerPanel(x).replace('OFFICIAL PROVIDER','OFFICIAL RADIO PROVIDER');status('Station page ready')}
+  else fail('No playable source is currently available for this channel.');
 }
 function showPlayer(x){
   tab=x.kind==='radio'?'radio':'tv'; document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
@@ -388,10 +373,10 @@ function providerCatalogRows(){
   p.channels.forEach((entry,i)=>{
    const name=typeof entry==='string'?entry:(entry.name||'Unnamed channel');
    const directUrl=typeof entry==='string'?'':(entry.url||'');
-   const stream=resolvePublicStream(name);
+   const streamCandidates=resolvePublicStreams(name);const stream=streamCandidates[0]||'';
    const providerUrl=directUrl||p.live;
    const isSling=pid==='sling'&&!!directUrl;
-   rows.push({id:'catalog-'+pid+'-'+i,name,network:p.name,category:(entry.category||'Live TV'),scope:p.count+' • '+p.name,url:stream||providerUrl,stream:stream||'',kind:stream?'stream':(isSling?'embed':'web'),playable:!!(stream||isSling),providerId:pid,provider:p.name,mode:'live',sourceLabel:stream?'Public live source • iptv-org':(isSling?'Official '+p.name+' channel':'Official '+p.name+' live guide')});
+   rows.push({id:'catalog-'+pid+'-'+i,name,network:p.name,category:(entry.category||'Live TV'),scope:p.count+' • '+p.name,url:stream||providerUrl,stream:stream||'',streamCandidates:streamCandidates,kind:stream?'stream':(isSling?'embed':'web'),playable:!!(stream||isSling),providerId:pid,provider:p.name,mode:'live',sourceLabel:stream?'Public live source • iptv-org':(isSling?'Official '+p.name+' channel':'Official '+p.name+' live guide')});
   });
  });
  return rows;
