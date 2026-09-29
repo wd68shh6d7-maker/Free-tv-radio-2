@@ -1,0 +1,22 @@
+{
+  "success": true,
+  "status": 200,
+  "statusText": "OK",
+  "text": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 128 128\"><rect width=\"128\" height=\"128\" rx=\"28\" fill=\"#07101f\"/><rect x=\"18\" y=\"28\" width=\"92\" height=\"62\" rx=\"12\" fill=\"#0f1e35\" stroke=\"#6db7ff\" stroke-width=\"4\"/><path d=\"M34 104h60M50 90v14m28-14v14\" stroke=\"#ff9a45\" stroke-width=\"5\" stroke-linecap=\"round\"/><path d=\"M38 55c12-12 40-12 52 0\" fill=\"none\" stroke=\"#6db7ff\" stroke-width=\"6\" stroke-linecap=\"round\"/></svg>",
+  "headers": {
+    "accept-ranges": "bytes",
+    "access-control-allow-origin": "*",
+    "age": "2429",
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-disposition": "inline; filename=\"icon.svg\"",
+    "content-length": "425",
+    "content-type": "image/svg+xml",
+    "date": "Tue, 29 Sep 2026 06:22:48 GMT",
+    "etag": "\"ca995e4755556f904cfd3b88645e7724\"",
+    "last-modified": "Tue, 29 Sep 2026 05:42:19 GMT",
+    "server": "Vercel",
+    "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+    "x-vercel-cache": "HIT",
+    "x-vercel-id": "iad1:iad1::k8wb8-1790662968628-c9b1398b3c94"
+  }
+}
