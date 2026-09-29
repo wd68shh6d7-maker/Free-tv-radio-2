@@ -25,7 +25,32 @@ body{font-size:1rem}
 <style>
 .player-dock{display:none;margin:0 0 14px;position:relative;z-index:10}.player-dock.show{display:block}.live-frame{background:#000}.live-frame iframe{display:block;width:100%;aspect-ratio:16/9;border:0;background:#000}.source-strip{padding:8px 12px;background:#0b1424;color:#9eabc1;font-size:.78rem}.guide-hero{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:14px;border:1px solid var(--line);border-radius:16px;background:#0d182b}.guide-hero p{margin:5px 0 0;color:var(--muted)}.language-title{font-weight:800;margin:16px 0 6px}.lang-chip,.culture-chip{white-space:nowrap;border:1px solid var(--line);background:#0e192c;color:#dce5f4;border-radius:999px;padding:10px 13px;min-height:44px}.lang-chip.active,.culture-chip.active{background:#fff;color:#07101f}.hero-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.quick-languages{display:flex;gap:8px;overflow:auto}.primary.big{padding:13px 16px;font-size:1rem}.player-dock .player{margin-bottom:0}.player-dock .notice{display:none}.provider-panel{min-height:250px}.provider-panel .primary{margin-right:4px}.mini .provider-panel{min-height:180px;padding:15px}.mini .provider-panel h3{font-size:1.05rem}.mini .provider-panel p{font-size:.84rem}.mini .provider-actions{margin:8px 0}.mini .provider-panel small{font-size:.75rem}.channel-row .actions{justify-content:flex-end}.channel-row button{min-height:40px}.guide-scroll{scroll-behavior:smooth;overscroll-behavior:contain}@media(max-width:760px){.guide-hero{align-items:flex-start;flex-direction:column}.quick-languages{width:100%}.player-actions{overflow:auto;max-width:100%}.player-actions button{flex:0 0 auto}.channel-row{padding:12px 10px}.channel-row>div:last-child{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}.channel-row>div:last-child .primary{padding:8px 9px}}
 </style>
-</head><body><main class="wrap"><header class="top"><div class="brand">📺 Free TV <span>&</span> 📻 Radio</div><div class="badge">Website 2 • independent</div></header><section class="hero"><h1>More TV. Less hunting.</h1><p>A clean guide to free television and radio, with a persistent player, personal favorites, big-screen friendly playback, and a private administrator room.</p></section><nav class="nav" id="nav"><button class="active" data-tab="home">Home</button><button data-tab="tv">📺 TV</button><button data-tab="radio">📻 Radio</button><button data-tab="weather">🌦️ Weather</button><button data-tab="favorites">⭐ Favorites</button><button data-tab="stories">📸 Our Photos & Stories</button><button data-tab="admin">🔐 Admin</button><button data-tab="invite">🔗 Invite</button></nav><section id="playerDock" class="player-dock" aria-live="polite"></section><section id="app"></section><section class="safety"><b>Friendly safety note:</b> We curate links and public streams, but third-party providers control their own content and availability. Keep your device/browser updated, use your normal security protections, and never enter sensitive information into an unfamiliar third-party site.</section><footer class="footer">Free TV & Radio is an independent directory and player interface. Provider names, trademarks and programming belong to their respective owners. We do not promise uninterrupted or buffer-free playback because third-party streams and internet connections vary. <b>Terms • Privacy • Safety</b></footer></main><div id="mini" class="mini"></div>
+<style>
+/* Famelack-style mobile guide: compact rows, one continuous easy-scroll surface, persistent player above. */
+.guide-title-row{margin-bottom:8px}.easy-guide-tools{grid-template-columns:1fr auto auto;margin:8px 0}.easy-guide-tools input{min-height:46px}
+.compact-language{padding:4px 0 8px}.compact-language .lang-chip{min-height:42px;padding:8px 12px}
+.easy-guide-shell{border-radius:12px;background:#080f1b;border-color:#1d2a3d}
+.easy-guide-shell .guide-head{grid-template-columns:52px 1fr 1fr auto;padding:8px 10px;background:#101a29;font-size:.68rem}
+.easy-guide-shell .guide-scroll{height:min(64vh,620px);max-height:none;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.easy-guide-shell .channel-row{grid-template-columns:52px minmax(0,1.2fr) minmax(120px,1fr) auto;min-height:58px;padding:8px 10px;background:#0a1422;border-top:1px solid #18263a;border-radius:0}
+.easy-guide-shell .channel-row:first-child{border-top:0}
+.easy-guide-shell .channel-row.selected{background:#55a6cf;color:#06111d}
+.easy-guide-shell .channel-row.selected .meta{color:#173247}
+.easy-guide-shell .channel-row.selected .star,.easy-guide-shell .channel-row.selected .primary{border-color:#173247;background:#eaf7ff;color:#06111d}
+.easy-guide-shell .channel-number{font-size:1.05rem;color:#8ea5bd}.easy-guide-shell .selected .channel-number{color:#06111d}
+.easy-guide-shell .channel-name{font-size:.98rem;line-height:1.15}.easy-guide-shell .meta{font-size:.72rem;line-height:1.2}
+.easy-guide-shell .row-actions{display:flex;gap:5px;align-items:center;justify-content:flex-end}.easy-guide-shell .row-actions .primary{min-height:40px;padding:7px 9px;font-size:.8rem}.easy-guide-shell .row-actions .star{min-height:40px;padding:7px 9px}
+.guide-foot{display:flex;justify-content:space-between;gap:8px;padding:8px 4px;color:#71829a;font-size:.72rem}
+@media(max-width:760px){
+ .easy-guide-tools{grid-template-columns:minmax(0,1fr) auto auto}.easy-guide-tools .search{min-width:0}
+ .easy-guide-shell .guide-head{grid-template-columns:46px 1fr auto}.easy-guide-shell .guide-head span:nth-child(3){display:none}
+ .easy-guide-shell .guide-scroll{height:calc(100vh - 330px);min-height:360px}
+ .easy-guide-shell .channel-row{grid-template-columns:46px minmax(0,1fr) auto;min-height:56px;padding:7px 8px}
+ .easy-guide-shell .channel-row>div:nth-child(3){display:none}
+ .easy-guide-shell .row-actions .primary{min-width:84px}
+ .guide-foot span:nth-child(2){display:none}
+}
+</style></head><body><main class="wrap"><header class="top"><div class="brand">📺 Free TV <span>&</span> 📻 Radio</div><div class="badge">Website 2 • independent</div></header><section class="hero"><h1>More TV. Less hunting.</h1><p>A clean guide to free television and radio, with a persistent player, personal favorites, big-screen friendly playback, and a private administrator room.</p></section><nav class="nav" id="nav"><button class="active" data-tab="home">Home</button><button data-tab="tv">📺 TV</button><button data-tab="radio">📻 Radio</button><button data-tab="weather">🌦️ Weather</button><button data-tab="favorites">⭐ Favorites</button><button data-tab="stories">📸 Our Photos & Stories</button><button data-tab="admin">🔐 Admin</button><button data-tab="invite">🔗 Invite</button></nav><section id="playerDock" class="player-dock" aria-live="polite"></section><section id="app"></section><section class="safety"><b>Friendly safety note:</b> We curate links and public streams, but third-party providers control their own content and availability. Keep your device/browser updated, use your normal security protections, and never enter sensitive information into an unfamiliar third-party site.</section><footer class="footer">Free TV & Radio is an independent directory and player interface. Provider names, trademarks and programming belong to their respective owners. We do not promise uninterrupted or buffer-free playback because third-party streams and internet connections vary. <b>Terms • Privacy • Safety</b></footer></main><div id="mini" class="mini"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2"></script>
 <script>
 const SUPABASE_URL="https://doxzuuzzcxaozkyojybu.supabase.co";
@@ -44,8 +69,8 @@ const national=[
  {id:'cbs-news',name:'CBS News 24/7',network:'CBS',category:'News',scope:'Nationwide',url:'https://www.cbsnews.com/live/',kind:'web'},
  {id:'nbc-news',name:'NBC News NOW',network:'NBC',category:'News',scope:'Nationwide • official YouTube live',url:'https://www.youtube.com/embed/live_stream?channel=UCeY0bbntWzzVIaj2z3QigXg',kind:'youtube',provider:'NBC News'},
  {id:'fox-weather',name:'FOX Weather',network:'FOX',category:'Weather',scope:'Nationwide • official provider',url:'https://www.foxweather.com/watch-live',kind:'web'},
- {id:'pbs',name:'PBS Local Live',network:'PBS',category:'Local Public TV • location-aware',scope:'PBS local livestream',url:'https://www.pbs.org/livestream/',kind:'embed',provider:'PBS'},
- {id:'pbs-create',name:'PBS Create',network:'PBS',category:'Lifestyle • Create',scope:'PBS subchannel directory',url:'https://www.pbs.org/livestream/',kind:'embed',provider:'PBS'},
+ {id:'pbs',name:'PBS Local Live',network:'PBS',category:'Local Public TV • Live',scope:'Official PBS local livestream',url:'https://www.pbs.org/livestream/',kind:'web',provider:'PBS',guideEligible:true,sourceLabel:'PBS official local live'},
+ {id:'pbs-create',name:'PBS Create',network:'PBS',category:'Lifestyle • Create',scope:'Official Create / PBS live route',url:'https://createtv.com/',kind:'web',provider:'Create TV',guideEligible:true,sourceLabel:'Create TV official local live route'},
  {id:'pbs-kids',name:'PBS KIDS',network:'PBS',category:'Kids',scope:'Public TV',url:'https://pbskids.org/',kind:'web'},
  {id:'pluto',name:'Pluto TV',network:'Pluto',category:'Live TV • Movies • Shows',scope:'Web',url:'https://pluto.tv/',kind:'web'},
  {id:'roku',name:'The Roku Channel',network:'Roku',category:'Live TV • Movies • Shows',scope:'Web',url:'https://www.therokuchannel.com/',kind:'web'},
@@ -174,8 +199,9 @@ const LIVE_OVERRIDES={
 };
 Object.entries(LIVE_OVERRIDES).forEach(([id,ov])=>{const x=[...allTV,...stations].find(a=>a.id===id);if(x)Object.assign(x,ov);});
 if(!international.some(x=>x.id==='france24-espanol')) international.push({id:'france24-espanol',name:'France 24 Español',network:'FRANCE 24',category:'Spanish • World News',language:'Spanish',culture:'Latin America',scope:'Official 24/7 live • YouTube',url:'https://www.youtube.com/embed/Y-IlMeCCtIg?autoplay=1&mute=0&rel=0',kind:'youtube',provider:'France 24 Español',sourceLabel:'France 24 Español official live source'});
-// Active TV means verified in-guide playback only. Provider-only and location-gated pages are not listed as channels.
-allTV.splice(0,allTV.length,...allTV.filter(x=>x.kind==='youtube'||x.kind==='embed'));
+// Keep the complete editorial lineup in the guide. In-site playback is limited to verified streams;
+// provider-controlled channels such as PBS remain visible and use their official live route.
+
 
 const CANONICAL_LANGS=[
   ['Spanish','Español','Spanish'],['Urdu','اردو','Urdu'],['Hindi','हिन्दी','Hindi'],['Arabic','العربية','Arabic'],
@@ -191,10 +217,10 @@ function languageGroup(x){
   if(l.includes('german'))return 'German'; if(l.includes('portuguese'))return 'Portuguese'; if(l.includes('italian'))return 'Italian';
   if(l.includes('polish'))return 'Polish'; if(l.includes('english'))return 'English'; return x.language?'Other':'English';
 }
-function enrich(x){return {...x,langGroup:languageGroup(x),playable:(x.kind==='youtube'||x.kind==='embed'||x.kind==='radio')};}
+function enrich(x){return {...x,langGroup:languageGroup(x),playable:(x.kind==='youtube'||x.kind==='embed'||x.kind==='radio'),guideEligible:(x.guideEligible===true)||(x.kind==='youtube'||x.kind==='embed'||x.kind==='radio')};}
 allTV.splice(0,allTV.length,...allTV.map(enrich));
 stations.splice(0,stations.length,...stations.map(enrich));
-guideTV.splice(0,guideTV.length,...allTV.filter(x=>x.kind==='youtube'||x.kind==='embed').map((x,i)=>({...x,guideNo:i+1,state:x.state||'NATIONWIDE'})));
+guideTV.splice(0,guideTV.length,...allTV.filter(x=>x.guideEligible===true).map((x,i)=>({...x,guideNo:i+1,state:x.state||'NATIONWIDE'})));
 
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function isFav(id){return favorites.includes(id)}
@@ -207,7 +233,7 @@ async function authAction(){const email=(document.querySelector('#adminEmail')?.
 async function signOutAdmin(){await supabaseClient.auth.signOut()}
 function openExternal(item){window.open(item.url,'_blank','noopener,noreferrer')}
 
-function guidePool(){return guideTV.filter(x=>x.playable===true);}
+function guidePool(){return guideTV.filter(x=>x.guideEligible===true);}
 function filteredGuide(){const pool=guidePool();if(languageFilter==='All')return pool;return pool.filter(x=>x.langGroup===languageFilter||x.culture===languageFilter)}
 function guidePosition(x){const pool=guidePool();const i=pool.findIndex(a=>a.id===x.id);return i<0?'—':String(i+1)}
 function languageButtons(){return CANONICAL_LANGS.map(([key,label])=>`<button type="button" class="lang-chip ${languageFilter===key?'active':''}" data-lang="${esc(key)}"><span>${label}</span></button>`).join('')}
@@ -233,6 +259,7 @@ function showPlayer(x){
   tab=x.kind==='radio'?'radio':'tv'; document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   const mini=document.getElementById('mini'); if(mini.querySelector('#mainPlayer')){mini.innerHTML='';mini.classList.remove('show')}
   const dock=document.getElementById('playerDock');dock.innerHTML=playerShell(x);dock.classList.add('show');current=x;render();mountPlayer(x);window.scrollTo({top:0,behavior:'smooth'});
+  setTimeout(()=>{const row=document.querySelector(`[data-channel-row="${CSS.escape(x.id)}"]`);row?.scrollIntoView({block:'center',behavior:'smooth'});},40);
 }
 function minimizePlayer(){const main=document.getElementById('mainPlayer');if(!main)return;const mini=document.getElementById('mini');mini.innerHTML='';mini.appendChild(main);main.classList.add('mini-mode');mini.classList.add('show');document.getElementById('playerDock').classList.remove('show')}
 function restorePlayer(){const mini=document.getElementById('mini');const main=mini.querySelector('#mainPlayer');if(!main)return;document.getElementById('playerDock').appendChild(main);main.classList.remove('mini-mode');mini.classList.remove('show');document.getElementById('playerDock').classList.add('show');window.scrollTo({top:0,behavior:'smooth'})}
@@ -257,7 +284,15 @@ function providerView(id){
  <div class="notice"><b>Next provider:</b> change the Provider menu above. No automatic launch. No dead embedded player.</div>`;
 }
 function platformGuides(){return '<div class="section"><div><h2>📡 Free TV Networks</h2><span class="muted">Browse providers without leaving the guide</span></div></div><div class="guide-tools"><select id="providerSelect" aria-label="Choose TV provider"><option value="">Choose a provider…</option>'+providerGuides.map(p=>'<option value="'+p.id+'">'+esc(p.name)+'</option>').join('')+'</select><button class="primary" data-open-provider>Open Provider</button></div><div class="grid">'+providerGuides.map(p=>'<article class="card"><div class="logo">'+esc(p.network.slice(0,2).toUpperCase())+'</div><h3>'+esc(p.name)+'</h3><p>'+esc(p.count)+'<br><span class="muted">'+esc(p.note)+'</span></p><div class="actions"><button class="primary" data-provider-id="'+p.id+'">▶ Browse Guide</button></div></article>').join('')+'</div>'}
-function tv(){const pool=guidePool();const filtered=filteredGuide();const markets=[...new Set(guideTV.map(x=>x.market).filter(Boolean))];return `<div class="section"><div><h2>📺 Channel Guide</h2><span class="muted">${filtered.length} verified live channels shown</span></div><span class="badge">VERIFIED PLAYBACK</span></div><div class="guide-hero"><div><b>Choose a language. The guide stays right here.</b><p>Every channel keeps one permanent number. CH+ and CH− surf the complete lineup.</p></div><button class="secondary" data-clear-lang>All channels</button></div><div class="language-title">🌎 Language</div><div class="guide-language-bar"><button type="button" class="lang-chip ${languageFilter==='All'?'active':''}" data-lang="All">All</button>${languageButtons()}</div><details class="language-more"><summary>Browse by culture / country</summary><div class="chips">${cultureButtons()}</div></details>${platformGuides()}<div class="guide-shell"><div class="guide-head"><span>#</span><span>Channel</span><span>Details</span><span></span></div><div class="guide-scroll">${filtered.map(x=>`<div class="channel-row"><div class="channel-number">${guidePosition(x)}</div><div><div class="channel-name">${esc(x.name)}</div><div class="meta">${esc(x.langGroup||'English')}${x.culture?' • '+esc(x.culture):''}</div></div><div class="meta">${esc(x.scope||'')}<br>${esc(x.category||'')}</div><div><button class="primary" data-play="${esc(x.id)}">${x.playable?'▶ Play Live':'ℹ Channel Info'}</button><button class="star ${isFav(x.id)?'on':''}" data-fav="${esc(x.id)}">${isFav(x.id)?'★':'☆'}</button></div></div>`).join('')}</div></div><div class="notice"><b>Playback promise:</b> “Play Live” is reserved for sources configured for in-site playback. Provider-controlled channels never launch automatically.</div>`}
+function tv(){
+ const filtered=filteredGuide();
+ const query=(q||'').trim().toLowerCase();
+ const visible=query?filtered.filter(x=>[x.name,x.network,x.category,x.scope,x.langGroup,x.culture].join(' ').toLowerCase().includes(query)):filtered;
+ return `<div class="section guide-title-row"><div><h2>📺 Channel Guide</h2><span class="muted">${visible.length} channels • swipe/scroll to browse</span></div><span class="badge">EASY SCROLL</span></div>
+ <div class="guide-tools easy-guide-tools"><input id="guideSearch" class="search" value="${esc(q)}" placeholder="Search channels…" aria-label="Search channels"><button class="secondary" data-clear-guide-search>Clear</button><button class="secondary" data-clear-lang>All channels</button></div>
+ <div class="guide-language-bar compact-language"><button type="button" class="lang-chip ${languageFilter==='All'?'active':''}" data-lang="All">All</button>${languageButtons()}</div>
+ <div class="guide-shell easy-guide-shell"><div class="guide-head"><span>#</span><span>Channel</span><span>Details</span><span></span></div><div class="guide-scroll" id="guideScroll">${visible.map(x=>`<div class="channel-row ${current?.id===x.id?'selected':''}" data-channel-row="${esc(x.id)}"><div class="channel-number">${guidePosition(x)}</div><div><div class="channel-name">${esc(x.name)}</div><div class="meta">${esc(x.langGroup||'English')}${x.culture?' • '+esc(x.culture):''}</div></div><div class="meta">${esc(x.scope||'')}<br>${esc(x.category||'')}</div><div class="row-actions"><button class="primary" data-play="${esc(x.id)}">${x.playable?'▶ Play Live':'↗ Open Live'}</button><button class="star ${isFav(x.id)?'on':''}" data-fav="${esc(x.id)}">${isFav(x.id)?'★':'☆'}</button></div></div>`).join('')}</div></div>
+ <div class="guide-foot"><span>↑↓ / swipe</span><span>Tap a row to play or open the official provider.</span><span>Radio stays in the same guide system.</span></div>`}
 function radio(){const list=stations.filter(x=>JSON.stringify(x).toLowerCase().includes(q));return `<div class="section"><h2>📻 Radio</h2><span class="muted">${list.length} featured</span></div><div class="grid">${list.map(card).join('')}</div><div class="notice"><b>iHeartRadio:</b> we use the official iHeart experience rather than rebroadcasting it without permission.</div>`}
 function favView(){const items=[...allTV,...stations,...streaming].filter(x=>isFav(x.id));return `<div class="section"><h2>⭐ My Favorites</h2><span class="muted">${authUser?'Synced to your account':'Saved on this device'}</span></div>${items.length?`<div class="grid">${items.map(card).join('')}</div>`:'<div class="notice">Tap ☆ Favorite on any channel or radio station to build your list.</div>'}`}
 function stories(){return `<div class="section"><h2>📸 Our Photos & Stories</h2><span class="muted">Admin-published • visitor view only</span></div>${posts.length?`<div class="gallery">${posts.map(p=>`<article class="item">${p.image_url?`<img src="${esc(p.image_url)}" alt="" style="width:100%;aspect-ratio:4/3;object-fit:cover">`:'<div class="ph">✍️</div>'}<div class="copy"><h3>${esc(p.title||'Untitled')}</h3><p class="muted">${esc(p.body||'')}</p></div></article>`).join('')}</div>`:'<div class="notice">No stories have been published yet.</div>'}`}
@@ -273,7 +308,7 @@ nav.onclick=e=>{const b=e.target.closest('[data-tab]');if(b)setTab(b.dataset.tab
 app.onclick=e=>{
  const openGuide=e.target.closest('[data-open-guide]');if(openGuide){languageFilter='All';setTab('tv');return}
  const langNav=e.target.closest('[data-lang-nav]');if(langNav){languageFilter=langNav.dataset.langNav;setTab('tv');return}
- const p=e.target.closest('[data-play]');if(p){const x=[...allTV,...stations,...streaming].find(a=>a.id===p.dataset.play);if(x)showPlayer(x);return}
+ const p=e.target.closest('[data-play]');if(p){const x=[...allTV,...stations,...streaming].find(a=>a.id===p.dataset.play);if(x){if(x.guideEligible&&!x.playable&&x.url){window.open(x.url,'_blank','noopener,noreferrer')}else showPlayer(x)}return}
  const f=e.target.closest('[data-fav]');if(f){toggleFav(f.dataset.fav);return}
  const lang=e.target.closest('[data-lang]');if(lang){languageFilter=lang.dataset.lang;render();return}
  if(e.target.closest('[data-clear-lang]')){languageFilter='All';render();return}
@@ -290,12 +325,14 @@ app.onclick=e=>{
  const providerSelect=e.target.closest('#providerSelect');if(providerSelect){app.innerHTML=providerView(providerSelect.value||'sling');return}
  if(e.target.closest('#mini #mainPlayer')){restorePlayer();return}
  if(e.target.closest('[data-copy-invite]')){(navigator.clipboard?.writeText(location.href.split('#')[0])||Promise.resolve());e.target.textContent='Copied ✓';setTimeout(()=>e.target.textContent='Copy invite link',1200);return}
+ if(e.target.closest('[data-clear-guide-search]')){q='';render();return}
  if(e.target.closest('[data-share-invite]')){navigator.share?.({title:'Free TV & Radio',text:'Come check out Free TV & Radio',url:location.href.split('#')[0]})||navigator.clipboard?.writeText(location.href.split('#')[0]);return}
  if(e.target.closest('[data-auth-action]')){authAction();return}
  if(e.target.closest('[data-signout]')){signOutAdmin();return}
  if(e.target.closest('[data-admin-browser]')){if(!isAdmin()){alert('Administrator sign-in is required.');return}let u=document.getElementById('adminWeb').value.trim();if(!u)return;const blocked=webFilter&&/(porn|xxx|sexcam|sex-chat|pornhub|xvideos|xnxx|xhamster|redtube|brazzers|onlyfans|chaturbate|stripchat|nsfw|adult[-_ ]?content|explicit[-_ ]?content|escort|hookup|fetish|cam[-_ ]?girl|cam[-_ ]?boy)/i.test(u);if(blocked){alert('Web safety filter blocked this adult-content request.');return}if(!/^https?:\/\//i.test(u)){const query=u;u='https://www.google.com/search?q='+encodeURIComponent(query)+(webFilter?'&safe=active':'')}window.open(u,'_blank','noopener,noreferrer');return}
  if(e.target.closest('[data-publish-post]')){publishPost();return}
 }
+app.addEventListener('input',e=>{if(e.target.id==='guideSearch'){q=e.target.value;render();const s=document.getElementById('guideSearch');s?.focus();s?.setSelectionRange(q.length,q.length);return}})
 app.addEventListener('change',e=>{if(e.target.id==='webFilter'){toggleWebFilter();return}if(e.target.id==='providerSelect'){app.innerHTML=providerView(e.target.value||'sling');return}})
 render();initAuth();
 </script>
