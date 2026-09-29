@@ -193,6 +193,7 @@ function languageGroup(x){
 }
 function enrich(x){return {...x,langGroup:languageGroup(x),playable:(x.kind==='youtube'||x.kind==='embed'||x.kind==='radio')};}
 allTV.splice(0,allTV.length,...allTV.map(enrich));
+stations.splice(0,stations.length,...stations.map(enrich));
 guideTV.splice(0,guideTV.length,...allTV.filter(x=>x.kind==='youtube').map((x,i)=>({...x,guideNo:i+1,state:x.state||'NATIONWIDE'})));
 
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
@@ -229,7 +230,7 @@ function mountPlayer(x){
   }else{stage.innerHTML=providerPanel(x)}
 }
 function showPlayer(x){
-  tab=x.kind==='radio'?'radio':'tv'; document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab==='tv'));
+  tab=x.kind==='radio'?'radio':'tv'; document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   const mini=document.getElementById('mini'); if(mini.querySelector('#mainPlayer')){mini.innerHTML='';mini.classList.remove('show')}
   const dock=document.getElementById('playerDock');dock.innerHTML=playerShell(x);dock.classList.add('show');current=x;render();mountPlayer(x);window.scrollTo({top:0,behavior:'smooth'});
 }
