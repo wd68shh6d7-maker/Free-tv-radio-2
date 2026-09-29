@@ -249,8 +249,8 @@ if(!international.some(x=>x.id==='france24-espanol')) international.push({id:'fr
 const FAMELACK_US_GUIDE_URL='https://raw.githubusercontent.com/OwnerPlugins/famelack-data/main/tv/raw/countries/us.json';
 
 function normalizeFamelackChannel(x,i){
- const streams=[...(x?.sources?.streams||[]),...(x?.stream_urls||[])].filter(u=>/^https?:\\/\\//i.test(String(u||'')));
- const youtube=[...(x?.sources?.youtube||[]),...(x?.youtube_urls||[])].filter(u=>/^https?:\\/\\//i.test(String(u||'')));
+ const streams=[...(x?.sources?.streams||[]),...(x?.stream_urls||[])].filter(u=>/^https?:\/\//i.test(String(u||'')));
+ const youtube=[...(x?.sources?.youtube||[]),...(x?.youtube_urls||[])].filter(u=>/^https?:\/\//i.test(String(u||'')));
  const source=streams[0]||youtube[0]||'';
  const kind=streams.length?'stream':youtube.length?'youtube':'web';
  return {
