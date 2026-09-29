@@ -23,7 +23,7 @@ body{font-size:1rem}
 <style>
 /* Famelack-style mobile guide: compact rows, one continuous easy-scroll surface, persistent player above. */
 .provider-strip{display:flex;gap:8px;overflow-x:auto;padding:6px 0 10px};scrollbar-width:thin}.provider-modebar{display:flex;gap:7px;overflow-x:auto;padding:4px 0 8px}.provider-modebar button{border:1px solid var(--line);background:#0e192c;color:#dce5f4;border-radius:999px;padding:10px 14px;min-height:44px;white-space:nowrap;font-weight:800}.provider-modebar button.active,.provider-chip.active{background:#fff;color:#07101f;border-color:#fff}.guide-provider-strip{padding-bottom:8px}.provider-chip{flex:0 0 auto;border:1px solid var(--line);background:#10213a;color:#fff;border-radius:11px;padding:10px 12px;min-height:46px;text-align:left}.provider-chip strong{display:block;font-size:.88rem}.provider-chip small{display:block;color:#9eabc1;font-size:.7rem;margin-top:2px}.provider-hub{border:1px solid var(--line);border-radius:14px;background:#0b1525;padding:10px 12px;margin:8px 0 12px}.provider-hub-head{display:flex;justify-content:space-between;align-items:center;gap:10px}.provider-hub-head strong{font-size:.95rem}.provider-hub-head span{color:#9eabc1;font-size:.72rem}.radio-search{display:grid;grid-template-columns:1fr auto;gap:8px;margin:10px 0}.radio-search input{min-height:46px}.radio-provider-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:10px 0 14px}.radio-provider{border:1px solid var(--line);border-radius:14px;background:#0b1525;padding:13px}.radio-provider h3{margin:0 0 4px}.radio-provider p{margin:0;color:#9eabc1;font-size:.84rem;line-height:1.35}.radio-provider .actions{padding-top:10px}.radio-provider .primary,.radio-provider .secondary{font-size:.85rem;min-height:42px;padding:8px 10px}
-.guide-title-row{margin-bottom:8px}.easy-guide-tools{grid-template-columns:1fr auto auto;margin:8px 0}.easy-guide-tools input{min-height:46px}
+.famelack-title{margin-top:4px}.famelack-search{display:grid;grid-template-columns:1fr auto;gap:8px;margin:8px 0}.famelack-search input{min-height:48px}.famelack-modebar{margin:4px 0 10px}.famelack-shell{border-radius:10px}.famelack-scroll{max-height:68vh}.famelack-row{grid-template-columns:58px minmax(0,1.4fr) minmax(120px,.8fr) 42px;min-height:58px;padding:10px 12px;cursor:pointer}.famelack-row:focus,.famelack-row:hover,.famelack-row.selected{background:#13243c}.famelack-row .channel-number{font-size:1rem;color:#aebbd0}.famelack-row .channel-name{font-size:.96rem}.famelack-row .source-meta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.famelack-row .star{justify-self:end}.guide-foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 2px;color:#8f9db2;font-size:.78rem}.guide-title-row{margin-bottom:8px}.easy-guide-tools{grid-template-columns:1fr auto auto;margin:8px 0}.easy-guide-tools input{min-height:46px}
 .compact-language{padding:4px 0 8px}.compact-language .lang-chip{min-height:42px;padding:8px 12px}
 .easy-guide-shell{border-radius:12px;background:#080f1b;border-color:#1d2a3d}
 .easy-guide-shell .guide-head{grid-template-columns:52px 1fr 1fr auto;padding:8px 10px;background:#101a29;font-size:.68rem}
@@ -416,16 +416,23 @@ function tv(){
  if(!publicStreamReady&&!publicStreamLoading)loadPublicUSStreams();
  if(!providerCatalogLoaded.sling&&!providerCatalogLoading.sling)loadProviderCatalog('sling');
  const visible=guideRows();
- const catalogCount=providerCatalogRows().length;
- const providerButtons=providerOrder.map(function(pid){const p=providerCatalogs[pid];const loading=providerCatalogLoading[pid];return '<button class="provider-chip '+(guideSource===pid?'active':'')+'" data-guide-source="'+pid+'"><strong>'+esc(p.name)+'</strong><small>'+esc(loading?'Loading live catalog…':p.count)+' '+(loading?'':(guideMode==='live'?'live':'free'))+'</small></button>';}).join('');
- const rows=visible.map(function(x,i){return '<div class="channel-row '+(current&&current.id===x.id?'selected':'')+'" data-channel-row="'+esc(x.id)+'"><div class="channel-number">'+(i+1)+'</div><div><div class="channel-name">'+esc(x.name)+'</div><div class="meta">'+esc(x.network||x.provider||'TV')+'</div></div><div class="meta">'+esc(x.provider||x.scope||'Official provider')+'<br>'+esc(x.category||'')+'</div><div class="row-actions"><button class="primary" data-play="'+esc(x.id)+'">'+(guideMode==='onDemand'?'↗ Browse':'↗ Open Live')+'</button><button class="star '+(isFav(x.id)?'on':'')+'" data-fav="'+esc(x.id)+'">'+(isFav(x.id)?'★':'☆')+'</button></div></div>';}).join('');
- return '<div class="section guide-title-row"><div><h2>📺 Channel Guide</h2><span class="muted">'+visible.length+' channels shown • '+(filteredGuide().length+catalogCount)+' guide entries</span></div><span class="badge">EASY SCROLL</span></div>'+
- '<div class="guide-tools easy-guide-tools"><input id="guideSearch" class="search" value="'+esc(guideQuery)+'" placeholder="Search channels, networks or providers…" aria-label="Search channels"><button class="secondary" data-clear-guide-search>Clear</button></div>'+
- '<div class="provider-modebar"><button class="'+'" data-guide-mode="live">▶ Live TV</button><button class="'+(guideMode==='onDemand'?'active':'')+'" data-guide-mode="onDemand">▣ On Demand</button></div>'+
- '<div class="provider-strip guide-provider-strip"><button class="provider-chip '+(guideSource==='All'?'active':'')+'" data-guide-source="All"><strong>All</strong><small>Every provider</small></button>'+providerButtons+'</div>'+
- (guideMode==='live'?'<div class="guide-language-bar compact-language"><button type="button" class="lang-chip '+(languageFilter==='All'?'active':'')+'" data-lang="All">All</button>'+languageButtons()+'</div>':'')+
- '<div class="guide-shell easy-guide-shell"><div class="guide-head"><span>#</span><span>Channel</span><span>Source</span><span></span></div><div class="guide-scroll" id="guideScroll">'+rows+'</div></div>'+
- '<div class="guide-foot"><span>Swipe / scroll</span><span>One continuous channel list.</span><span>Live + On Demand use the same guide.</span></div>';
+ const rows=visible.map(function(x,i){
+  const sources=(x.sources||[]).map(s=>s.provider).filter(Boolean).filter((v,j,a)=>a.indexOf(v)===j);
+  const sourceText=sources.length?sources.join(' • '):(x.provider||x.network||'Free TV');
+  const playable=x.kind==='stream'||x.kind==='embed'||!!x.stream;
+  return '<div class="channel-row famelack-row '+(current&&current.id===x.id?'selected':'')+'" data-channel-row="'+esc(x.id)+'" data-play="'+esc(x.id)+'" role="button" tabindex="0">'+
+   '<div class="channel-number">'+(i+1)+'</div>'+
+   '<div><div class="channel-name">'+esc(x.name)+'</div><div class="meta">'+esc(x.category||'Live TV')+'</div></div>'+
+   '<div class="meta source-meta">'+esc(sourceText)+(playable?' • LIVE':'')+'</div>'+
+   '<button class="star '+(isFav(x.id)?'on':'')+'" data-fav="'+esc(x.id)+'" aria-label="'+(isFav(x.id)?'Remove favorite':'Add favorite')+'">'+(isFav(x.id)?'★':'☆')+'</button>'+
+  '</div>';
+ }).join('');
+ const status=guideMode==='live'?'Live channels':'Free on-demand libraries';
+ return '<div class="section guide-title-row famelack-title"><div><h2>📺 Free TV</h2><span class="muted">'+esc(String(visible.length))+' unique '+esc(status.toLowerCase())+' • scroll and choose a channel</span></div></div>'+
+ '<div class="famelack-search"><input id="guideSearch" class="search" value="'+esc(guideQuery)+'" placeholder="Search channels…" aria-label="Search channels"><button class="secondary" data-clear-guide-search>Clear</button></div>'+
+ '<div class="provider-modebar famelack-modebar"><button class="'+(guideMode==='live'?'active':'')+'" data-guide-mode="live">LIVE TV</button><button class="'+(guideMode==='onDemand'?'active':'')+'" data-guide-mode="onDemand">ON DEMAND</button></div>'+
+ '<div class="guide-shell famelack-shell"><div class="guide-head"><span>#</span><span>Channel</span><span>Source</span><span>★</span></div><div class="guide-scroll famelack-scroll" id="guideScroll">'+rows+'</div></div>'+
+ '<div class="guide-foot"><span>Scroll the list</span><span>Tap a channel to watch</span><span>One channel appears once</span></div>';
 }
 const radioDirectories=[
  {id:'iheartradio',name:'iHeartRadio',count:'1,000+ U.S. stations',url:'https://www.iheart.com/live/country/US/'},
@@ -540,7 +547,7 @@ app.onclick=e=>{
  const ya=e.target.closest('[data-youtube-app]');if(ya){openYouTubeApp('https://www.youtube.com/');return}const yl=e.target.closest('[data-youtube-live]');if(yl){openYouTubeApp('https://www.youtube.com/live');return}const yo=e.target.closest('[data-youtube-open]');if(yo){openYouTubeApp(yo.dataset.youtubeOpen||'https://www.youtube.com/live');return}
  const openGuide=e.target.closest('[data-open-guide]');if(openGuide){setTab('tv');return}
  const p=e.target.closest('[data-play]');if(p){const id=p.dataset.play;const x=[...allTV,...stations,...streaming,...(providerCatalogs.youtube.channels||[]).map((a,i)=>({id:'yt-'+i,name:typeof a==='string'?a:(a.name||'YouTube live channel'),url:typeof a==='string'?'https://www.youtube.com/live':(a.url||'https://www.youtube.com/live'),kind:'web',provider:'YouTube'}))].find(a=>a.id===id)||guideRows().find(a=>a.id===id)||radioRows().find(a=>a.id===id);if(x){if(x.type==='directory'){window.open(x.url,'_blank','noopener,noreferrer')}else showPlayer(x)}return}
- const f=e.target.closest('[data-fav]');if(f){toggleFav(f.dataset.fav);return}
+ const f=e.target.closest('[data-fav]');if(f){e.stopPropagation();toggleFav(f.dataset.fav);return} const row=e.target.closest('[data-channel-row][data-play]');if(row){const id=row.dataset.play;const x=guideRows().find(a=>a.id===id)||radioRows().find(a=>a.id===id);if(x)showPlayer(x);return}
  if(e.target.closest('[data-minimize]')){minimizePlayer();return}
  if(e.target.closest('[data-close]')){closePlayer();render();return}
  if(e.target.closest('[data-fullscreen]')){toggleFullscreen();return}
