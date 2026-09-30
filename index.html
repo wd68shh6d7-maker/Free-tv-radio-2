@@ -430,7 +430,7 @@ function toggleFullscreen(){const main=document.getElementById('mainPlayer')||do
 function surf(delta){const pool=(current?.kind==='radio'||current?.kind==='radio-direct')?radioRows():guideRows();if(!pool.length)return;const i=pool.findIndex(a=>a.id===current?.id);const base=i<0?(delta>0?0:pool.length-1):i;const next=Math.min(pool.length-1,Math.max(0,base+delta));if(next!==i){const item=pool[next];if(item.type==='directory'||(item.kind==='web'&&!item.stream)){showPlayer(item)}else showPlayer(item)}}
 
 const PRESENCE_COUNTRIES={US:'United States',CA:'Canada',GB:'United Kingdom',AU:'Australia',NZ:'New Zealand',MX:'Mexico',BR:'Brazil',DE:'Germany',FR:'France',IT:'Italy',ES:'Spain',IE:'Ireland',NL:'Netherlands',SE:'Sweden',NO:'Norway',DK:'Denmark',FI:'Finland',IN:'India',JP:'Japan',KR:'South Korea',PH:'Philippines',ZA:'South Africa'};
-const US_STATES={AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',DE:'Delaware',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming',DC:'District of Columbia'};
+const US_STATE_NAMES={AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',DE:'Delaware',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming',DC:'District of Columbia'};
 function presenceMode(){if(!current)return 'site';return (current.kind==='radio'||current.kind==='radio-direct')?'radio':'tv'}
 function renderPresenceStats(){
  const total=document.querySelector('[data-presence-total]');if(total)total.textContent=String(presenceStats.total||0);
@@ -441,7 +441,7 @@ function renderPresenceStats(){
  }
  const states=document.querySelector('[data-presence-states']);
  if(states){
-  const rows=(presenceStats.us_states||[]).map(x=>'<div class="presence-row"><span>'+esc(US_STATES[x.code]||x.code||'Other U.S. region')+'</span><span>'+Number(x.count||0)+'</span></div>').join('');
+  const rows=(presenceStats.us_states||[]).map(x=>'<div class="presence-row"><span>'+esc(US_STATE_NAMES[x.code]||x.code||'Other U.S. region')+'</span><span>'+Number(x.count||0)+'</span></div>').join('');
   states.innerHTML=rows||'<div class="presence-empty">No active U.S. viewers yet.</div>';
  }
 }
