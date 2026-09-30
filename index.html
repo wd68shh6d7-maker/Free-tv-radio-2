@@ -997,6 +997,8 @@ async function roomEnsureMedia(){
   roomLocalStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:{facingMode:'user',width:{ideal:640},height:{ideal:360}}});
   roomMicOn=true;roomCamOn=true;roomUpdateLocalPreview();
   Object.keys(roomPeers).forEach(id=>roomAttachTracks(roomPeers[id]));
+  const micBtn=document.querySelector('[data-room-mic]');if(micBtn)micBtn.textContent='🎙️ Mute microphone';
+  const camBtn=document.querySelector('[data-room-cam]');if(camBtn)camBtn.textContent='📷 Turn camera off';
   roomSetStatus('Microphone + camera are on. TV playback remains in the player above.',true);
   return true;
  }catch(err){
@@ -1079,7 +1081,8 @@ async function createRoom(){
  roomCode=makeRoomCode();roomName=(name.trim()||'My Watch Room').slice(0,60);
  roomJoinCode=roomCode;roomDisplayName=(document.getElementById('roomDisplayName')?.value||'').trim().slice(0,32)||'Host';
  renderRoomOnly();
- await startRoomSession(roomCode,roomDisplayName,'host');
+ const ok=await startRoomSession(roomCode,roomDisplayName,'host');
+ if(ok)await roomEnsureMedia();
  renderRoomOnly();
 }
 async function joinRoom(){
@@ -1124,12 +1127,12 @@ function copyRoomInvite(){
 }
 function roomsView(){
  if(roomJoined)return '<div class="section"><div><h2>👥 '+esc(roomName||'Watch Room')+'</h2><span class="muted">Watch TV together • talk • use video</span></div><span class="badge"><span data-room-count>1</span> people</span></div>'+
- '<div class="room-panel"><div class="section" style="margin-top:0"><div><h3 style="margin:0">Room code</h3><span class="muted">Share this link or code with your guests.</span></div></div><div class="room-code">'+esc(roomCode)+'</div><div class="room-controls"><button class="primary" data-room-copy>🔗 Copy room link</button><button class="secondary" data-room-media>🎥 Start microphone & camera</button><button class="secondary" data-room-mic>🎙️ Mute microphone</button><button class="secondary" data-room-cam>📷 Turn camera off</button><button class="secondary" data-room-leave>Leave room</button></div><div class="room-status" data-room-status>'+esc(roomStatus||'Room connected.')+'</div><div class="room-people" data-room-people></div></div>'+
+ '<div class="room-panel"><div class="section" style="margin-top:0"><div><h3 style="margin:0">Room code</h3><span class="muted">Share this link or code with your guests.</span></div></div><div class="room-code">'+esc(roomCode)+'</div><div class="room-controls"><button class="primary" data-room-copy>🔗 Copy room link</button><button class="secondary" data-room-media>🎥 Start microphone & camera</button><button class="secondary" data-room-mic>🎙️ Toggle microphone</button><button class="secondary" data-room-cam>📷 Toggle camera</button><button class="secondary" data-room-leave>Leave room</button></div><div class="room-status" data-room-status>'+esc(roomStatus||'Room connected.')+'</div><div class="room-people" data-room-people></div></div>'+
  '<div class="room-panel"><h3 style="margin-top:0">Your video</h3><p class="muted">Your camera preview stays separate from the TV player. Microphone echo cancellation is requested by the browser; headphones can further reduce TV sound being picked up by a microphone.</p><div class="room-video-grid"><div class="room-tile"><video data-room-local-video autoplay muted playsinline></video><span class="room-tile-label">You</span></div><div data-room-video-grid class="room-video-grid" style="margin-top:0;display:contents"></div></div></div>'+
  '<div class="room-chat"><div style="padding:10px 12px"><b>💬 Room chat</b></div><div class="room-chat-log" data-room-chat-log></div><div class="room-chat-form"><input id="roomChatInput" placeholder="Type a message…"><button class="primary" data-room-send-chat>Send</button></div></div>'+
  '<div class="notice"><b>TV + conversation test:</b> Keep Live TV playing in the player above while you turn the microphone and camera on. The room sends your camera/mic through WebRTC separately from the TV player. We will test whether TV audio, room audio, and video continue without one stopping the other.</div>';
  return '<div class="section"><div><h2>👥 Rooms</h2><span class="muted">Watch TV together, talk and use video.</span></div><span class="badge">EASY ROOM SETUP</span></div>'+
- '<div class="notice"><b>Create a room in three simple steps.</b> The room feature is now being built for the exact test you described: TV stays playing while people talk and use video together.</div>'+
+ '<div class="notice"><b>Create a room in three simple steps.</b> The room opens immediately, then asks for microphone and camera permission so the host can test the full TV + voice + video experience before inviting anyone.</div>'+
  '<div class="rooms-steps"><div class="room-step"><strong>1. Name it</strong><span>Give your watch room a simple name.</span></div><div class="room-step"><strong>2. Create it</strong><span>We make a short room code and open the room immediately.</span></div><div class="room-step"><strong>3. Invite</strong><span>Copy the room link and send it to your test person.</span></div></div>'+
  '<div class="room-panel"><h3 style="margin-top:0">Create a new room</h3><div class="room-form"><label>Room name<input id="roomCreateName" placeholder="Example: Saturday Night Watch Room"></label><label>Your name<input id="roomDisplayName" placeholder="Your name"></label><button class="primary" data-room-create>➕ Create Room</button></div></div>'+
  '<div class="room-panel"><h3 style="margin-top:0">Join a room</h3><div class="room-form"><label>Room code<input id="roomJoinCode" value="'+esc(roomJoinCode)+'" placeholder="6-character code"></label><label>Your name<input id="roomJoinName" placeholder="Your name"></label><button class="primary" data-room-join>🚪 Join Room</button></div></div>'+
