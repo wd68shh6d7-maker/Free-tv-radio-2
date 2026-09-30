@@ -1252,7 +1252,7 @@ document.addEventListener('click',e=>{const t=e.target;const b=t.closest('[data-
 function handleRouteHash(){if(location.hash==='#tv')setTab('tv');}
 window.addEventListener('hashchange',handleRouteHash);
 
-document.getElementById('app').onclick=e=>{
+document.getElementById('app').onclick=async e=>{
  const noraInfo=e.target.closest('[data-nora-info]');if(noraInfo){setTab('info');return}
  const noraAsk=e.target.closest('[data-nora-ask]');if(noraAsk){const v=(document.getElementById('noraQuestion')?.value||'').trim();window.noraLastAnswer=noraAnswerText(v);render();setTimeout(()=>{document.getElementById('noraQuestion')?.focus();speakNora(window.noraLastAnswer)},0);return}
  const noraSpeak=e.target.closest('[data-nora-speak]');if(noraSpeak){const msg='Hi, I’m Nora. I’m your Free TV and Radio helper. You can ask me about the TV guide, Radio, Apps, Rooms, Reading Room, Favorites, Weather, or how the website works.';if('speechSynthesis' in window){speakNora(msg)}else{window.noraLastAnswer=msg;render()}return}
