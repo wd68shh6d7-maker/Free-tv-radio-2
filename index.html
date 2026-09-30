@@ -442,7 +442,6 @@ function renderPresenceStats(){
  const states=document.querySelectorAll('[data-presence-states]');
  states.forEach(function(el){el.innerHTML=el.closest('.presence-livebar')?(stateNames||'No active U.S. states yet.'):(presenceStats.us_states||[]).map(function(x){return '<div class="presence-row"><span>'+esc(US_STATE_NAMES[x.code]||x.code||'Other U.S. region')+'</span><span>'+Number(x.count||0)+'</span></div>'}).join('')||'<div class="presence-empty">No active U.S. viewers yet.</div>'});
 }
-}
 async function heartbeatPresence(){
  try{
   const res=await fetch('/api/presence',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:presenceSessionId,mode:presenceMode()})});
