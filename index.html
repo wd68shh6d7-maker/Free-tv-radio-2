@@ -755,9 +755,16 @@ function noraStartListening(){
    const lower=heard.toLowerCase();
    window.noraTranscript=heard;
    const wake=lower.indexOf('hey nora');
-   if(wake<0)return;
-   const command=heard.slice(wake+'hey nora'.length).replace(/^[\s,.:;-]+/,'').trim();
+   let command='';
+   if(wake>=0){
+     command=heard.slice(wake+'hey nora'.length).replace(/^[\s,.:;-]+/,'').trim();
+   }else if(window.noraConversation){
+     command=heard.trim();
+   }else{
+     return;
+   }
    if(!command){
+     window.noraConversation=true;
      window.noraLastAnswer='Hey, I hear you. What can I help you with?';
      window.noraVoiceStatus='I’m listening for your request…';
      render();
@@ -772,22 +779,33 @@ function noraStartListening(){
    render();
    try{rec.abort()}catch(_){}
    window.noraRecognition=null;
-   if(!/\b(open|launch|start|go to)\b/.test(command.toLowerCase()))speakNora(window.noraLastAnswer,()=>{if(window.noraConversation)noraStartListening()});
+   speakNora(window.noraLastAnswer,()=>{if(window.noraConversation)noraStartListening()});
   };
   rec.onerror=ev=>{
    window.noraRecognition=null;
-   if(ev?.error==='not-allowed'||ev?.error==='service-not-allowed'){window.noraListening=false;window.noraVoiceStatus='Microphone or speech recognition permission is off. Use Safari’s microphone permission, then return to Nora.';render();return}
-   if(window.noraConversation)setTimeout(noraStartListening,900);
+   if(ev?.error==='not-allowed'||ev?.error==='service-not-allowed'){window.noraListening=false;window.noraVoiceStatus='Microphone or speech recognition permission is off. Use Safari’s microphone permission and try Nora again.'}
+   else if(ev?.error==='aborted')window.noraVoiceStatus='Nora is ready. Say “Hey Nora.”';
+   else window.noraVoiceStatus='Nora is ready. Say “Hey Nora.”';
+   render();
   };
-  rec.onend=()=>{window.noraRecognition=null;if(window.noraConversation&&!speechSynthesis?.speaking)setTimeout(noraStartListening,900)};
-  window.noraConversation=true;
+  rec.onend=()=>{
+   window.noraRecognition=null;
+   if(window.noraConversation){
+    window.noraListening=false;
+    setTimeout(()=>{if(window.noraConversation&&!window.noraRecognition)noraStartListening()},250);
+   }else{
+    window.noraListening=false;render();
+   }
+  };
   rec.start();
   return true;
- }catch(_){window.noraRecognition=null;window.noraListening=false;window.noraVoiceStatus='Nora could not start hands-free listening here. The text box is still available.';render();return false}
+ }catch(err){
+  window.noraRecognition=null;window.noraListening=false;window.noraVoiceStatus='Nora could not start the microphone here. You can still type to Nora.';render();return false;
+ }
 }
 function noraArm(){
- window.noraConversation=true;window.noraTranscript='';window.noraVoiceStatus='Starting hands-free mode…';render();
- setTimeout(()=>noraStartListening(),50);
+ window.noraConversation=false;window.noraTranscript='';window.noraVoiceStatus='Starting hands-free mode…';
+ noraStartListening();
 }
 function noraView(){
  const answer=window.noraLastAnswer||'Hi! I’m Nora. Say “Hey Nora” and I’ll answer you.';
@@ -1339,7 +1357,7 @@ window.addEventListener('hashchange',handleRouteHash);
 
 document.getElementById('app').onclick=async e=>{
  const noraInfo=e.target.closest('[data-nora-info]');if(noraInfo){setTab('info');return}
- const noraAsk=e.target.closest('[data-nora-ask]');if(noraAsk){const v=(document.getElementById('noraQuestion')?.value||'').trim();window.noraLastAnswer=noraCommand(v);render();setTimeout(()=>{document.getElementById('noraQuestion')?.focus()},0);return}
+ const noraAsk=e.target.closest('[data-nora-ask]');if(noraAsk){const v=(document.getElementById('noraQuestion')?.value||'').trim();if(!v)return;window.noraConversation=false;window.noraLastAnswer=noraCommand(v);render();speakNora(window.noraLastAnswer);setTimeout(()=>{document.getElementById('noraQuestion')?.focus()},0);return}
  const noraSpeak=e.target.closest('[data-nora-speak]');if(noraSpeak){speakNora(window.noraLastAnswer||'Hey, I’m Nora. What can I help you with?');return}
  const noraMic=e.target.closest('[data-nora-mic]');if(noraMic){noraArm();return}
  const openResourceLive=e.target.closest('[data-open-resource-live]');if(openResourceLive){openResourceLive(openResourceLive.dataset.openResourceLive);return} const openResource=e.target.closest('[data-open-resource]');if(openResource){openResourceWindow(openResource.dataset.openResource);return}
