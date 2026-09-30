@@ -143,7 +143,27 @@ body{font-size:1rem}
   .presence-livebar .live-detail span{white-space:normal}
   .presence-livebar .live-privacy{display:none}
 }
-</style></head><body><main class="wrap"><header class="top"><div class="brand">📺 Free TV <span>&</span> 📻 Radio</div><div class="badge">Website 2 • independent</div></header><section class="hero"><h1>More TV. Less hunting.</h1><p>A clean guide to free television and radio, with a persistent player, personal favorites, big-screen friendly playback, and a private administrator room.</p></section><nav class="nav" id="nav"><button class="active" data-tab="home">🏠 Home</button><button data-tab="info">ℹ️ Information</button><button data-tab="tv">📺 Live TV</button><button data-tab="radio">📻 Radio</button><button data-tab="apps">📱 Apps</button><button data-tab="paid">🔐 Paid TV</button><button data-tab="weather">🌦️ Weather</button><button data-tab="favorites">⭐ Favorites</button><button data-tab="stories">📸 Our Photos & Stories</button><button data-tab="gold">🏞️ California’s Gold</button><button data-tab="alex">🎙️ Alex Jones Live</button><button data-tab="bible">📖 Bible</button><button data-tab="maxvelocity">🌩️ Max Velocity — Severe Weather Center</button><button data-tab="admin">🔐 Admin</button><button data-tab="invite">🔗 Invite</button></nav><section id="playerDock" class="player-dock" aria-live="polite"></section><section id="app"></section><div id="presenceLiveBar" class="presence-livebar" aria-live="polite"><div class="presence-livebar-inner"><span class="live-dot" aria-hidden="true"></span><strong>👥 <span data-presence-total>0</span> here now</strong><span class="live-sep">•</span><span class="live-detail">🌎 <span data-presence-countries>Connecting…</span></span><span class="live-sep">•</span><span class="live-detail">🇺🇸 <span data-presence-states>U.S. activity loading…</span></span><span class="live-privacy">🔒 Approximate location only</span></div></div><section class="safety"><b>Friendly safety note:</b> We curate links and public streams, but third-party providers control their own content and availability. Keep your device/browser updated, use your normal security protections, and never enter sensitive information into an unfamiliar third-party site.</section><footer class="footer">Free TV & Radio is an independent directory and player interface. Provider names, trademarks and programming belong to their respective owners. We do not promise uninterrupted or buffer-free playback because third-party streams and internet connections vary. <b>Terms • Privacy • Safety</b></footer></main><div id="mini" class="mini"></div>
+<style id="rooms-style">
+.rooms-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0 16px}
+.room-step{border:1px solid var(--line);border-radius:14px;background:#0d182b;padding:12px}
+.room-step strong{display:block;font-size:.9rem}.room-step span{display:block;color:var(--muted);font-size:.8rem;line-height:1.35;margin-top:4px}
+.room-panel{border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,#101b30,#0b1526);padding:16px;margin:12px 0}
+.room-form{display:grid;grid-template-columns:1fr 1fr auto;gap:9px;align-items:end}
+.room-form label{display:block;color:#cbd6e8;font-size:.86rem}.room-form input{width:100%;margin-top:5px;padding:12px 13px;border:1px solid var(--line);border-radius:11px;background:#0b1527;color:#fff}
+.room-code{font-size:clamp(1.7rem,8vw,2.5rem);font-weight:950;letter-spacing:.18em;padding:12px 14px;border:1px dashed #5b789f;border-radius:14px;background:#081221;text-align:center}
+.room-controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.room-controls button{min-height:46px}
+.room-video-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:12px}
+.room-tile{position:relative;border:1px solid var(--line);border-radius:15px;overflow:hidden;background:#030914;min-height:150px}
+.room-tile video{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;background:#000}
+.room-tile .room-tile-label{position:absolute;left:8px;bottom:8px;padding:5px 8px;border-radius:999px;background:rgba(0,0,0,.72);font-size:.76rem}
+.room-chat{border:1px solid var(--line);border-radius:14px;background:#091322;margin-top:12px;overflow:hidden}
+.room-chat-log{max-height:180px;overflow:auto;padding:10px}.room-chat-msg{padding:6px 0;border-bottom:1px solid #17263b;font-size:.86rem}.room-chat-msg:last-child{border-bottom:0}
+.room-chat-form{display:grid;grid-template-columns:1fr auto;gap:8px;padding:9px;border-top:1px solid var(--line)}.room-chat-form input{min-height:44px}
+.room-people{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.room-person{border:1px solid var(--line);border-radius:999px;padding:7px 9px;background:#102039;color:#dce5f4;font-size:.8rem}
+.room-status{margin-top:10px;color:#cbd6e9;font-size:.86rem}.room-status.good{color:var(--good)}
+@media(max-width:760px){.rooms-steps{grid-template-columns:1fr}.room-form{grid-template-columns:1fr}.room-video-grid{grid-template-columns:1fr 1fr}.room-panel{padding:13px}.room-code{letter-spacing:.12em}}
+</style></style></head><body><main class="wrap"><header class="top"><div class="brand">📺 Free TV <span>&</span> 📻 Radio</div><div class="badge">Website 2 • independent</div></header><section class="hero"><h1>More TV. Less hunting.</h1><p>A clean guide to free television and radio, with a persistent player, personal favorites, big-screen friendly playback, and a private administrator room.</p></section><nav class="nav" id="nav"><button class="active" data-tab="home">🏠 Home</button><button data-tab="info">ℹ️ Information</button><button data-tab="tv">📺 Live TV</button><button data-tab="radio">📻 Radio</button><button data-tab="rooms">👥 Rooms</button><button data-tab="apps">📱 Apps</button><button data-tab="paid">🔐 Paid TV</button><button data-tab="weather">🌦️ Weather</button><button data-tab="favorites">⭐ Favorites</button><button data-tab="stories">📸 Our Photos & Stories</button><button data-tab="gold">🏞️ California’s Gold</button><button data-tab="alex">🎙️ Alex Jones Live</button><button data-tab="bible">📖 Bible</button><button data-tab="maxvelocity">🌩️ Max Velocity — Severe Weather Center</button><button data-tab="admin">🔐 Admin</button><button data-tab="invite">🔗 Invite</button></nav><section id="playerDock" class="player-dock" aria-live="polite"></section><section id="app"></section><div id="presenceLiveBar" class="presence-livebar" aria-live="polite"><div class="presence-livebar-inner"><span class="live-dot" aria-hidden="true"></span><strong>👥 <span data-presence-total>0</span> here now</strong><span class="live-sep">•</span><span class="live-detail">🌎 <span data-presence-countries>Connecting…</span></span><span class="live-sep">•</span><span class="live-detail">🇺🇸 <span data-presence-states>U.S. activity loading…</span></span><span class="live-privacy">🔒 Approximate location only</span></div></div><section class="safety"><b>Friendly safety note:</b> We curate links and public streams, but third-party providers control their own content and availability. Keep your device/browser updated, use your normal security protections, and never enter sensitive information into an unfamiliar third-party site.</section><footer class="footer">Free TV & Radio is an independent directory and player interface. Provider names, trademarks and programming belong to their respective owners. We do not promise uninterrupted or buffer-free playback because third-party streams and internet connections vary. <b>Terms • Privacy • Safety</b></footer></main><div id="mini" class="mini"></div>
 <!-- JavaScript interaction fix verified -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2"></script><script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.15/dist/hls.min.js"></script>
 <script>
@@ -287,6 +307,7 @@ const stations=[
 const allTV=[...national];
 let guideTV=[...national,...international].map((x,i)=>({...x,state:x.state||'NATIONWIDE',guideNo:i+1}));
 let tab='home', q='', guideQuery='', radioQuery='', webQuery='', webStatus='', webUrl='', webTitle='', appUrl='', appTitle='', network='All', city='All', cat='All', guideSource='All', guideMode='live';
+let roomChannel=null, roomCode='', roomName='', roomJoinCode='', roomDisplayName='', roomClientId=(crypto?.randomUUID?.()||('room-'+Date.now()+'-'+Math.random().toString(36).slice(2))), roomRole='', roomLocalStream=null, roomPeers={}, roomParticipants={}, roomMessages=[], roomStatus='', roomMicOn=false, roomCamOn=false, roomJoined=false;
 let passwordRecovery=false;
 let webSuggestTimer=null;
 let webSuggestions=[];
@@ -938,7 +959,183 @@ function web(){
 }
 function weather(){return '<div class="section"><div><h2>🌦️ Weather</h2><span class="muted">Official National Weather Service / NOAA</span></div></div><div class="grid"><article class="card"><div class="logo">NWS</div><h3>National Weather Service</h3><p>Official U.S. forecasts, active alerts, forecast maps, radar, satellite and current conditions.</p><div class="actions"><a class="primary" href="https://www.weather.gov/" target="_blank" rel="noopener noreferrer">Open NWS</a><a class="secondary" href="https://radar.weather.gov/" target="_blank" rel="noopener noreferrer">Open Radar</a></div></article></div><div class="notice">Weather information is provided by the National Weather Service. Use your city or ZIP code on NWS for the official local forecast and alerts.</div>'}
 function restoreGuideToCurrent(){if(tab!=='tv'||!current)return;const sc=document.getElementById('guideScroll');const row=sc?.querySelector('[data-channel-row="'+CSS.escape(String(current.id))+'"]');if(!sc||!row)return;const top=row.offsetTop-(sc.clientHeight*0.35);sc.scrollTo({top:Math.max(0,top),behavior:'auto'});}
-function render(){const view=passwordRecovery?passwordRecoveryView():(tab==='home'?home():tab==='info'?information():tab==='tv'?tv():tab==='radio'?radio():tab==='apps'?appsView():tab==='paid'?paidView():tab==='web'?web():tab==='weather'?weather():tab==='favorites'?favView():tab==='stories'?stories():tab==='gold'?resourceView('gold'):tab==='alex'?resourceView('alex'):tab==='bible'?resourceView('bible'):tab==='maxvelocity'?resourceView('maxvelocity'):tab==='admin'?admin():invite());app.innerHTML=view;if(tab==='tv')requestAnimationFrame(()=>restoreGuideToCurrent());if(tab==='radio'&&!radioCatalog.length&&!radioLoading){loadRadioCatalog()}}
+
+function makeRoomCode(){const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let out='';for(let i=0;i<6;i++)out+=chars[Math.floor(Math.random()*chars.length)];return out}
+function roomInviteUrl(){return location.origin+location.pathname+'?room='+encodeURIComponent(roomCode)}
+function roomSetStatus(msg,good){roomStatus=String(msg||'');const el=document.querySelector('[data-room-status]');if(el){el.textContent=roomStatus;el.className='room-status'+(good?' good':'')}}
+function roomSend(event,payload){if(!roomChannel)return;roomChannel.send({type:'broadcast',event,payload}).catch(()=>{})}
+function roomPeopleFromPresence(){
+ if(!roomChannel)return;
+ const state=roomChannel.presenceState()||{};
+ const list=[];
+ Object.keys(state).forEach(key=>{
+  const meta=Array.isArray(state[key])?state[key][0]:state[key];
+  if(meta&&meta.clientId)list.push({id:meta.clientId,name:meta.name||'Guest',role:meta.role||'member'});
+ });
+ if(!list.some(x=>x.id===roomClientId))list.push({id:roomClientId,name:roomDisplayName||'You',role:roomRole||'member'});
+ roomParticipants={};list.forEach(x=>roomParticipants[x.id]=x);
+ const people=document.querySelector('[data-room-people]');
+ if(people)people.innerHTML=list.map(x=>'<span class="room-person">'+esc(x.name)+(x.id===roomClientId?' • You':'')+'</span>').join('');
+ const count=document.querySelector('[data-room-count]');if(count)count.textContent=String(list.length);
+}
+function roomAddTile(peerId,name,stream){
+ const grid=document.querySelector('[data-room-video-grid]');if(!grid)return;
+ let tile=grid.querySelector('[data-room-peer="'+CSS.escape(peerId)+'"]');
+ if(!tile){tile=document.createElement('div');tile.className='room-tile';tile.dataset.roomPeer=peerId;tile.innerHTML='<video autoplay playsinline></video><span class="room-tile-label">'+esc(name||'Guest')+'</span>';grid.appendChild(tile)}
+ const v=tile.querySelector('video');if(v&&stream&&v.srcObject!==stream)v.srcObject=stream;
+}
+function roomRemoveTile(peerId){const tile=document.querySelector('[data-room-peer="'+CSS.escape(peerId)+'"]');if(tile)tile.remove()}
+function roomUpdateLocalPreview(){
+ const v=document.querySelector('[data-room-local-video]');
+ if(v&&roomLocalStream)v.srcObject=roomLocalStream;
+}
+async function roomEnsureMedia(){
+ if(!navigator.mediaDevices?.getUserMedia){roomSetStatus('This browser does not provide camera/microphone access.',false);return false}
+ if(roomLocalStream)return true;
+ try{
+  roomSetStatus('Requesting microphone and camera permission…',false);
+  roomLocalStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:{facingMode:'user',width:{ideal:640},height:{ideal:360}}});
+  roomMicOn=true;roomCamOn=true;roomUpdateLocalPreview();
+  Object.keys(roomPeers).forEach(id=>roomAttachTracks(roomPeers[id]));
+  roomSetStatus('Microphone + camera are on. TV playback remains in the player above.',true);
+  return true;
+ }catch(err){
+  roomSetStatus('Camera/microphone permission was not granted. You can try again.',false);
+  console.error('Room media error',err);return false;
+ }
+}
+function roomAttachTracks(pc){
+ if(!pc||!roomLocalStream)return;
+ const existing=pc.getSenders().map(s=>s.track).filter(Boolean);
+ roomLocalStream.getTracks().forEach(track=>{if(!existing.includes(track))pc.addTrack(track,roomLocalStream)});
+}
+async function roomMakePeer(peerId,peerName,shouldOffer){
+ if(roomPeers[peerId])return roomPeers[peerId];
+ const pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
+ roomPeers[peerId]=pc;
+ pc.onicecandidate=e=>{if(e.candidate)roomSend('signal',{kind:'ice',from:roomClientId,to:peerId,candidate:e.candidate})};
+ pc.ontrack=e=>{const stream=e.streams?.[0]||new MediaStream([e.track]);roomAddTile(peerId,peerName,stream)};
+ pc.onconnectionstatechange=()=>{if(['failed','closed','disconnected'].includes(pc.connectionState)&&roomPeers[peerId]===pc){if(pc.connectionState==='failed')pc.restartIce?.();roomRemoveTile(peerId)}};
+ roomAttachTracks(pc);
+ if(shouldOffer){
+  try{const offer=await pc.createOffer();await pc.setLocalDescription(offer);roomSend('signal',{kind:'offer',from:roomClientId,to:peerId,sdp:pc.localDescription})}catch(err){console.error('Room offer error',err)}
+ }
+ return pc;
+}
+async function roomSignal(msg){
+ if(!msg||msg.to!==roomClientId)return;
+ const peer=roomParticipants[msg.from]||{name:'Guest'};
+ if(msg.kind==='offer'){
+  const pc=await roomMakePeer(msg.from,peer.name,false);
+  try{
+   await pc.setRemoteDescription(msg.sdp);
+   roomAttachTracks(pc);
+   const answer=await pc.createAnswer();await pc.setLocalDescription(answer);
+   roomSend('signal',{kind:'answer',from:roomClientId,to:msg.from,sdp:pc.localDescription});
+  }catch(err){console.error('Room answer error',err)}
+ }else if(msg.kind==='answer'){
+  const pc=roomPeers[msg.from];if(pc)try{await pc.setRemoteDescription(msg.sdp)}catch(err){console.error('Room set answer error',err)}
+ }else if(msg.kind==='ice'){
+  const pc=roomPeers[msg.from];if(pc)try{await pc.addIceCandidate(msg.candidate)}catch(err){console.warn('Room ICE error',err)}
+ }
+}
+async function roomOfferToPeer(peerId,peerName){
+ if(roomClientId<peerId){await roomMakePeer(peerId,peerName,true)}
+}
+function roomHandlePresenceSync(){
+ roomPeopleFromPresence();
+ Object.keys(roomParticipants).forEach(id=>{if(id!==roomClientId)roomOfferToPeer(id,roomParticipants[id].name)});
+}
+async function startRoomSession(code,name,role){
+ if(!supabaseClient){roomSetStatus('Realtime room service is unavailable right now.',false);return false}
+ await leaveRoom(false);
+ roomCode=String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,12);
+ roomDisplayName=(String(name||'Guest').trim().slice(0,32)||'Guest');
+ roomRole=role||'member';roomJoined=false;roomMessages=[];roomStatus='Connecting to room…';
+ roomChannel=supabaseClient.channel('room:'+roomCode,{config:{broadcast:{self:false},presence:{key:roomClientId}}});
+ roomChannel.on('broadcast',{event:'signal'},p=>roomSignal(p.payload))
+  .on('broadcast',{event:'chat'},p=>{const m=p.payload;if(!m||m.roomCode!==roomCode)return;roomMessages.push({name:m.name||'Guest',text:String(m.text||'').slice(0,300)});roomRenderChat()})
+  .on('presence',{event:'sync'},roomHandlePresenceSync)
+  .on('presence',{event:'join'},roomHandlePresenceSync)
+  .on('presence',{event:'leave'},({leftPresences})=>{(leftPresences||[]).forEach(p=>{if(p.clientId){const pc=roomPeers[p.clientId];if(pc)pc.close();delete roomPeers[p.clientId];roomRemoveTile(p.clientId)}});roomPeopleFromPresence()});
+ return new Promise(resolve=>{
+  roomChannel.subscribe(async status=>{
+   if(status==='SUBSCRIBED'){
+    roomJoined=true;
+    await roomChannel.track({clientId:roomClientId,name:roomDisplayName,role:roomRole,online_at:new Date().toISOString()});
+    roomSetStatus('Room connected. Start your microphone and camera when you are ready.',true);
+    roomPeopleFromPresence();
+    renderRoomOnly();
+    resolve(true);
+   }else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){
+    roomSetStatus('Room connection failed. Check your connection and try again.',false);resolve(false);
+   }
+  });
+ });
+}
+function renderRoomOnly(){if(tab==='rooms'){app.innerHTML=roomsView();roomUpdateLocalPreview();roomRenderChat();roomPeopleFromPresence();}}
+async function createRoom(){
+ const name=document.getElementById('roomCreateName')?.value||'';
+ roomCode=makeRoomCode();roomName=(name.trim()||'My Watch Room').slice(0,60);
+ roomJoinCode=roomCode;roomDisplayName=(document.getElementById('roomDisplayName')?.value||'').trim().slice(0,32)||'Host';
+ renderRoomOnly();
+ await startRoomSession(roomCode,roomDisplayName,'host');
+ renderRoomOnly();
+}
+async function joinRoom(){
+ const code=(document.getElementById('roomJoinCode')?.value||roomJoinCode||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+ const name=(document.getElementById('roomJoinName')?.value||'').trim().slice(0,32)||'Guest';
+ if(code.length<4){roomSetStatus('Enter the room code first.',false);return}
+ roomCode=code;roomJoinCode=code;roomName='Shared Watch Room';roomDisplayName=name;
+ await startRoomSession(code,name,'member');renderRoomOnly();
+}
+async function leaveRoom(showRooms=true){
+ if(roomChannel){try{await roomChannel.untrack()}catch(_){}try{await supabaseClient?.removeChannel(roomChannel)}catch(_){}}
+ Object.values(roomPeers).forEach(pc=>{try{pc.close()}catch(_){}});roomPeers={};
+ Object.values(roomParticipants).forEach(p=>{if(p.id!==roomClientId)roomRemoveTile(p.id)});
+ if(roomLocalStream){roomLocalStream.getTracks().forEach(t=>t.stop());roomLocalStream=null}
+ roomChannel=null;roomJoined=false;roomParticipants={};roomStatus='';roomMicOn=false;roomCamOn=false;roomMessages=[];
+ if(showRooms){tab='rooms';render()}
+}
+async function toggleRoomMedia(kind){
+ if(!roomJoined){roomSetStatus('Create or join a room first.',false);return}
+ if(!roomLocalStream){const ok=await roomEnsureMedia();if(!ok)return}
+ const track=kind==='mic'?roomLocalStream.getAudioTracks()[0]:roomLocalStream.getVideoTracks()[0];
+ if(!track){roomSetStatus('That device does not have the requested track.',false);return}
+ track.enabled=!track.enabled;
+ if(kind==='mic')roomMicOn=track.enabled;else roomCamOn=track.enabled;
+ const b=document.querySelector('[data-room-'+kind+']');if(b)b.textContent=(kind==='mic'?(roomMicOn?'🎙️ Mute microphone':'🔇 Unmute microphone'):(roomCamOn?'📷 Turn camera off':'📷 Turn camera on'));
+ roomSetStatus(kind==='mic'?(roomMicOn?'Microphone is on.':'Microphone is muted.'):(roomCamOn?'Camera is on.':'Camera is off.'),true);
+}
+function roomRenderChat(){
+ const log=document.querySelector('[data-room-chat-log]');if(!log)return;
+ log.innerHTML=roomMessages.map(m=>'<div class="room-chat-msg"><b>'+esc(m.name)+'</b>: '+esc(m.text)+'</div>').join('')||'<span class="muted">Room chat is ready.</span>';
+ log.scrollTop=log.scrollHeight;
+}
+function roomSendChat(){
+ const input=document.getElementById('roomChatInput');const textVal=(input?.value||'').trim();
+ if(!textVal||!roomChannel)return;
+ const m={roomCode,name:roomDisplayName||'Guest',text:textVal.slice(0,300)};
+ roomMessages.push({name:m.name,text:m.text});roomRenderChat();roomSend('chat',m);if(input){input.value='';input.focus()}
+}
+function copyRoomInvite(){
+ const url=roomInviteUrl();if(navigator.clipboard?.writeText)navigator.clipboard.writeText(url);
+ roomSetStatus('Room link copied. Send it to the people you want to join.',true);
+}
+function roomsView(){
+ if(roomJoined)return '<div class="section"><div><h2>👥 '+esc(roomName||'Watch Room')+'</h2><span class="muted">Watch TV together • talk • use video</span></div><span class="badge"><span data-room-count>1</span> people</span></div>'+
+ '<div class="room-panel"><div class="section" style="margin-top:0"><div><h3 style="margin:0">Room code</h3><span class="muted">Share this link or code with your guests.</span></div></div><div class="room-code">'+esc(roomCode)+'</div><div class="room-controls"><button class="primary" data-room-copy>🔗 Copy room link</button><button class="secondary" data-room-media>🎥 Start microphone & camera</button><button class="secondary" data-room-mic>🎙️ Mute microphone</button><button class="secondary" data-room-cam>📷 Turn camera off</button><button class="secondary" data-room-leave>Leave room</button></div><div class="room-status" data-room-status>'+esc(roomStatus||'Room connected.')+'</div><div class="room-people" data-room-people></div></div>'+
+ '<div class="room-panel"><h3 style="margin-top:0">Your video</h3><p class="muted">Your camera preview stays separate from the TV player. Microphone echo cancellation is requested by the browser; headphones can further reduce TV sound being picked up by a microphone.</p><div class="room-video-grid"><div class="room-tile"><video data-room-local-video autoplay muted playsinline></video><span class="room-tile-label">You</span></div><div data-room-video-grid class="room-video-grid" style="margin-top:0;display:contents"></div></div></div>'+
+ '<div class="room-chat"><div style="padding:10px 12px"><b>💬 Room chat</b></div><div class="room-chat-log" data-room-chat-log></div><div class="room-chat-form"><input id="roomChatInput" placeholder="Type a message…"><button class="primary" data-room-send-chat>Send</button></div></div>'+
+ '<div class="notice"><b>TV + conversation test:</b> Keep Live TV playing in the player above while you turn the microphone and camera on. The room sends your camera/mic through WebRTC separately from the TV player. We will test whether TV audio, room audio, and video continue without one stopping the other.</div>';
+ return '<div class="section"><div><h2>👥 Rooms</h2><span class="muted">Watch TV together, talk and use video.</span></div><span class="badge">EASY ROOM SETUP</span></div>'+
+ '<div class="notice"><b>Create a room in three simple steps.</b> The room feature is now being built for the exact test you described: TV stays playing while people talk and use video together.</div>'+
+ '<div class="rooms-steps"><div class="room-step"><strong>1. Name it</strong><span>Give your watch room a simple name.</span></div><div class="room-step"><strong>2. Create it</strong><span>We make a short room code and open the room immediately.</span></div><div class="room-step"><strong>3. Invite</strong><span>Copy the room link and send it to your test person.</span></div></div>'+
+ '<div class="room-panel"><h3 style="margin-top:0">Create a new room</h3><div class="room-form"><label>Room name<input id="roomCreateName" placeholder="Example: Saturday Night Watch Room"></label><label>Your name<input id="roomDisplayName" placeholder="Your name"></label><button class="primary" data-room-create>➕ Create Room</button></div></div>'+
+ '<div class="room-panel"><h3 style="margin-top:0">Join a room</h3><div class="room-form"><label>Room code<input id="roomJoinCode" value="'+esc(roomJoinCode)+'" placeholder="6-character code"></label><label>Your name<input id="roomJoinName" placeholder="Your name"></label><button class="primary" data-room-join>🚪 Join Room</button></div></div>'+
+ '<div class="notice"><b>What we will test:</b> microphone, camera, TV audio, room voice, room video, and whether all three can run together without the TV being stopped by the conversation.</div>';
+}
+function render(){const view=passwordRecovery?passwordRecoveryView():(tab==='home'?home():tab==='info'?information():tab==='tv'?tv():tab==='radio'?radio():tab==='rooms'?roomsView():tab==='apps'?appsView():tab==='paid'?paidView():tab==='web'?web():tab==='weather'?weather():tab==='favorites'?favView():tab==='stories'?stories():tab==='gold'?resourceView('gold'):tab==='alex'?resourceView('alex'):tab==='bible'?resourceView('bible'):tab==='maxvelocity'?resourceView('maxvelocity'):tab==='admin'?admin():invite());app.innerHTML=view;if(tab==='tv')requestAnimationFrame(()=>restoreGuideToCurrent());if(tab==='radio'&&!radioCatalog.length&&!radioLoading){loadRadioCatalog()}}
 function setTab(t){
  tab=t;
  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
@@ -1010,13 +1207,22 @@ document.getElementById('app').onclick=e=>{
  if(e.target.closest('[data-web-clear]')){webQuery='';webStatus='';render();return}
  if(e.target.closest('[data-web-quick]')){const u=e.target.closest('[data-web-quick]').dataset.webQuick;webQuery=u;openWebSafely(u);return}
  if(e.target.closest('[data-web-open]')){openWebSafely((document.getElementById('webQuery')?.value||'').trim());return}
- if(e.target.closest('[data-auth-action]')){authAction();return}
+ if(e.target.closest('[data-room-create]')){createRoom();return}
+ if(e.target.closest('[data-room-join]')){joinRoom();return}
+ if(e.target.closest('[data-room-media]')){roomEnsureMedia();return}
+ if(e.target.closest('[data-room-mic]')){toggleRoomMedia('mic');return}
+ if(e.target.closest('[data-room-cam]')){toggleRoomMedia('cam');return}
+ if(e.target.closest('[data-room-copy]')){copyRoomInvite();return}
+ if(e.target.closest('[data-room-leave]')){leaveRoom(true);return}
+ if(e.target.closest('[data-room-send-chat]')){roomSendChat();return}
+if(e.target.closest('[data-auth-action]')){authAction();return}
  if(e.target.closest('[data-update-password]')){updateRecoveredPassword();return}
  if(e.target.closest('[data-create-account]')){const x=document.getElementById('adminConfirm');if(x){x.value=document.getElementById('adminPassword')?.value||'';x.focus()}return}
  if(e.target.closest('[data-resend-verification]')){resendVerification();return}
  if(e.target.closest('[data-signout]')){signOutAdmin();return}
  if(e.target.closest('[data-publish-post]')){publishPost();return}
 }
+app.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='roomChatInput'){e.preventDefault();roomSendChat();return}});
 app.addEventListener('input',e=>{if(e.target.id==='guideSearch'){guideQuery=e.target.value;q=guideQuery;render();const s=document.getElementById('guideSearch');s?.focus();s?.setSelectionRange(guideQuery.length,guideQuery.length);return}if(e.target.id==='radioSearch'){radioQuery=e.target.value;render();const s=document.getElementById('radioSearch');s?.focus();s?.setSelectionRange(radioQuery.length,radioQuery.length);clearTimeout(radioSearchTimer);radioSearchTimer=setTimeout(()=>loadRadioCatalog(true),420);return}if(e.target.id==='webQuery'){webQuery=e.target.value;clearTimeout(webSuggestTimer);webSuggestTimer=setTimeout(async()=>{await fetchWebSuggestions(webQuery);if(tab==='web'){render();const x=document.getElementById('webQuery');x?.focus();x?.setSelectionRange(webQuery.length,webQuery.length)}},220);return}})
 app.addEventListener('change',e=>{if(e.target.id==='webFilter'){toggleWebFilter();return}if(e.target.id==='providerSelect'){app.innerHTML=providerView(e.target.value||'sling');return}})
 function hydrateRowSurf(select){
@@ -1063,6 +1269,8 @@ document.addEventListener('change',e=>{
  else if(v.startsWith('provider:')){setTab('tv');app.innerHTML=providerView(v.slice(9))}
  jump.value='';
 });
+function handleRoomRoute(){const m=new URLSearchParams(location.search).get('room');if(m){roomJoinCode=String(m).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,12);tab='rooms';}}
+handleRoomRoute();
 render();initAuth();checkPasswordRecovery();startPresence();
 </script>
 </body></html>
