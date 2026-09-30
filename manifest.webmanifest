@@ -1,10 +1,13 @@
 {
+  "id":"/",
   "name":"Free TV & Radio — Website 2",
   "short_name":"Free TV & Radio",
   "start_url":"./",
+  "scope":"./",
   "display":"standalone",
   "background_color":"#07101f",
   "theme_color":"#07101f",
+  "description":"Free TV & Radio — organized free television, radio, favorites and helpful tools.",
   "icons":[
     {"src":"/api/apple-touch-icon","sizes":"180x180","type":"image/jpeg","purpose":"any maskable"}
   ]
