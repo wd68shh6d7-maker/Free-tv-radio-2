@@ -692,7 +692,7 @@ function noraAnswerText(q){
 function noraPreferredVoice(){
  if(!('speechSynthesis' in window))return null;
  const voices=speechSynthesis.getVoices?.()||[];
- const femaleNames=/samantha|ava|karen|victoria|zira|jenny|aria|libby|susan|siri|google us english female|microsoft.*female/i;
+ const femaleNames=/samantha|ava|karen|victoria|zira|jenny|aria|libby|susan|siri|allison|serena|moira|fiona|google us english female|microsoft.*female/i;
  return voices.find(v=>/^en(-|_)?US/i.test(v.lang)&&femaleNames.test(v.name))||
    voices.find(v=>/^en(-|_)?US/i.test(v.lang)&&femaleNames.test((v.voiceURI||'')))||
    voices.find(v=>/^en(-|_)?US/i.test(v.lang))||
@@ -702,7 +702,7 @@ function speakNora(textVal,onDone){
  const msg=String(textVal||'').trim();if(!msg||!('speechSynthesis' in window))return;
  speechSynthesis.cancel();
  const u=new SpeechSynthesisUtterance(msg);
- u.lang='en-US';u.rate=.94;u.pitch=1.04;
+ u.lang='en-US';u.rate=.91;u.pitch=1.08;u.volume=1;
  const v=noraPreferredVoice();if(v)u.voice=v;
  u.onend=()=>{if(typeof onDone==='function')onDone()};
  speechSynthesis.speak(u);
