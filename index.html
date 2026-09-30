@@ -110,7 +110,40 @@ body{font-size:1rem}
   .player-dock.show .provider-panel small{font-size:.7rem}
   .famelack-shell{margin-top:7px}
 }
-</style></head><body><main class="wrap"><header class="top"><div class="brand">📺 Free TV <span>&</span> 📻 Radio</div><div class="badge">Website 2 • independent</div></header><section class="hero"><h1>More TV. Less hunting.</h1><p>A clean guide to free television and radio, with a persistent player, personal favorites, big-screen friendly playback, and a private administrator room.</p></section><nav class="nav" id="nav"><button class="active" data-tab="home">🏠 Home</button><button data-tab="info">ℹ️ Information</button><button data-tab="tv">📺 Live TV</button><button data-tab="radio">📻 Radio</button><button data-tab="apps">📱 Apps</button><button data-tab="paid">🔐 Paid TV</button><button data-tab="weather">🌦️ Weather</button><button data-tab="favorites">⭐ Favorites</button><button data-tab="stories">📸 Our Photos & Stories</button><button data-tab="gold">🏞️ California’s Gold</button><button data-tab="alex">🎙️ Alex Jones Live</button><button data-tab="bible">📖 Bible</button><button data-tab="maxvelocity">🌩️ Max Velocity — Severe Weather Center</button><button data-tab="admin">🔐 Admin</button><button data-tab="invite">🔗 Invite</button></nav><section id="playerDock" class="player-dock" aria-live="polite"></section><section id="app"></section><div id="presenceLiveBar" class="presence-livebar" aria-live="polite"><div class="presence-livebar-inner"><span class="live-dot" aria-hidden="true"></span><strong>👥 <span data-presence-total>0</span> watching/listening now</strong><span class="live-sep">•</span><span class="live-detail">🌎 <span data-presence-countries>Connecting…</span></span><span class="live-sep">•</span><span class="live-detail">🇺🇸 <span data-presence-states>U.S. activity loading…</span></span><span class="live-privacy">🔒 Approximate location only</span></div></div><section class="safety"><b>Friendly safety note:</b> We curate links and public streams, but third-party providers control their own content and availability. Keep your device/browser updated, use your normal security protections, and never enter sensitive information into an unfamiliar third-party site.</section><footer class="footer">Free TV & Radio is an independent directory and player interface. Provider names, trademarks and programming belong to their respective owners. We do not promise uninterrupted or buffer-free playback because third-party streams and internet connections vary. <b>Terms • Privacy • Safety</b></footer></main><div id="mini" class="mini"></div>
+</style><style id="presence-readability">
+/* Live community strip: make the country and U.S. state easy to read on phones. */
+.presence-livebar-inner{align-items:center}
+.presence-livebar .live-detail{font-weight:650}
+@media(max-width:760px){
+  body{padding-bottom:104px}
+  .presence-livebar{padding:9px 12px calc(9px + env(safe-area-inset-bottom))}
+  .presence-livebar-inner{
+    display:grid;
+    grid-template-columns:auto minmax(0,1fr);
+    gap:4px 8px;
+    justify-content:stretch;
+    align-items:center;
+    font-size:.86rem;
+    line-height:1.25;
+    white-space:normal;
+    overflow:visible;
+  }
+  .presence-livebar .live-dot{grid-row:1}
+  .presence-livebar strong{grid-row:1;min-width:0}
+  .presence-livebar .live-sep{display:none}
+  .presence-livebar .live-detail{
+    grid-column:1/-1;
+    min-width:0;
+    overflow:visible;
+    text-overflow:clip;
+    white-space:normal;
+    overflow-wrap:anywhere;
+    padding-left:16px;
+  }
+  .presence-livebar .live-detail span{white-space:normal}
+  .presence-livebar .live-privacy{display:none}
+}
+</style></head><body><main class="wrap"><header class="top"><div class="brand">📺 Free TV <span>&</span> 📻 Radio</div><div class="badge">Website 2 • independent</div></header><section class="hero"><h1>More TV. Less hunting.</h1><p>A clean guide to free television and radio, with a persistent player, personal favorites, big-screen friendly playback, and a private administrator room.</p></section><nav class="nav" id="nav"><button class="active" data-tab="home">🏠 Home</button><button data-tab="info">ℹ️ Information</button><button data-tab="tv">📺 Live TV</button><button data-tab="radio">📻 Radio</button><button data-tab="apps">📱 Apps</button><button data-tab="paid">🔐 Paid TV</button><button data-tab="weather">🌦️ Weather</button><button data-tab="favorites">⭐ Favorites</button><button data-tab="stories">📸 Our Photos & Stories</button><button data-tab="gold">🏞️ California’s Gold</button><button data-tab="alex">🎙️ Alex Jones Live</button><button data-tab="bible">📖 Bible</button><button data-tab="maxvelocity">🌩️ Max Velocity — Severe Weather Center</button><button data-tab="admin">🔐 Admin</button><button data-tab="invite">🔗 Invite</button></nav><section id="playerDock" class="player-dock" aria-live="polite"></section><section id="app"></section><div id="presenceLiveBar" class="presence-livebar" aria-live="polite"><div class="presence-livebar-inner"><span class="live-dot" aria-hidden="true"></span><strong>👥 <span data-presence-total>0</span> here now</strong><span class="live-sep">•</span><span class="live-detail">🌎 <span data-presence-countries>Connecting…</span></span><span class="live-sep">•</span><span class="live-detail">🇺🇸 <span data-presence-states>U.S. activity loading…</span></span><span class="live-privacy">🔒 Approximate location only</span></div></div><section class="safety"><b>Friendly safety note:</b> We curate links and public streams, but third-party providers control their own content and availability. Keep your device/browser updated, use your normal security protections, and never enter sensitive information into an unfamiliar third-party site.</section><footer class="footer">Free TV & Radio is an independent directory and player interface. Provider names, trademarks and programming belong to their respective owners. We do not promise uninterrupted or buffer-free playback because third-party streams and internet connections vary. <b>Terms • Privacy • Safety</b></footer></main><div id="mini" class="mini"></div>
 <!-- JavaScript interaction fix verified -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2"></script><script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.15/dist/hls.min.js"></script>
 <script>
@@ -483,7 +516,7 @@ function startPresence(){
 }
 function home(){return `<div class="hero hub-hero"><div><span class="badge">YOUR FREE ENTERTAINMENT HUB</span><h1>TV. Radio. Web. All in one place.</h1><p>Think Roku box meets radio receiver: one universal guide, one persistent player, and your favorite free services organized around the experience—not a pile of links.</p></div><div class="hero-actions"><button type="button" class="primary big" data-open-guide data-tab="tv" onclick="setTab('tv');return false;">📺 Watch Live TV</button><button class="secondary big" data-radio-menu>📻 Listen to Radio</button></div></div><div class="section"><div><h2>🎛️ Everything starts here</h2><span class="muted">Choose an experience, then stay inside Free TV & Radio.</span></div></div><div class="grid hub-cards"><article class="card"><div class="logo">📺</div><h3>Live TV Guide</h3><p>Scroll channels like a television guide. Choose a channel and keep watching in the persistent player.</p><div class="actions"><button type="button" class="primary" data-open-guide data-tab="tv" onclick="setTab('tv');return false;">Open Guide</button></div></article><article class="card"><div class="logo">📻</div><h3>Radio</h3><p>Live stations, local radio, music, talk, news and internet radio with the same simple player.</p><div class="actions"><button class="primary" data-radio-menu>Open Radio</button></div></article><article class="card"><div class="logo">📱</div><h3>Streaming Apps</h3><p>Roku Channel, Pluto, Tubi, Plex, PBS, STIRR, YouTube and Sling organized in one app shelf.</p><div class="actions"><button class="primary" data-tab="apps">Browse Apps</button></div></article></div><section class="presence-card" aria-live="polite">
   <div class="presence-head">
-    <div><div class="presence-count">👥 <span data-presence-total>0</span> watching/listening now</div><div class="presence-sub">Approximate active Free TV & Radio players • no exact locations shown</div></div>
+    <div><div class="presence-count">👥 <span data-presence-total>0</span> people here now</div><div class="presence-sub">People currently using Free TV & Radio • approximate region only</div></div>
     <span class="badge">🌎 PRIVACY-SAFE</span>
   </div>
   <div class="presence-grid">
