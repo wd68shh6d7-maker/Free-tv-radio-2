@@ -542,7 +542,7 @@ function appsView(){
   ['Fandango at Home','Fandango','https://athome.fandango.com/','🍿','TV'],
   ['iHeartRadio','iHeart','https://www.iheart.com/live/','❤️','RADIO'],
   ['TuneIn','TuneIn','https://tunein.com/radio/home/','🎙️','RADIO'],
-  ['KXGR GraceFM','GraceFM','https://kxgr.com/','✝️','RADIO']
+  ['KXGR GraceFM','GraceFM','https://calvaryco.church/gracefm','✝️','RADIO']
  ];
  const saved=JSON.parse(localStorage.getItem('ftvr2-my-apps')||'[]');
  const addApp=(name)=>{const a=apps.find(x=>x[0]===name);if(a&&!saved.includes(name)){saved.push(name);localStorage.setItem('ftvr2-my-apps',JSON.stringify(saved));render()}};
