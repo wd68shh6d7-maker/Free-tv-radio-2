@@ -595,7 +595,7 @@ function appsView(){
  const tvApps=apps.filter(x=>x[4]==='TV'), radioApps=apps.filter(x=>x[4]==='RADIO');
  return '<div class="section"><div><h2>📱 Apps</h2><span class="muted">One hub • one provider tab • switch services without opening a pile of tabs</span></div><span class="badge">'+apps.length+' APPS</span></div>'+
  (providerWindowUrl?'<div class="app-dock"><div><strong>▶ '+esc(appTitle||'Provider App')+'</strong><span class="muted"> is open in your single provider tab.</span></div><div class="actions"><button class="primary" data-focus-provider>↗ Return to App</button><button class="secondary" data-close-app-room>✕ Close App</button></div></div>':'')+
- '<div class="notice"><b>One front door.</b> Free TV & Radio stays in this hub while one reusable provider tab handles services that require the provider’s own player. Choose another app and that same provider tab is reused.</div>'+
+ '<div class="notice"><b>One front door.</b> Free TV & Radio stays your home base. When you open an app such as Pluto TV, it opens in this tab so your browser Back button/gesture returns you to the Apps shelf without closing the website.</div>'+
  (shelf.length?'<div class="section"><h2>⭐ My Apps</h2><span class="muted">Saved on this device</span></div><div class="grid">'+shelf.map(cardHtml).join('')+'</div>':'')+
  '<div class="section"><h2>📺 TV Apps</h2><span class="muted">Live TV + free on-demand where offered</span></div><div class="grid">'+tvApps.map(cardHtml).join('')+'</div>'+
  '<div class="section"><h2>📻 Radio Apps</h2><span class="muted">Live radio, music, news and podcasts</span></div><div class="grid">'+radioApps.map(cardHtml).join('')+'</div>'+
@@ -827,18 +827,14 @@ function openAppInHub(url,title){
  tab='apps';
  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab==='apps'));
  render();
- // Reuse one named provider tab instead of creating a new tab for every app.
- // The Free TV & Radio hub stays open in its own tab.
+ // Final navigation polish: open the provider in THIS tab.
+ // The browser Back button/gesture then returns directly to the Apps shelf,
+ // instead of leaving the user stranded in a separate provider tab.
  try{
-  if(!providerWindow||providerWindow.closed){
-    providerWindow=window.open(u,'ftvr_provider_app');
-  }else{
-    providerWindow.location.href=u;
-    providerWindow.focus();
-  }
- }catch(_){}
- if(!providerWindow){
-  webQuery=u;webStatus='POPUP BLOCKED • Allow one app tab for provider playback.';render();
+  sessionStorage.setItem('ftvr2-return-tab','apps');
+  window.location.href=u;
+ }catch(_){
+  window.open(u,'_self');
  }
 }
 function closeAppInHub(){
