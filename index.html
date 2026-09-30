@@ -47,7 +47,7 @@ body{font-size:1rem}
  .guide-foot span:nth-child(2){display:none}
 }
 </style><style>
-.radio-country-bar{display:flex;gap:7px;overflow-x:auto;padding:6px 0 10px;scrollbar-width:thin}.radio-country-label{font-size:.72rem;font-weight:800;color:#8f9db5;text-transform:uppercase;letter-spacing:.08em;margin:7px 0 3px}.radio-state-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;max-height:180px;overflow:auto;padding:3px 0 9px}.radio-state{min-height:38px;border:1px solid var(--line);background:#0e192c;color:#dce5f4;border-radius:9px;padding:7px 6px;font-weight:650;font-size:.76rem}.radio-state.active{background:#fff;color:#07101f;border-color:#fff}@media(min-width:700px){.radio-state-grid{grid-template-columns:repeat(6,minmax(0,1fr));max-height:210px}}
+.presence-card{margin:18px 0;border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,#101b30,#0b1526);padding:16px}.presence-head{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}.presence-count{font-size:1.35rem;font-weight:900}.presence-sub{color:var(--muted);font-size:.86rem}.presence-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.presence-list{border:1px solid var(--line);border-radius:13px;background:#0a1423;padding:12px}.presence-list h3{font-size:.92rem;margin:0 0 8px}.presence-row{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid #18263a;font-size:.86rem}.presence-row:first-child{border-top:0}.presence-row span:last-child{font-weight:850}.presence-empty{color:var(--muted);font-size:.84rem}@media(max-width:760px){.presence-grid{grid-template-columns:1fr}}.radio-country-bar{display:flex;gap:7px;overflow-x:auto;padding:6px 0 10px;scrollbar-width:thin}.radio-country-label{font-size:.72rem;font-weight:800;color:#8f9db5;text-transform:uppercase;letter-spacing:.08em;margin:7px 0 3px}.radio-state-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;max-height:180px;overflow:auto;padding:3px 0 9px}.radio-state{min-height:38px;border:1px solid var(--line);background:#0e192c;color:#dce5f4;border-radius:9px;padding:7px 6px;font-weight:650;font-size:.76rem}.radio-state.active{background:#fff;color:#07101f;border-color:#fff}@media(min-width:700px){.radio-state-grid{grid-template-columns:repeat(6,minmax(0,1fr));max-height:210px}}
 .radio-country{white-space:nowrap;border:1px solid var(--line);background:#0e192c;color:#dce5f4;border-radius:999px;padding:9px 12px;min-height:42px;font-weight:700}
 .radio-country.active{background:#fff;color:#07101f;border-color:#fff}
 .radio-search{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin:8px 0}
@@ -97,6 +97,14 @@ const app=document.getElementById('app');
 let authUser=null;
 let favorites=[];
 let posts=[];
+let current=null;
+let presenceStats={total:0,tv:0,radio:0,countries:[],us_states:[]};
+let presenceSessionId=localStorage.getItem('ftvr2-presence-session')||'';
+if(!presenceSessionId){
+  presenceSessionId=(crypto?.randomUUID?.()||('ftvr2-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
+  localStorage.setItem('ftvr2-presence-session',presenceSessionId);
+}
+let presenceTimer=null;
 
 const national=[
  {id:'abc-news',name:'ABC News Live',network:'ABC',category:'News',scope:'Nationwide • direct HLS',stream:'https://aegis-cloudfront-1.tubi.video/d6cbb0de-68e4-4f3b-82f9-bf5d526e0bde/index.m3u8',kind:'stream',playable:true,sourceLabel:'ABC News Live direct HLS'},
@@ -413,15 +421,53 @@ function showPlayer(x){
   const isRadio=x.kind==='radio'||x.kind==='radio-direct';
   if(!isRadio)tab='tv'; document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   const mini=document.getElementById('mini'); if(mini.querySelector('#mainPlayer')){mini.innerHTML='';mini.classList.remove('show')}
-  const dock=document.getElementById('playerDock');dock.innerHTML=playerShell(x);dock.classList.add('show');current=x;render();mountPlayer(x);window.scrollTo({top:0,behavior:'smooth'});
+  const dock=document.getElementById('playerDock');dock.innerHTML=playerShell(x);dock.classList.add('show');current=x;render();mountPlayer(x);heartbeatPresence();window.scrollTo({top:0,behavior:'smooth'});
 }
 function minimizePlayer(){const main=document.getElementById('mainPlayer');if(!main)return;const mini=document.getElementById('mini');mini.innerHTML='';mini.appendChild(main);main.classList.add('mini-mode');mini.classList.add('show');document.getElementById('playerDock').classList.remove('show')}
 function restorePlayer(){const mini=document.getElementById('mini');const main=mini.querySelector('#mainPlayer');if(!main)return;document.getElementById('playerDock').appendChild(main);main.classList.remove('mini-mode');mini.classList.remove('show');document.getElementById('playerDock').classList.add('show');window.scrollTo({top:0,behavior:'smooth'})}
-function closePlayer(){const mini=document.getElementById('mini');mini.innerHTML='';mini.classList.remove('show');document.getElementById('playerDock').innerHTML='';document.getElementById('playerDock').classList.remove('show');current=null}
+function closePlayer(){const mini=document.getElementById('mini');mini.innerHTML='';mini.classList.remove('show');document.getElementById('playerDock').innerHTML='';document.getElementById('playerDock').classList.remove('show');current=null;heartbeatPresence()}
 function toggleFullscreen(){const main=document.getElementById('mainPlayer')||document.querySelector('#mini #mainPlayer');if(!main)return;if(document.fullscreenElement){document.exitFullscreen?.()}else{(main.querySelector('iframe')||main).requestFullscreen?.()}}
 function surf(delta){const pool=(current?.kind==='radio'||current?.kind==='radio-direct')?radioRows():guideRows();if(!pool.length)return;const i=pool.findIndex(a=>a.id===current?.id);const base=i<0?(delta>0?0:pool.length-1):i;const next=Math.min(pool.length-1,Math.max(0,base+delta));if(next!==i){const item=pool[next];if(item.type==='directory'||(item.kind==='web'&&!item.stream)){showPlayer(item)}else showPlayer(item)}}
 
-function home(){return `<div class="hero hub-hero"><div><span class="badge">YOUR FREE ENTERTAINMENT HUB</span><h1>TV. Radio. Web. All in one place.</h1><p>Think Roku box meets radio receiver: one universal guide, one persistent player, and your favorite free services organized around the experience—not a pile of links.</p></div><div class="hero-actions"><button type="button" class="primary big" data-open-guide data-tab="tv" onclick="setTab('tv');return false;">📺 Watch Live TV</button><button class="secondary big" data-radio-menu>📻 Listen to Radio</button></div></div><div class="section"><div><h2>🎛️ Everything starts here</h2><span class="muted">Choose an experience, then stay inside Free TV & Radio.</span></div></div><div class="grid hub-cards"><article class="card"><div class="logo">📺</div><h3>Live TV Guide</h3><p>Scroll channels like a television guide. Choose a channel and keep watching in the persistent player.</p><div class="actions"><button type="button" class="primary" data-open-guide data-tab="tv" onclick="setTab('tv');return false;">Open Guide</button></div></article><article class="card"><div class="logo">📻</div><h3>Radio</h3><p>Live stations, local radio, music, talk, news and internet radio with the same simple player.</p><div class="actions"><button class="primary" data-radio-menu>Open Radio</button></div></article><article class="card"><div class="logo">📱</div><h3>Streaming Apps</h3><p>Roku Channel, Pluto, Tubi, Plex, PBS, STIRR, YouTube and Sling organized in one app shelf.</p><div class="actions"><button class="primary" data-tab="apps">Browse Apps</button></div></article></div><div class="section"><div><h2>⭐ Featured Resources</h2><span class="muted">Easy-to-find public resources</span></div></div><div class="grid featured-resources"><article class="card"><div class="logo">🎙️</div><h3>Alex Jones Live</h3><p>Open the official Alex Jones Live show page in its own browser tab.</p><div class="actions"><button class="primary" data-open-resource="alex">Open Alex Jones Live</button></div></article><article class="card"><div class="logo">🏞️</div><h3>California’s Gold</h3><p>Explore Huell Howser’s California’s Gold archive presented by Chapman University.</p><div class="actions"><button class="primary" data-open-resource="gold">Open California’s Gold</button></div></article><article class="card"><div class="logo">📖</div><h3>Blue Letter Bible</h3><p>Open Bible reading, searching and study tools in its own browser tab.</p><div class="actions"><button class="primary" data-open-resource="bible">Open Blue Letter Bible</button></div></article></div><div class="section"><h2>▶️ Jump back in</h2><span class="muted">Playable channels available now</span></div><div class="grid">${allTV.filter(x=>x.playable).slice(0,8).map(card).join('')}</div><div class="notice"><b>The rule:</b> a channel belongs in the playable guide only when we have a real stream or verified in-app playback route. Provider names are never used as a substitute for playback.</div>`}
+const PRESENCE_COUNTRIES={US:'United States',CA:'Canada',GB:'United Kingdom',AU:'Australia',NZ:'New Zealand',MX:'Mexico',BR:'Brazil',DE:'Germany',FR:'France',IT:'Italy',ES:'Spain',IE:'Ireland',NL:'Netherlands',SE:'Sweden',NO:'Norway',DK:'Denmark',FI:'Finland',IN:'India',JP:'Japan',KR:'South Korea',PH:'Philippines',ZA:'South Africa'};
+const US_STATES={AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',DE:'Delaware',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming',DC:'District of Columbia'};
+function presenceMode(){if(!current)return 'site';return (current.kind==='radio'||current.kind==='radio-direct')?'radio':'tv'}
+function renderPresenceStats(){
+ const total=document.querySelector('[data-presence-total]');if(total)total.textContent=String(presenceStats.total||0);
+ const countries=document.querySelector('[data-presence-countries]');
+ if(countries){
+  const rows=(presenceStats.countries||[]).map(x=>'<div class="presence-row"><span>'+esc(PRESENCE_COUNTRIES[x.code]||x.code||'Other')+'</span><span>'+Number(x.count||0)+'</span></div>').join('');
+  countries.innerHTML=rows||'<div class="presence-empty">No active viewers/listeners yet.</div>';
+ }
+ const states=document.querySelector('[data-presence-states']);
+ if(states){
+  const rows=(presenceStats.us_states||[]).map(x=>'<div class="presence-row"><span>'+esc(US_STATES[x.code]||x.code||'Other U.S. region')+'</span><span>'+Number(x.count||0)+'</span></div>').join('');
+  states.innerHTML=rows||'<div class="presence-empty">No active U.S. viewers yet.</div>';
+ }
+}
+async function heartbeatPresence(){
+ try{
+  const res=await fetch('/api/presence',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:presenceSessionId,mode:presenceMode()})});
+  if(!res.ok)return;
+  const data=await res.json();presenceStats=data||presenceStats;renderPresenceStats();
+ }catch(_){}
+}
+function startPresence(){
+ if(presenceTimer)clearInterval(presenceTimer);
+ heartbeatPresence();
+ presenceTimer=setInterval(heartbeatPresence,45000);
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')heartbeatPresence()});
+}
+function home(){return `<div class="hero hub-hero"><div><span class="badge">YOUR FREE ENTERTAINMENT HUB</span><h1>TV. Radio. Web. All in one place.</h1><p>Think Roku box meets radio receiver: one universal guide, one persistent player, and your favorite free services organized around the experience—not a pile of links.</p></div><div class="hero-actions"><button type="button" class="primary big" data-open-guide data-tab="tv" onclick="setTab('tv');return false;">📺 Watch Live TV</button><button class="secondary big" data-radio-menu>📻 Listen to Radio</button></div></div><div class="section"><div><h2>🎛️ Everything starts here</h2><span class="muted">Choose an experience, then stay inside Free TV & Radio.</span></div></div><div class="grid hub-cards"><article class="card"><div class="logo">📺</div><h3>Live TV Guide</h3><p>Scroll channels like a television guide. Choose a channel and keep watching in the persistent player.</p><div class="actions"><button type="button" class="primary" data-open-guide data-tab="tv" onclick="setTab('tv');return false;">Open Guide</button></div></article><article class="card"><div class="logo">📻</div><h3>Radio</h3><p>Live stations, local radio, music, talk, news and internet radio with the same simple player.</p><div class="actions"><button class="primary" data-radio-menu>Open Radio</button></div></article><article class="card"><div class="logo">📱</div><h3>Streaming Apps</h3><p>Roku Channel, Pluto, Tubi, Plex, PBS, STIRR, YouTube and Sling organized in one app shelf.</p><div class="actions"><button class="primary" data-tab="apps">Browse Apps</button></div></article></div><section class="presence-card" aria-live="polite">
+  <div class="presence-head">
+    <div><div class="presence-count">👥 <span data-presence-total>0</span> watching/listening now</div><div class="presence-sub">Approximate active Free TV & Radio players • no exact locations shown</div></div>
+    <span class="badge">🌎 PRIVACY-SAFE</span>
+  </div>
+  <div class="presence-grid">
+    <div class="presence-list"><h3>🌎 Countries</h3><div data-presence-countries><div class="presence-empty">Waiting for live activity…</div></div></div>
+    <div class="presence-list"><h3>🇺🇸 U.S. States</h3><div data-presence-states><div class="presence-empty">U.S. state activity will appear here.</div></div></div>
+  </div>
+</section><div class="section"><div><h2>⭐ Featured Resources</h2><span class="muted">Easy-to-find public resources</span></div></div><div class="grid featured-resources"><article class="card"><div class="logo">🎙️</div><h3>Alex Jones Live</h3><p>Open the official Alex Jones Live show page in its own browser tab.</p><div class="actions"><button class="primary" data-open-resource="alex">Open Alex Jones Live</button></div></article><article class="card"><div class="logo">🏞️</div><h3>California’s Gold</h3><p>Explore Huell Howser’s California’s Gold archive presented by Chapman University.</p><div class="actions"><button class="primary" data-open-resource="gold">Open California’s Gold</button></div></article><article class="card"><div class="logo">📖</div><h3>Blue Letter Bible</h3><p>Open Bible reading, searching and study tools in its own browser tab.</p><div class="actions"><button class="primary" data-open-resource="bible">Open Blue Letter Bible</button></div></article></div><div class="section"><h2>▶️ Jump back in</h2><span class="muted">Playable channels available now</span></div><div class="grid">${allTV.filter(x=>x.playable).slice(0,8).map(card).join('')}</div><div class="notice"><b>The rule:</b> a channel belongs in the playable guide only when we have a real stream or verified in-app playback route. Provider names are never used as a substitute for playback.</div>`}
 const providerGuides=[
  {id:'sling',name:'Sling Freestream',network:'Sling',count:'650+ free channels',url:'https://watch.sling.com/',note:'Free • no account required'},
  {id:'pluto',name:'Pluto TV',network:'Pluto TV',count:'Hundreds of live channels',url:'https://pluto.tv/us/watch/live-tv/',note:'Free • official live guide'},
@@ -951,6 +997,6 @@ document.addEventListener('change',e=>{
  else if(v.startsWith('provider:')){setTab('tv');app.innerHTML=providerView(v.slice(9))}
  jump.value='';
 });
-render();initAuth();checkPasswordRecovery();
+render();initAuth();checkPasswordRecovery();startPresence();
 </script>
 </body></html>
