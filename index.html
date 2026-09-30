@@ -700,6 +700,16 @@ function information(){return `
 
 <div class="info-card"><h3>🆘 If something does not work</h3><ol><li>Try the channel or station again.</li><li>Try another source if one is offered.</li><li>If the problem is with a provider app or website, that provider may need to resolve it.</li><li>For a Free TV & Radio feature that is broken, use the site's Help/Report option when available.</li></ol></div>`}
 
+
+function speakSiteText(text){
+ const s=String(text||'').trim();
+ if(!s||!('speechSynthesis' in window)){alert('Your device/browser does not provide built-in speech for this page.');return}
+ window.speechSynthesis.cancel();
+ const u=new SpeechSynthesisUtterance(s);
+ u.lang='en-US';u.rate=.95;u.pitch=1;
+ window.speechSynthesis.speak(u);
+}
+
 function announcements(){return `
 <div class="section"><div><h2>📣 Announcements</h2><span class="muted">What we're building • how Nora will help • how Rooms stay welcoming</span></div><span class="badge">BUILDING TOGETHER</span></div>
 
@@ -739,6 +749,19 @@ function announcements(){return `
 <li><b>Minors:</b> stronger safeguards should apply whenever children or teens may be present.</li>
 </ul>
 <p class="muted">Final community rules, moderation procedures, privacy practices, and legal requirements will be reviewed before Rooms are opened broadly.</p></div>
+
+<div class="info-card"><h3>📚 Free Reading & Listening — Our Online Lounge</h3>
+<p>Want to relax with the TV or radio playing in the background? You can also read a book or listen to an audiobook. We've researched several established free-book resources and are starting with services that clearly focus on public-domain or open-access material.</p>
+<div class="grid">
+<article class="card"><div class="logo">📖</div><h3>Project Gutenberg</h3><p>Free ebooks you can read online or download, with a strong focus on older works whose U.S. copyrights have expired.</p><div class="actions"><a class="primary" href="https://www.gutenberg.org/" target="_blank" rel="noopener noreferrer">Read / Download</a></div></article>
+<article class="card"><div class="logo">🎧</div><h3>LibriVox</h3><p>Free public-domain audiobooks read by volunteers. Listen online or use the available audio options.</p><div class="actions"><a class="primary" href="https://librivox.org/" target="_blank" rel="noopener noreferrer">Listen</a></div></article>
+<article class="card"><div class="logo">📚</div><h3>Standard Ebooks</h3><p>Carefully formatted, accessible public-domain ebooks designed for modern phones, browsers, and e-readers.</p><div class="actions"><a class="primary" href="https://standardebooks.org/" target="_blank" rel="noopener noreferrer">Read</a></div></article>
+<article class="card"><div class="logo">🏛️</div><h3>Open Library</h3><p>An online library that can connect readers with books to read or borrow and with trusted open-access book providers.</p><div class="actions"><a class="primary" href="https://openlibrary.org/" target="_blank" rel="noopener noreferrer">Visit Library</a></div></article>
+</div>
+<div class="notice"><b>🎧 Listen to this announcement</b><br>Use your phone or computer's built-in voice to hear this short explanation. No audio file has to be stored on our servers.</div>
+<div id="readingListeningText" class="hidden">Free Reading and Listening is part of our online lounge. While you relax with Free TV and Radio, you can also read a book or listen to an audiobook. Project Gutenberg offers free ebooks to read online or download, LibriVox offers free public-domain audiobooks, Standard Ebooks provides carefully formatted public-domain ebooks, and Open Library connects readers with books and trusted open-access providers. We do not list WeLib as an official resource because we are choosing to avoid services surrounded by significant copyright or legal controversy. We will continue checking resources before adding them to our official list.</div>
+<div class="actions"><button class="primary" data-listen-reading>🎧 Listen</button><button class="secondary" data-stop-reading>⏹ Stop</button></div>
+</div>
 
 <div class="info-card"><h3>📘 Our Step-by-Step e-Brochures</h3>
 <p>We're planning simple guides for every major area of the website. Each guide will explain one feature in plain language, one step at a time.</p>
@@ -891,6 +914,8 @@ document.getElementById('app').onclick=e=>{
  if(e.target.closest('[data-resend-verification]')){resendVerification();return}
  if(e.target.closest('[data-signout]')){signOutAdmin();return}
  if(e.target.closest('[data-admin-browser]')){if(!isAdmin()){alert('Administrator sign-in is required.');return}let u=document.getElementById('adminWeb').value.trim();if(!u)return;if(!/^https?:\/\//i.test(u)){const query=u;if(webFilter&&isXRatedRequest(query)){alert('Web safety filter blocked this X-rated search.');return}u='https://www.google.com/search?safe=active&q='+encodeURIComponent(query)}window.open(u,'_blank','noopener,noreferrer');return}
+ if(e.target.closest('[data-listen-reading]')){speakSiteText(document.getElementById('readingListeningText')?.textContent||'');return}
+ if(e.target.closest('[data-stop-reading]')){if('speechSynthesis' in window)window.speechSynthesis.cancel();return}
  if(e.target.closest('[data-print-brochure]')){window.print();return}
  if(e.target.closest('[data-guide-jump]')){const id=e.target.closest('[data-guide-jump]').dataset.guideJump;const el=document.getElementById('guide'+id.charAt(0).toUpperCase()+id.slice(1));if(el)el.scrollIntoView({behavior:'smooth',block:'start'});return}
  if(e.target.closest('[data-publish-post]')){publishPost();return}
