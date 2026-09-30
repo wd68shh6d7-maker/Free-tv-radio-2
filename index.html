@@ -433,16 +433,19 @@ const PRESENCE_COUNTRIES={US:'United States',CA:'Canada',GB:'United Kingdom',AU:
 const US_STATE_NAMES={AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',DE:'Delaware',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming',DC:'District of Columbia'};
 function presenceMode(){if(!current)return 'site';return (current.kind==='radio'||current.kind==='radio-direct')?'radio':'tv'}
 function renderPresenceStats(){
- const total=document.querySelector('[data-presence-total]');if(total)total.textContent=String(presenceStats.total||0);
+ const total=document.querySelector('[data-presence-total]');
+ if(total)total.textContent=String(presenceStats.total||0);
  const countries=document.querySelector('[data-presence-countries]');
  if(countries){
-  const rows=(presenceStats.countries||[]).map(x=>'<div class="presence-row"><span>'+esc(PRESENCE_COUNTRIES[x.code]||x.code||'Other')+'</span><span>'+Number(x.count||0)+'</span></div>').join('');
-  countries.innerHTML=rows||'<div class="presence-empty">No active viewers/listeners yet.</div>';
+  countries.innerHTML=(presenceStats.countries||[]).map(function(x){
+   return '<div class="presence-row"><span>'+esc(PRESENCE_COUNTRIES[x.code]||x.code||'Other')+'</span><span>'+Number(x.count||0)+'</span></div>';
+  }).join('')||'<div class="presence-empty">No active viewers/listeners yet.</div>';
  }
- const states=document.querySelector('[data-presence-states']);
+ const states=document.querySelector('[data-presence-states]');
  if(states){
-  const rows=(presenceStats.us_states||[]).map(x=>'<div class="presence-row"><span>'+esc(US_STATE_NAMES[x.code]||x.code||'Other U.S. region')+'</span><span>'+Number(x.count||0)+'</span></div>').join('');
-  states.innerHTML=rows||'<div class="presence-empty">No active U.S. viewers yet.</div>';
+  states.innerHTML=(presenceStats.us_states||[]).map(function(x){
+   return '<div class="presence-row"><span>'+esc(US_STATE_NAMES[x.code]||x.code||'Other U.S. region')+'</span><span>'+Number(x.count||0)+'</span></div>';
+  }).join('')||'<div class="presence-empty">No active U.S. viewers yet.</div>';
  }
 }
 async function heartbeatPresence(){
