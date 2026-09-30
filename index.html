@@ -1059,6 +1059,8 @@ async function roomEnsureMedia(){
   roomLocalStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:{facingMode:'user',width:{ideal:640},height:{ideal:360}}});
   roomMicOn=true;roomCamOn=true;roomUpdateLocalPreview();
   Object.keys(roomPeers).forEach(id=>roomAttachTracks(roomPeers[id]));
+  // Adding tracks after a peer connection was created requires renegotiation.
+  Object.keys(roomPeers).forEach(id=>{if(id!==roomClientId&&roomClientId<id)roomRenegotiatePeer(id)});
   const micBtn=document.querySelector('[data-room-mic]');if(micBtn)micBtn.textContent='🎙️ Mute microphone';
   const camBtn=document.querySelector('[data-room-cam]');if(camBtn)camBtn.textContent='📷 Turn camera off';
   roomSetStatus('Microphone + camera are on. TV playback remains in the player above.',true);
@@ -1104,11 +1106,28 @@ async function roomSignal(msg){
  }
 }
 async function roomOfferToPeer(peerId,peerName){
- if(roomClientId<peerId){await roomMakePeer(peerId,peerName,true)}
+ if(roomClientId>=peerId||!roomLocalStream)return;
+ if(!roomPeers[peerId]){
+  await roomMakePeer(peerId,peerName,true);
+ }else{
+  await roomRenegotiatePeer(peerId);
+ }
 }
 function roomHandlePresenceSync(){
  roomPeopleFromPresence();
- Object.keys(roomParticipants).forEach(id=>{if(id!==roomClientId)roomOfferToPeer(id,roomParticipants[id].name)});
+ Object.keys(roomParticipants).forEach(id=>{
+  if(id!==roomClientId&&roomLocalStream)roomOfferToPeer(id,roomParticipants[id].name);
+ });
+}
+async function roomRenegotiatePeer(peerId){
+ const pc=roomPeers[peerId];if(!pc||!roomLocalStream)return;
+ if(pc.signalingState!=='stable')return;
+ try{
+  roomAttachTracks(pc);
+  const offer=await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  roomSend('signal',{kind:'offer',from:roomClientId,to:peerId,sdp:pc.localDescription});
+ }catch(err){console.error('Room renegotiation error',err)}
 }
 async function startRoomSession(code,name,role){
  if(!supabaseClient){roomSetStatus('Realtime room service is unavailable right now.',false);return false}
@@ -1146,13 +1165,16 @@ async function createRoom(){
  const ok=await startRoomSession(roomCode,roomDisplayName,'host');
  if(ok)await roomEnsureMedia();
  renderRoomOnly();
+ if(ok)roomHandlePresenceSync();
 }
 async function joinRoom(){
  const code=(document.getElementById('roomJoinCode')?.value||roomJoinCode||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
  const name=(document.getElementById('roomJoinName')?.value||'').trim().slice(0,32)||'Guest';
  if(code.length<4){roomSetStatus('Enter the room code first.',false);return}
  roomCode=code;roomJoinCode=code;roomName='Shared Watch Room';roomDisplayName=name;
- await startRoomSession(code,name,'member');renderRoomOnly();
+ const ok=await startRoomSession(code,name,'member');
+ if(ok)await roomEnsureMedia();
+ renderRoomOnly();
 }
 async function leaveRoom(showRooms=true){
  if(roomChannel){try{await roomChannel.untrack()}catch(_){}try{await supabaseClient?.removeChannel(roomChannel)}catch(_){}}
