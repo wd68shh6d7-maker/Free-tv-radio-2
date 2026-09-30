@@ -282,9 +282,9 @@ async function loadFamelackUSGuide(){
   const res=await fetch(FAMELACK_US_GUIDE_URL,{cache:'no-store'});
   if(!res.ok)throw new Error('Famelack dataset returned '+res.status);
   const data=await res.json();
-  const rows=(Array.isArray(data)?data:[]).map(normalizeFamelackChannel);
+  const rows=(Array.isArray(data)?data:[]).map(normalizeFamelackChannel).filter(x=>!isExcludedGuideChannel(x));
   if(!rows.length)throw new Error('Famelack dataset was empty');
-  guideTV=rows.map((x,i)=>({...x,guideNo:i+1,state:'NATIONWIDE'}));
+  guideTV=rows.map((x,i)=>({...x,guideNo:i+1,state:'NATIONWIDE'})).filter(x=>!isExcludedGuideChannel(x));
   // Keep the existing small, verified editorial list as a fallback only; the TV tab now follows
   // the public Famelack U.S. lineup and order.
   if(tab==='tv')render();
@@ -834,7 +834,7 @@ function setTab(t){
  try{render()}catch(err){
   console.error('Free TV & Radio render failed:',err);
   if(t==='tv'){
-   const rows=(guideTV||[]).map(function(x,i){return '<div class="channel-row famelack-row" data-channel-row="'+esc(x.id)+'" data-play="'+esc(x.id)+'" role="button" tabindex="0"><div class="channel-number">'+(i+1)+'</div><div><div class="channel-name">'+esc(x.name)+'</div><div class="meta">'+esc(x.category||'Live TV')+'</div></div><div class="meta source-meta">'+esc(x.network||'Free TV')+'</div><button class="star '+(isFav(x.id)?'on':'')+'" data-fav="'+esc(x.id)+'">'+(isFav(x.id)?'★':'☆')+'</button></div>'}).join('');
+   const rows=guidePool().map(function(x,i){return '<div class="channel-row famelack-row" data-channel-row="'+esc(x.id)+'" data-play="'+esc(x.id)+'" role="button" tabindex="0"><div class="channel-number">'+(i+1)+'</div><div><div class="channel-name">'+esc(x.name)+'</div><div class="meta">'+esc(x.category||'Live TV')+'</div></div><div class="meta source-meta">'+esc(x.network||'Free TV')+'</div><button class="star '+(isFav(x.id)?'on':'')+'" data-fav="'+esc(x.id)+'">'+(isFav(x.id)?'★':'☆')+'</button></div>'}).join('');
    app.innerHTML='<div class="section"><div><h2>📺 Free TV</h2><span class="muted">The guide is opening with the verified lineup.</span></div></div><div class="guide-shell easy-guide-shell"><div class="guide-head"><span>#</span><span>Channel</span><span>Source</span><span>★</span></div><div class="guide-scroll">'+rows+'</div></div>';
    setTimeout(function(){try{render()}catch(e){console.error(e)}},250);
   }else{
