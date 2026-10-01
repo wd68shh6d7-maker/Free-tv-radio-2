@@ -188,6 +188,7 @@ let authUser=null;
 let favorites=[];
 let posts=[];
 let current=null;
+let guideScrollTop=0;
 let presenceStats={total:0,tv:0,radio:0,countries:[],us_states:[]};
 let presenceSessionId=localStorage.getItem('ftvr2-presence-session')||'';
 if(!presenceSessionId){
@@ -508,6 +509,7 @@ function mountPlayer(x){
   else fail('No playable source is currently available for this channel.');
 }
 function showPlayer(x){
+  if(tab==='tv'){const sc=document.getElementById('guideScroll');if(sc)guideScrollTop=sc.scrollTop;}
   const direct=[...(Array.isArray(x.streamCandidates)?x.streamCandidates:[]),x.stream,...resolvePublicStreams(x.name)].filter(Boolean).filter((u,i,a)=>a.indexOf(u)===i);
   if(direct.length&&!['radio','radio-direct'].includes(x.kind))x={...x,kind:'stream',stream:direct[0],streamCandidates:direct,playable:true,sourceLabel:x.provider?('Public live source • '+x.provider):'Public live source'};
   const isRadio=x.kind==='radio'||x.kind==='radio-direct';
@@ -1027,7 +1029,7 @@ function web(){
  return '<div class="section"><div><h2>🌐 Web Browser</h2><span class="muted">Normal websites and searches • X-rated searches blocked</span></div><div class="hero-actions"><span class="badge">SEARCH SAFETY ON</span></div></div><div class="web-shell"><div class="web-rating"><div><strong>🌐 Your web browser</strong><br><span class="muted">Search the web or enter any normal website. It opens in a separate browser tab so sites that block embedded browsers still work. Your Free TV & Radio hub remains open in this tab.</span></div><span class="pill">🛡️ SafeSearch</span></div><div class="web-toolbar"><input id="webQuery" class="search" value="'+esc(webQuery)+'" list="webSuggestions" autocomplete="off" placeholder="Search the web or enter a website…" aria-label="Web search"><datalist id="webSuggestions">'+webSuggestions.map(x=>'<option value="'+esc(x)+'"></option>').join('')+'</datalist><button class="primary" data-web-open>Open</button><button class="secondary" data-web-clear>Clear</button></div><div class="muted" style="margin:6px 0 10px">Start typing for live suggestions — for example, <b>red</b> can suggest Red Cross, Reddit, Red Lobster, Red Bull, and more.</div><div class="web-quick">'+safeSites.map(x=>'<button class="secondary" data-web-quick="'+esc(x[1])+'">'+esc(x[0])+'</button>').join('')+'</div>'+(webStatus?'<div class="web-status '+(webStatus.startsWith('BLOCKED')?'blocked':'allowed')+'">'+esc(webStatus)+'</div>':'')+'<div class="notice"><b>Browser rule:</b> normal website URLs are allowed. Normal searches use Google SafeSearch. Only clearly X-rated search terms are blocked.</div></div>';
 }
 function weather(){return '<div class="section"><div><h2>🌦️ Weather</h2><span class="muted">Official National Weather Service / NOAA</span></div></div><div class="grid"><article class="card"><div class="logo">NWS</div><h3>National Weather Service</h3><p>Official U.S. forecasts, active alerts, forecast maps, radar, satellite and current conditions.</p><div class="actions"><a class="primary" href="https://www.weather.gov/" target="_blank" rel="noopener noreferrer">Open NWS</a><a class="secondary" href="https://radar.weather.gov/" target="_blank" rel="noopener noreferrer">Open Radar</a></div></article></div><div class="notice">Weather information is provided by the National Weather Service. Use your city or ZIP code on NWS for the official local forecast and alerts.</div>'}
-function restoreGuideToCurrent(){if(tab!=='tv'||!current)return;const sc=document.getElementById('guideScroll');const row=sc?.querySelector('[data-channel-row="'+CSS.escape(String(current.id))+'"]');if(!sc||!row)return;const top=row.offsetTop-(sc.clientHeight*0.35);sc.scrollTo({top:Math.max(0,top),behavior:'auto'});}
+function restoreGuideToCurrent(){if(tab!=='tv')return;const sc=document.getElementById('guideScroll');if(!sc)return;if(Number.isFinite(guideScrollTop)&&guideScrollTop>0){sc.scrollTop=guideScrollTop;return}if(!current)return;const row=sc.querySelector('[data-channel-row="'+CSS.escape(String(current.id))+'"]');if(!row)return;const top=row.offsetTop-(sc.clientHeight*0.35);sc.scrollTop=Math.max(0,top);}
 
 function makeRoomCode(){const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let out='';for(let i=0;i<6;i++)out+=chars[Math.floor(Math.random()*chars.length)];return out}
 function roomInviteUrl(){return location.origin+location.pathname+'?room='+encodeURIComponent(roomCode)}
@@ -1229,9 +1231,8 @@ function roomsView(){
  '<div class="room-panel"><h3 style="margin-top:0">Join a room</h3><div class="room-form"><label>Room code<input id="roomJoinCode" value="'+esc(roomJoinCode)+'" placeholder="6-character code"></label><label>Your name<input id="roomJoinName" placeholder="Your name"></label><button class="primary" data-room-join>🚪 Join Room</button></div></div>'+
  '<div class="notice"><b>What we will test:</b> microphone, camera, TV audio, room voice, room video, and whether all three can run together without the TV being stopped by the conversation.</div>';
 }
-function render(){const view=passwordRecovery?passwordRecoveryView():(tab==='home'?home():tab==='info'?information():tab==='tv'?tv():tab==='radio'?radio():tab==='rooms'?roomsView():tab==='apps'?appsView():tab==='nora'?noraView():tab==='reading'?readingRoom():tab==='paid'?paidView():tab==='web'?web():tab==='weather'?weather():tab==='favorites'?favView():tab==='stories'?stories():tab==='gold'?resourceView('gold'):tab==='alex'?resourceView('alex'):tab==='bible'?resourceView('bible'):tab==='maxvelocity'?resourceView('maxvelocity'):tab==='admin'?admin():invite());app.innerHTML=view;if(tab==='tv')requestAnimationFrame(()=>restoreGuideToCurrent());if(tab==='radio'&&!radioCatalog.length&&!radioLoading){loadRadioCatalog()}}
+function render(){const view=passwordRecovery?passwordRecoveryView():(tab==='home'?home():tab==='info'?information():tab==='tv'?tv():tab==='radio'?radio():tab==='rooms'?roomsView():tab==='apps'?appsView():tab==='nora'?noraView():tab==='reading'?readingRoom():tab==='paid'?paidView():tab==='web'?web():tab==='weather'?weather():tab==='favorites'?favView():tab==='stories'?stories():tab==='gold'?resourceView('gold'):tab==='alex'?resourceView('alex'):tab==='bible'?resourceView('bible'):tab==='maxvelocity'?resourceView('maxvelocity'):tab==='admin'?admin():invite());app.innerHTML=view;if(tab==='tv')requestAnimationFrame(()=>{const sc=document.getElementById('guideScroll');if(sc)sc.addEventListener('scroll',()=>{guideScrollTop=sc.scrollTop},{passive:true});restoreGuideToCurrent()});if(tab==='radio'&&!radioCatalog.length&&!radioLoading){loadRadioCatalog()}}
 function setTab(t){
- if(t!=='nora'&&window.noraConversation){noraStopListening()}
  tab=t;
  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
  if(t==='gold'||t==='alex'||t==='bible'||t==='maxvelocity')openResourceWindow(t);
@@ -1261,7 +1262,7 @@ window.addEventListener('hashchange',handleRouteHash);
 
 document.getElementById('app').onclick=async e=>{
  const noraInfo=e.target.closest('[data-nora-info]');if(noraInfo){setTab('info');return}
- const noraAsk=e.target.closest('[data-nora-ask]');if(noraAsk){const v=(document.getElementById('noraQuestion')?.value||'').trim();if(!v)return;window.noraConversation=false;window.noraLastAnswer=noraCommand(v);render();speakNora(window.noraLastAnswer);setTimeout(()=>{document.getElementById('noraQuestion')?.focus()},0);return}
+ const noraAsk=e.target.closest('[data-nora-ask]');if(noraAsk){const v=(document.getElementById('noraQuestion')?.value||'').trim();if(!v)return;window.noraConversation=false;window.noraLastAnswer=noraCommand(v);render();setTimeout(()=>{document.getElementById('noraQuestion')?.focus()},0);return}
  const openResourceLive=e.target.closest('[data-open-resource-live]');if(openResourceLive){openResourceLive(openResourceLive.dataset.openResourceLive);return} const openResource=e.target.closest('[data-open-resource]');if(openResource){openResourceWindow(openResource.dataset.openResource);return}
  const focusApp=e.target.closest('[data-focus-provider]');if(focusApp){if(!focusProviderApp()&&providerWindowUrl){openAppInHub(providerWindowUrl,appTitle||'Streaming App')}return}
  const closeApp=e.target.closest('[data-close-app-room]');if(closeApp){closeAppInHub();return}
