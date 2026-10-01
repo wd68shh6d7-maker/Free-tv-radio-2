@@ -1349,17 +1349,42 @@ function setTab(t){
   }
  }
  }
-document.getElementById('nav').onclick=e=>{const b=e.target.closest('[data-tab]');if(b)setTab(b.dataset.tab)}
-// iPhone/iPad touch fallback: route the TV entry points on pointerup as well as click.
+function bindLoungeNavigation(){
+ const buttons=nav?nav.querySelectorAll('[data-tab]'):[];
+ let lastNavActivation=0;
+ const activate=(e)=>{
+  const b=e.currentTarget;
+  if(!b||!b.dataset.tab)return;
+  const now=Date.now();
+  if(now-lastNavActivation<300)return;
+  lastNavActivation=now;
+  e.preventDefault();
+  e.stopPropagation();
+  setTab(b.dataset.tab);
+ };
+ buttons.forEach(b=>{
+  b.addEventListener('pointerup',activate,{passive:false});
+  b.addEventListener('touchend',activate,{passive:false});
+  b.addEventListener('click',activate);
+ });
+}
+window.setTab=setTab;
+bindLoungeNavigation();
+// Capture fallback for controls created inside the page (including iPhone/iPad touch events).
 document.addEventListener('pointerup',e=>{
  if(e.pointerType!=='touch'&&e.pointerType!=='pen')return;
  const t=e.target.closest?.('[data-tab]');
- if(t){e.preventDefault();setTab(t.dataset.tab);return}
+ if(t&&!t.closest('#nav')){e.preventDefault();setTab(t.dataset.tab);return}
  const og=e.target.closest?.('[data-open-guide]');
  if(og){e.preventDefault();setTab('tv');return}
 },{capture:true});
-
-document.addEventListener('click',e=>{const t=e.target;const b=t.closest('[data-tab]');if(b){setTab(b.dataset.tab);return}const og=t.closest('[data-open-guide]');if(og){setTab('tv');return}},{capture:true});
+document.addEventListener('click',e=>{
+ const t=e.target;
+ const b=t.closest?.('[data-tab]');
+ if(b&&!b.closest('#nav')){setTab(b.dataset.tab);return}
+ const og=t.closest?.('[data-open-guide]');
+ if(og){setTab('tv');return}
+},{capture:true});
 // Native hash fallback: even if an iOS touch/click event is swallowed, #tv still opens the guide.
 function handleRouteHash(){if(location.hash==='#tv')setTab('tv');}
 window.addEventListener('hashchange',handleRouteHash);
@@ -1388,7 +1413,7 @@ document.getElementById('app').onclick=async e=>{
  if(e.target.closest('[data-provider-info]')){return}
  const back=e.target.closest('[data-back-guide]');if(back){setTab('tv');return}
  const providerCard=e.target.closest('[data-provider-id]');if(providerCard){setTab('tv');app.innerHTML=providerView(providerCard.dataset.providerId);return}
- const playerJump=e.target.closest('[data-player-jump]');if(playerJump){const v=jump.value||'';if(v.startsWith('tv:')){const item=guideRows().find(a=>a.id===v.slice(3));if(item)showPlayer(item)}else if(v.startsWith('radio:')){const item=stations.find(a=>a.id===v.slice(6));if(item)showPlayer(item)}else if(v.startsWith('provider:')){setTab('tv');app.innerHTML=providerView(v.slice(9));}return}
+ const playerJump=e.target.closest('[data-player-jump]');if(playerJump){const v=playerJump.value||'';if(v.startsWith('tv:')){const item=guideRows().find(a=>a.id===v.slice(3));if(item)showPlayer(item)}else if(v.startsWith('radio:')){const item=stations.find(a=>a.id===v.slice(6));if(item)showPlayer(item)}else if(v.startsWith('provider:')){setTab('tv');app.innerHTML=providerView(v.slice(9));}return}
  const providerOpen=e.target.closest('[data-open-provider]');if(providerOpen){const sel=document.getElementById('providerSelect');const p=providerGuides.find(x=>x.id===(sel?.value||'sling'))||providerGuides[0];openAppInHub(p.url,p.name);return}
  if(e.target.closest('[data-open-external]')){const b=e.target.closest('[data-open-external]');if(b.dataset.openExternal)window.open(b.dataset.openExternal,'_blank','noopener,noreferrer');return} if(e.target.closest('[data-open-provider-app]')){const b=e.target.closest('[data-open-provider-app]');if(b.dataset.openProviderApp)openAppInHub(b.dataset.openProviderApp,b.dataset.openProviderTitle||'Streaming App');return}
  if(e.target.closest('[data-open-app]')){const b=e.target.closest('[data-open-app]');openAppInHub(b.dataset.openApp,b.dataset.openAppTitle);return} if(e.target.closest('[data-add-app]')){const n=e.target.closest('[data-add-app]').dataset.addApp;const a=JSON.parse(localStorage.getItem('ftvr2-my-apps')||'[]');if(n&&!a.includes(n)){a.push(n);localStorage.setItem('ftvr2-my-apps',JSON.stringify(a));render()}return}
@@ -1478,7 +1503,9 @@ document.addEventListener('change',e=>{
 });
 function handleRoomRoute(){const m=new URLSearchParams(location.search).get('room');if(m){roomJoinCode=String(m).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,12);tab='rooms';}}
 handleRoomRoute();
-render();initAuth();checkPasswordRecovery();startPresence();
+try{startPresence()}catch(err){console.error('Presence startup failed:',err)}
+try{render()}catch(err){console.error('Initial lounge render failed:',err);if(app)app.innerHTML='<div class="notice"><b>The lounge is still loading.</b><br>Please tap Home or another tab to continue.</div>'}
+try{initAuth();checkPasswordRecovery()}catch(err){console.error('Authentication startup failed:',err)}
 if('speechSynthesis' in window){try{speechSynthesis.getVoices()}catch(_){}}
 
 </script>
