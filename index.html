@@ -1340,7 +1340,7 @@ function setTab(t){
    app.innerHTML='<div class="notice"><b>This section could not be displayed.</b> Please try again.</div>';
   }
  }
- if(t==='nora')setTimeout(noraArm,120);
+ if(t==='nora')noraArm();
 }
 document.getElementById('nav').onclick=e=>{const b=e.target.closest('[data-tab]');if(b)setTab(b.dataset.tab)}
 // iPhone/iPad touch fallback: route the TV entry points on pointerup as well as click.
