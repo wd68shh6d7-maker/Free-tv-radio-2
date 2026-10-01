@@ -465,48 +465,45 @@ async function checkPasswordRecovery(){
  }
 }
 
+let favoritesLoadRevision=0;
 async function loadFavorites(){
+  const revision=++favoritesLoadRevision;
   const localFavorites=JSON.parse(localStorage.getItem('ftvr2-favorites')||'[]');
   if(!authUser){favorites=localFavorites;return}
-  const {data,error}=await supabaseClient.from('favorites').select('item_key');
+  const userId=authUser.id;
+  const {data,error}=await supabaseClient.from('favorites').select('item_key,item_type').eq('user_id',userId);
+  if(revision!==favoritesLoadRevision)return;
   if(error){favorites=localFavorites;return}
-  const dbFavorites=(data||[]).map(x=>x.item_key);
-  const owner=localStorage.getItem('ftvr2-favorites-owner');
-  if(!owner||owner===authUser.id){
-    favorites=[...new Set([...dbFavorites,...localFavorites])];
-    localStorage.setItem('ftvr2-favorites',JSON.stringify(favorites));
-    localStorage.setItem('ftvr2-favorites-owner',authUser.id);
-    if(!owner&&localFavorites.length){
-      for(const id of localFavorites){
-        const item=[...allTV,...stations].find(x=>x.id===id);
-        if(item&&!dbFavorites.includes(id)){
-          await supabaseClient.from('favorites').upsert({user_id:authUser.id,item_type:stations.some(x=>x.id===id)?'radio':'tv',item_key:id},{onConflict:'user_id,item_type,item_key'});
-        }
+  const dbFavorites=(data||[]).map(x=>x.item_key).filter(Boolean);
+  const dbSet=new Set(dbFavorites);
+  favorites=[...new Set([...dbFavorites,...localFavorites])];
+  localStorage.setItem('ftvr2-favorites',JSON.stringify(favorites));
+  localStorage.setItem('ftvr2-favorites-owner',userId);
+  for(const id of localFavorites){
+    if(revision!==favoritesLoadRevision)break;
+    if(!dbSet.has(id)){
+      const item=[...allTV,...stations].find(x=>x.id===id);
+      if(item){
+        await supabaseClient.from('favorites').upsert({user_id:userId,item_type:stations.some(x=>x.id===id)?'radio':'tv',item_key:id},{onConflict:'user_id,item_type,item_key'});
       }
     }
-  }else{
-    favorites=dbFavorites;
-    localStorage.setItem('ftvr2-favorites',JSON.stringify(favorites));
-    localStorage.setItem('ftvr2-favorites-owner',authUser.id);
   }
 }
 async function toggleFav(id){
   const was=isFav(id);
-  favorites=was?favorites.filter(x=>x!==id):[...favorites,id];
+  favorites=was?favorites.filter(x=>x!==id):[...new Set([...favorites,id])];
   localStorage.setItem('ftvr2-favorites',JSON.stringify(favorites));
   if(authUser){
     const item=[...allTV,...stations].find(x=>x.id===id);
     if(item){
+      const itemType=stations.some(x=>x.id===id)?'radio':'tv';
       let error=null;
       if(was){
-        ({error}=await supabaseClient.from('favorites').delete().eq('user_id',authUser.id).eq('item_key',id));
+        ({error}=await supabaseClient.from('favorites').delete().eq('user_id',authUser.id).eq('item_type',itemType).eq('item_key',id));
       }else{
-        ({error}=await supabaseClient.from('favorites').upsert({user_id:authUser.id,item_type:stations.some(x=>x.id===id)?'radio':'tv',item_key:id},{onConflict:'user_id,item_type,item_key'}));
+        ({error}=await supabaseClient.from('favorites').upsert({user_id:authUser.id,item_type:itemType,item_key:id},{onConflict:'user_id,item_type,item_key'}));
       }
-      if(error){
-        favorites=was?[...favorites,id]:favorites.filter(x=>x!==id);
-        localStorage.setItem('ftvr2-favorites',JSON.stringify(favorites));
-      }
+      if(error)console.error('Favorite sync failed:',error);
     }
   }
   render()
