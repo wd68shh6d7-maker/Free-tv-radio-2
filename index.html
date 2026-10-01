@@ -690,133 +690,38 @@ function noraAnswerText(q){
  if(/who are you|what are you|nora/.test(x))return 'I’m Nora, the Free TV & Radio helper. I explain the site, help people find features, and point out how the different sections work.';
  return 'I can help with TV, Radio, Apps, Rooms, Reading Room, Favorites, Weather, and general website instructions. Try asking, “How do I open the TV guide?”';
 }
-function noraPreferredVoice(){
- if(!('speechSynthesis' in window))return null;
- const voices=speechSynthesis.getVoices?.()||[];
- const preferred=/samantha|victoria|ava|aria|jenny|zira|allison|serena|karen|libby|susan|moira|fiona|google us english female|microsoft.*female/i;
- return voices.find(v=>/^en(-|_)?US/i.test(v.lang)&&/samantha/i.test(v.name))||
-   voices.find(v=>/^en(-|_)?US/i.test(v.lang)&&/victoria/i.test(v.name))||
-   voices.find(v=>/^en(-|_)?US/i.test(v.lang)&&preferred.test(v.name))||
-   voices.find(v=>/^en(-|_)?US/i.test(v.lang)&&preferred.test(v.voiceURI||''))||
-   voices.find(v=>/^en(-|_)?US/i.test(v.lang))||
-   voices.find(v=>/^en/i.test(v.lang))||null;
-}
-if('speechSynthesis' in window)window.speechSynthesis.onvoiceschanged=()=>{window.noraVoiceReady=true};
-function speakNora(textVal,onDone){
- const msg=String(textVal||'').trim();if(!msg||!('speechSynthesis' in window)){if(typeof onDone==='function')onDone();return}
- speechSynthesis.cancel();
- const u=new SpeechSynthesisUtterance(msg);
- u.lang='en-US';u.rate=.94;u.pitch=1.06;u.volume=1;
- const v=noraPreferredVoice();if(v)u.voice=v;
- u.onend=()=>{if(typeof onDone==='function')onDone()};
- u.onerror=()=>{if(typeof onDone==='function')onDone()};
- speechSynthesis.speak(u);
-}
-function noraRecognitionCtor(){return window.SpeechRecognition||window.webkitSpeechRecognition||null}
-function noraStopListening(){
- window.noraConversation=false;window.noraListening=false;
- if(window.noraRecognition){try{window.noraRecognition.abort()}catch(_){}}
- window.noraRecognition=null;
-}
 function noraCommand(q){
  const x=String(q||'').toLowerCase().trim();
- if(/\b(open|launch|start|go to)\b.*\broku\b/.test(x)||/\broku\b.*\b(open|launch|start)\b/.test(x)){
+ if(/\b(open|launch|start|go to)\b.*\broku\b/.test(x)||\broku\b.*\b(open|launch|start)\b){
    window.noraLastAnswer='Absolutely. Opening The Roku Channel now.';
-   speakNora(window.noraLastAnswer,()=>openAppInHub('https://www.therokuchannel.com/','The Roku Channel'));
+   openAppInHub('https://www.therokuchannel.com/','The Roku Channel');
    return window.noraLastAnswer;
  }
  if(/\b(open|launch|start|go to)\b.*\b(pluto)\b/.test(x)){
    window.noraLastAnswer='Sure. Opening Pluto TV now.';
-   speakNora(window.noraLastAnswer,()=>openAppInHub('https://pluto.tv/us/watch/live-tv/','Pluto TV'));
+   openAppInHub('https://pluto.tv/us/watch/live-tv/','Pluto TV');
    return window.noraLastAnswer;
  }
- if(/\b(open|launch|start|go to)\b.*\b(tubi)\b/.test(x)){
+ if(/\b(open|launch|start|go to)\b.*\btubi\b/.test(x)){
    window.noraLastAnswer='Sure. Opening Tubi now.';
-   speakNora(window.noraLastAnswer,()=>openAppInHub('https://tubitv.com/','Tubi'));
+   openAppInHub('https://tubitv.com/','Tubi');
    return window.noraLastAnswer;
  }
- if(/\b(open|show|go to)\b.*\b(tv|guide|live tv)\b/.test(x)){window.noraLastAnswer='Opening Live TV for you.';setTab('tv');speakNora(window.noraLastAnswer);return window.noraLastAnswer}
- if(/\b(open|show|go to)\b.*\bradio\b/.test(x)){window.noraLastAnswer='Opening Radio for you.';setTab('radio');speakNora(window.noraLastAnswer);return window.noraLastAnswer}
- if(/\b(open|show|go to)\b.*\b(room|rooms)\b/.test(x)){window.noraLastAnswer='Opening Rooms for you.';setTab('rooms');speakNora(window.noraLastAnswer);return window.noraLastAnswer}
- if(/\b(open|show|go to)\b.*\b(reading|books|gutenberg)\b/.test(x)){window.noraLastAnswer='Opening the Reading Room for you.';setTab('reading');speakNora(window.noraLastAnswer);return window.noraLastAnswer}
- if(/\b(open|show|go to)\b.*\b(favorite|favorites)\b/.test(x)){window.noraLastAnswer='Opening your Favorites.';setTab('favorites');speakNora(window.noraLastAnswer);return window.noraLastAnswer}
+ if(/\b(open|show|go to)\b.*\b(tv|guide|live tv)\b/.test(x)){window.noraLastAnswer='Opening Live TV for you.';setTab('tv');return window.noraLastAnswer}
+ if(/\b(open|show|go to)\b.*\bradio\b/.test(x)){window.noraLastAnswer='Opening Radio for you.';setTab('radio');return window.noraLastAnswer}
+ if(/\b(open|show|go to)\b.*\b(room|rooms)\b/.test(x)){window.noraLastAnswer='Opening Rooms for you.';setTab('rooms');return window.noraLastAnswer}
+ if(/\b(open|show|go to)\b.*\b(reading|books|gutenberg)\b/.test(x)){window.noraLastAnswer='Opening the Reading Room for you.';setTab('reading');return window.noraLastAnswer}
+ if(/\b(open|show|go to)\b.*\b(favorite|favorites)\b/.test(x)){window.noraLastAnswer='Opening your Favorites.';setTab('favorites');return window.noraLastAnswer}
  return noraAnswerText(q);
 }
-function noraStartListening(){
- const SR=noraRecognitionCtor();
- if(!SR){window.noraListening=false;window.noraVoiceStatus='Voice recognition is not available in this browser. You can still type to Nora.';render();return false}
- if(window.noraRecognition)return true;
- window.noraListening=true;window.noraVoiceStatus='Listening for “Hey Nora”…';render();
- try{
-  const rec=new SR();window.noraRecognition=rec;rec.lang='en-US';rec.continuous=true;rec.interimResults=false;rec.maxAlternatives=1;
-  rec.onresult=ev=>{
-   const heard=Array.from(ev.results||[]).map(r=>String(r?.[0]?.transcript||'')).join(' ').trim();
-   if(!heard)return;
-   const lower=heard.toLowerCase();
-   window.noraTranscript=heard;
-   const wake=lower.indexOf('hey nora');
-   let command='';
-   if(wake>=0){
-     command=heard.slice(wake+'hey nora'.length).replace(/^[\s,.:;-]+/,'').trim();
-   }else if(window.noraConversation){
-     command=heard.trim();
-   }else{
-     return;
-   }
-   if(!command){
-     window.noraConversation=true;
-     window.noraLastAnswer='Hey, I hear you. What can I help you with?';
-     window.noraVoiceStatus='I’m listening for your request…';
-     render();
-     try{rec.abort()}catch(_){}
-     window.noraRecognition=null;
-     speakNora(window.noraLastAnswer,()=>{if(window.noraConversation)noraStartListening()});
-     return;
-   }
-   window.noraConversation=true;
-   window.noraLastAnswer=noraCommand(command);
-   window.noraVoiceStatus='I heard: '+command;
-   render();
-   try{rec.abort()}catch(_){}
-   window.noraRecognition=null;
-   speakNora(window.noraLastAnswer,()=>{if(window.noraConversation)noraStartListening()});
-  };
-  rec.onerror=ev=>{
-   window.noraRecognition=null;
-   if(ev?.error==='not-allowed'||ev?.error==='service-not-allowed'){window.noraListening=false;window.noraVoiceStatus='Microphone or speech recognition permission is off. Use Safari’s microphone permission and try Nora again.'}
-   else if(ev?.error==='aborted')window.noraVoiceStatus='Nora is ready. Say “Hey Nora.”';
-   else window.noraVoiceStatus='Nora is ready. Say “Hey Nora.”';
-   render();
-  };
-  rec.onend=()=>{
-   window.noraRecognition=null;
-   if(window.noraConversation){
-    window.noraListening=false;
-    setTimeout(()=>{if(window.noraConversation&&!window.noraRecognition)noraStartListening()},250);
-   }else{
-    window.noraListening=false;render();
-   }
-  };
-  rec.start();
-  return true;
- }catch(err){
-  window.noraRecognition=null;window.noraListening=false;window.noraVoiceStatus='Nora could not start the microphone here. You can still type to Nora.';render();return false;
- }
-}
-function noraArm(){
- window.noraConversation=false;window.noraTranscript='';window.noraVoiceStatus='Starting hands-free mode…';
- noraStartListening();
-}
 function noraView(){
- const answer=window.noraLastAnswer||'Hi! I’m Nora. Say “Hey Nora” and I’ll answer you.';
- const listening=!!window.noraListening;
- const status=window.noraVoiceStatus||(listening?'Listening for “Hey Nora”…':'Ready for “Hey Nora”');
- return '<div class="section"><div><h2>🧑‍💻 Nora</h2><span class="muted">Your Free TV & Radio helper</span></div><span class="badge">'+(listening?'NORA IS LISTENING':'NORA IS READY')+'</span></div>'+
- '<div class="nora-live"><div class="nora-live-top"><div class="nora-live-title"><div class="nora-orb '+(listening?'listening':'')+'">👩‍💻</div><div><div class="nora-live-status">'+esc(status)+'<small>Say <b>“Hey Nora”</b> — no Talk button required.</small></div></div></div><button class="secondary" data-nora-info>ℹ️ More Information</button></div><div class="nora-transcript">'+esc(window.noraTranscript||'Nora is standing by.')+'</div><div class="nora-command-note"><b>Try it naturally:</b> “Hey Nora.” → “Hey, I hear you. What can I help you with?” Then say “Open Roku,” “Open Live TV,” “Open Radio,” or ask a question. Nora can act on supported site commands.</div><div class="nora-fallback">If this browser does not provide hands-free speech recognition, use the text box below. Safari supports Web Speech, but browser and iOS versions can differ.</div></div>'+
+ const answer=window.noraLastAnswer||'Hi! I’m Nora. I’m here to help you find your way around Free TV & Radio.';
+ return '<div class="section"><div><h2>🧑‍💻 Nora</h2><span class="muted">Your Free TV & Radio helper</span></div><span class="badge">HERE TO HELP</span></div>'+
+ '<div class="notice"><b>Hi! I’m Nora.</b><br>I’m here to help you find things, explain the site, and take you to supported sections. You can ask me by typing below.</div>'+
  '<div class="nora-chat"><b>💬 Ask Nora</b><div class="nora-chat-form"><input id="noraQuestion" placeholder="Ask Nora something…" autocomplete="off"><button class="primary" data-nora-ask>Ask</button></div><div class="nora-answer" data-nora-answer>'+esc(answer)+'</div></div>'+
- '<div class="section"><div><h2>📌 What you need to know about Nora</h2><span class="muted">Simple rules for the helper</span></div></div>'+
- '<div class="nora-list"><div class="nora-item"><h3>🛠️ Helper, not admin</h3><p>Nora can explain and guide. The site remains under your administration. Nora is not Admin #2.</p></div><div class="nora-item"><h3>📺 TV + Radio help</h3><p>Ask Nora where to find the Live TV guide, Radio, channel favorites, or the player controls.</p></div><div class="nora-item"><h3>👥 Rooms</h3><p>Nora can explain room setup, invitations, microphone/camera permissions, and the TV + conversation test.</p></div><div class="nora-item"><h3>📱 Apps</h3><p>Nora can explain that Pluto, Roku, Tubi, Plex and other providers run on their own websites while Free TV & Radio remains your hub.</p></div><div class="nora-item"><h3>📚 Reading Room</h3><p>Nora can point people to the Reading Room and the official Project Gutenberg source.</p></div><div class="nora-item"><h3>🔒 Privacy & safety</h3><p>Nora does not ask users for passwords, payment information, or private account credentials.</p></div></div>'+
- '<div class="notice"><b>Voice note:</b> Nora now prefers the device’s more natural English voices when they are available. The actual voice is supplied by the device/browser.</div>';
+ '<div class="section"><div><h2>📌 What Nora can help with</h2><span class="muted">Simple, optional help</span></div></div>'+
+ '<div class="nora-list"><div class="nora-item"><h3>🛠️ Helper, not admin</h3><p>Nora can explain and guide. The site remains under your administration. Nora is not Admin #2.</p></div><div class="nora-item"><h3>📺 TV + Radio</h3><p>Ask Nora where to find the Live TV guide, Radio, channel favorites, or player controls.</p></div><div class="nora-item"><h3>👥 Rooms</h3><p>Nora can explain room setup, invitations, and microphone/camera permissions.</p></div><div class="nora-item"><h3>📱 Apps</h3><p>Nora can help you find Pluto, Roku, Tubi, Plex and other provider apps.</p></div><div class="nora-item"><h3>📚 Reading Room</h3><p>Nora can point people to the Reading Room and Project Gutenberg.</p></div></div>'+
+ '<div class="notice"><b>Nora is optional.</b> You never need Nora to use Free TV & Radio. The TV Guide, Radio, Apps, Reading Room, Max Velocity and other sections work on their own.</div>';
 }
 function appsView(){
  const apps=[
@@ -1340,8 +1245,7 @@ function setTab(t){
    app.innerHTML='<div class="notice"><b>This section could not be displayed.</b> Please try again.</div>';
   }
  }
- if(t==='nora')noraArm();
-}
+ }
 document.getElementById('nav').onclick=e=>{const b=e.target.closest('[data-tab]');if(b)setTab(b.dataset.tab)}
 // iPhone/iPad touch fallback: route the TV entry points on pointerup as well as click.
 document.addEventListener('pointerup',e=>{
@@ -1358,8 +1262,6 @@ window.addEventListener('hashchange',handleRouteHash);
 document.getElementById('app').onclick=async e=>{
  const noraInfo=e.target.closest('[data-nora-info]');if(noraInfo){setTab('info');return}
  const noraAsk=e.target.closest('[data-nora-ask]');if(noraAsk){const v=(document.getElementById('noraQuestion')?.value||'').trim();if(!v)return;window.noraConversation=false;window.noraLastAnswer=noraCommand(v);render();speakNora(window.noraLastAnswer);setTimeout(()=>{document.getElementById('noraQuestion')?.focus()},0);return}
- const noraSpeak=e.target.closest('[data-nora-speak]');if(noraSpeak){speakNora(window.noraLastAnswer||'Hey, I’m Nora. What can I help you with?');return}
- const noraMic=e.target.closest('[data-nora-mic]');if(noraMic){noraArm();return}
  const openResourceLive=e.target.closest('[data-open-resource-live]');if(openResourceLive){openResourceLive(openResourceLive.dataset.openResourceLive);return} const openResource=e.target.closest('[data-open-resource]');if(openResource){openResourceWindow(openResource.dataset.openResource);return}
  const focusApp=e.target.closest('[data-focus-provider]');if(focusApp){if(!focusProviderApp()&&providerWindowUrl){openAppInHub(providerWindowUrl,appTitle||'Streaming App')}return}
  const closeApp=e.target.closest('[data-close-app-room]');if(closeApp){closeAppInHub();return}
