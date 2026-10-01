@@ -796,14 +796,13 @@ function freeStreamingView(){
   ['DOCUMENTARY+','DOCUMENTARY+','https://play.xumo.com/live-guide/documentary-plus','📚','Free FAST • documentaries'],
   ['Smithsonian Channel Selects','Smithsonian','https://pluto.tv/us/watch/live-tv/30763/','🏛️','Free FAST • science, history & culture'],
   ['Xumo Play','Xumo','https://play.xumo.com/','📺','350+ free live channels + on-demand'],
-  ['FreeCast','FreeCast','https://freecast.com/channels?ct=free','📡','500+ free streaming channels + on-demand'],
   ['NASA+','NASA','https://plus.nasa.gov/','🚀','Free NASA science, space & live programming']
  ];
  const card=(x)=>'<article class="card"><div class="logo">'+x[3]+'</div><h3>'+esc(x[0])+'</h3><p><b>'+esc(x[1])+'</b> • '+esc(x[4])+'</p><div class="actions"><button class="primary" data-open-app="'+esc(x[2])+'" data-open-app-title="'+esc(x[0])+'">▶ Watch</button></div></article>';
  return '<div class="section"><div><h2>📡 Free Streaming</h2><span class="muted">Curated free services and documentary channels from established providers</span></div><span class="badge">SAFE PICKS</span></div>'+
  '<div class="notice"><b>Our rule:</b> We link to established providers and official services. No pirate streams, suspicious mirrors, forced pop-ups, or intentionally questionable streaming sites.</div>'+
  '<div class="grid">'+services.map(card).join('')+'</div>'+
- '<div class="notice"><b>FreeCast note:</b> FreeCast currently advertises 500+ free streaming channels and free on-demand content. Local broadcast channels are a separate setup that requires an antenna/HDHomeRun, so we do not count those as universally available online channels.</div>';
+ '';
 }
 function appsView(){
  const apps=[
