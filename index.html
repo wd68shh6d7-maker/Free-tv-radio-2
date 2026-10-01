@@ -1353,8 +1353,10 @@ document.getElementById('nav').onclick=e=>{const b=e.target.closest('[data-tab]'
 // iPhone/iPad touch fallback: route the TV entry points on pointerup as well as click.
 document.addEventListener('pointerup',e=>{
  if(e.pointerType!=='touch'&&e.pointerType!=='pen')return;
- const t=e.target.closest?.('[data-open-guide],[data-tab="tv"]');
- if(t)setTab('tv');
+ const t=e.target.closest?.('[data-tab]');
+ if(t){e.preventDefault();setTab(t.dataset.tab);return}
+ const og=e.target.closest?.('[data-open-guide]');
+ if(og){e.preventDefault();setTab('tv');return}
 },{capture:true});
 
 document.addEventListener('click',e=>{const t=e.target;const b=t.closest('[data-tab]');if(b){setTab(b.dataset.tab);return}const og=t.closest('[data-open-guide]');if(og){setTab('tv');return}},{capture:true});
