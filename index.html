@@ -791,10 +791,7 @@ function noraView(){
 }
 function freeStreamingView(){
  const services=[
-  ['Xumo Free Documentaries','Xumo Play','https://play.xumo.com/networks/xumo-free-documentaries/99991392','🎥','Free FAST • documentary programming'],
-  ['DOCUMENTARY+','DOCUMENTARY+','https://play.xumo.com/live-guide/documentary-plus','📚','Free FAST • documentaries'],
   ['Smithsonian Channel Selects','Smithsonian','https://pluto.tv/us/watch/live-tv/30763/','🏛️','Free FAST • science, history & culture'],
-  ['Xumo Play','Xumo','https://play.xumo.com/','📺','350+ free live channels + on-demand'],
   ['NASA+','NASA','https://plus.nasa.gov/','🚀','Free NASA science, space & live programming']
  ];
  const card=(x)=>'<article class="card"><div class="logo">'+x[3]+'</div><h3>'+esc(x[0])+'</h3><p><b>'+esc(x[1])+'</b> • '+esc(x[4])+'</p><div class="actions"><button class="primary" data-open-app="'+esc(x[2])+'" data-open-app-title="'+esc(x[0])+'">▶ Watch</button></div></article>';
