@@ -694,7 +694,7 @@ function noraAnswerText(q){
 }
 function noraCommand(q){
  const x=String(q||'').toLowerCase().trim();
- if(/\b(open|launch|start|go to)\b.*\broku\b/.test(x)||\broku\b.*\b(open|launch|start)\b){
+ if(/\b(open|launch|start|go to)\b.*\broku\b/.test(x)||/\broku\b.*\b(open|launch|start)\b/.test(x)){
    window.noraLastAnswer='Absolutely. Opening The Roku Channel now.';
    openAppInHub('https://www.therokuchannel.com/','The Roku Channel');
    return window.noraLastAnswer;
