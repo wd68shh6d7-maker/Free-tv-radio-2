@@ -1183,7 +1183,7 @@ function musicRoom(){
   const genres=musicGenres();
   return '<div class="section"><div><h2>🎵 Robert &amp; Christina’s Music Room</h2><span class="muted">Your own music library • play while reading or using the Game Room</span></div><span class="badge">'+(admin?'OWNER CONTROLS ON':'LISTENING OPEN TO EVERYONE')+'</span></div>'+
   '<div class="music-hero"><h3>🎶 Our music, organized our way</h3><p>Robert and Christina are the only people who can upload, manage, and organize the music. Everyone else is welcome to listen. Music is stored separately from Live TV and is loaded only when a song is played, so the 200+ song collection does not have to load all at once.</p><p><b>Playlists:</b> make as many playlists as you want for different genres, moods, seasons, favorites, or family collections. The music player stays on the lounge page while you move to Reading Room or Game Room.</p><div class="music-note">📱 <b>Phone, tablet, or computer:</b> the owner upload button opens the device’s normal file picker, so you can choose songs from Files, Finder, Windows folders, or another supported file location. No Suno account is needed for listeners.</div></div>'+
-  (admin?'<div class="music-owner-panel"><div class="music-owner-head"><div><h3>🔐 Owner Music Controls</h3><p>Only authorized Robert/Christina owner accounts can upload or manage files and playlists. Your existing Admin sign-in is used automatically — there is no separate Music Room login.</p></div></div><div class="music-upload-grid"><label>Genre / collection<input id="musicUploadGenre" placeholder="Example: Christian, Country, Christmas"></label><label>Artist (optional)<input id="musicUploadArtist" placeholder="Artist or leave blank"></label></div><input id="musicFileInput" type="file" accept="audio/*,video/mp4" multiple class="hidden"><div class="actions"><button class="primary" data-music-choose-files>📤 Upload Music Files</button><button class="secondary" data-music-new-playlist>➕ Make a Playlist</button></div><div id="musicUploadStatus" class="notice">Choose one or several songs. MP3, M4A, WAV, AAC, FLAC, OGG/Opus, and MP4 audio files are supported. Larger files use resumable upload when supported.</div><div class="music-owner-add"><label>Add Christina as a music owner<input id="musicOwnerEmail" type="email" placeholder="Christina’s website-account email"></label><button class="secondary" data-music-add-owner>Add Owner</button></div></div>':'')+
+  (admin?'<div class="music-owner-panel"><div class="music-owner-head"><div><h3>🔐 Owner Music Controls</h3><p>Only authorized Robert/Christina owner accounts can upload or manage files and playlists. Your existing Admin sign-in is used automatically — there is no separate Music Room login.</p></div></div><div class="music-upload-grid"><label>Genre / collection<input id="musicUploadGenre" placeholder="Example: Christian, Country, Christmas"></label><label>Artist (optional)<input id="musicUploadArtist" placeholder="Artist or leave blank"></label></div><input id="musicFileInput" type="file" multiple class="hidden"><div class="actions"><button class="primary" data-music-choose-files>📤 Upload Music Files</button><button class="secondary" data-music-new-playlist>➕ Make a Playlist</button></div><div id="musicUploadStatus" class="notice">Choose one or several music files from your normal Files/Finder/Windows picker. The picker is intentionally not filtered, so iPhone/iPad can show your full file collection. Music Room accepts MP3, M4A, M4R, WAV, AAC, FLAC, OGG/Opus, and MP4 audio files. Larger files use resumable upload when supported.</div><div class="music-owner-add"><label>Add Christina as a music owner<input id="musicOwnerEmail" type="email" placeholder="Christina’s website-account email"></label><button class="secondary" data-music-add-owner>Add Owner</button></div></div>':'')+
   '<div class="section"><div><h2>🎼 Playlists</h2><span class="muted">'+musicPlaylists.length+' playlist'+(musicPlaylists.length===1?'':'s')+'</span></div></div><div class="music-playlists">'+musicPlaylistCards()+'</div>'+
   '<div class="section"><div><h2>🎧 All Songs</h2><span class="muted">'+musicTracks.length+' song'+(musicTracks.length===1?'':'s')+'</span></div></div>'+
   (genres.length?'<div class="music-genres">'+genres.map(function(g){return '<span class="music-tag">'+esc(g)+'</span>'}).join('')+'</div>':'')+
@@ -1262,18 +1262,23 @@ function musicUploadOne(file,genre,artist,onProgress){
 async function musicHandleFiles(files){
   if(!musicIsAdmin()||!files||!files.length)return;
   const status=document.getElementById('musicUploadStatus'),genre=(document.getElementById('musicUploadGenre')?.value||'').trim(),artist=(document.getElementById('musicUploadArtist')?.value||'').trim();
-  if(status)status.textContent='Starting upload of '+files.length+' file'+(files.length===1?'':'s')+'…';
+  const allowed=/\\.(mp3|m4a|m4r|wav|aac|flac|ogg|oga|opus|mp4)$/i;
+  const selected=Array.from(files);
+  const usable=selected.filter(function(file){return allowed.test(file.name||'')||/^audio\\//i.test(file.type||'')||file.type==='video/mp4'});
+  const skipped=selected.filter(function(file){return usable.indexOf(file)<0});
+  if(status)status.textContent='Selected '+selected.length+' file'+(selected.length===1?'':'s')+'. '+usable.length+' music file'+(usable.length===1?'':'s')+' ready to upload.'+(skipped.length?' '+skipped.length+' non-music file'+(skipped.length===1?' was':'s were')+' skipped.':'');
+  if(!usable.length)return;
   let done=0;
-  for(const file of Array.from(files)){
+  for(const file of usable){
     try{
       await musicUploadOne(file,genre,artist,function(bytes,total){
         const pct=total?Math.round(bytes/total*100):0;
         if(status)status.textContent='Uploading '+file.name+' — '+pct+'%';
       });
-      done++;if(status)status.textContent='Uploaded '+done+' of '+files.length+': '+file.name;
+      done++;if(status)status.textContent='Uploaded '+done+' of '+usable.length+': '+file.name;
     }catch(err){if(status)status.textContent='Could not upload '+file.name+': '+(err?.message||err)}
   }
-  if(status)status.textContent='Finished. '+done+' of '+files.length+' file'+(files.length===1?'':'s')+' uploaded.';
+  if(status)status.textContent='Finished. '+done+' of '+usable.length+' music file'+(usable.length===1?'':'s')+' uploaded.'+(skipped.length?' '+skipped.length+' non-music file'+(skipped.length===1?' was':'s were')+' skipped.':'');
   await loadMusicData();render();
 }
 
