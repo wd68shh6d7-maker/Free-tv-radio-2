@@ -902,7 +902,10 @@ function chessView(){
   {title:'January–March 2003 — Volume 35, No. 1',url:'https://masschess.org/Chess_Horizons/Articles/2003-01_Sample_Silicon_Saga.pdf',desc:'MACA-hosted digital sample issue with openings, annotated games, reviews and chess news.'},
   {title:'October–December 2005 — sample issue',url:'https://masschess.org/Chess_Horizons/Articles/2005-10_sample.pdf',desc:'MACA-hosted digital sample issue with chess features and annotated material.'},
   {title:'Holidays 2016 — double issue',url:'https://www.masschess.org/chess_horizons/articles/CHHolidays2016.pdf',desc:'MACA-hosted digital double issue with tactics, reviews and annotated games.'},
-  {title:'Summer 2017',url:'https://www.masschess.org/chess_horizons/articles/ch_summer2017.pdf',desc:'MACA-hosted digital issue with openings, lessons and annotated games.'}
+  {title:'Summer 2017',url:'https://www.masschess.org/chess_horizons/articles/ch_summer2017.pdf',desc:'MACA-hosted digital issue with openings, lessons and annotated games.'},
+  {title:'April–June 2011 — Chess Horizons',url:'https://www.masschess.org/about/chess_news.aspx?nYear=2011',desc:'Official MACA archive reference for the April–June 2011 issue; MACA announced this issue as available online.'},
+  {title:'Summer 2013 — Chess Horizons',url:'https://www.yumpu.com/en/document/view/38032681/chess-horizons-the-massachusetts-chess-association',desc:'Digital viewing copy of the Summer 2013 Chess Horizons issue. The issue is shown as a 24-page publication; this link is a third-party viewer, not a MACA rehost.'},
+  {title:'Summer 2018 — 48-page issue',url:'https://www.masschess.org/about/chess_news.aspx?nYear=2018',desc:'Official MACA archive reference for the Summer 2018 issue; MACA describes it as a 48-page issue of Chess Horizons.'}
  ];
  const card=x=>'<article class="card"><div class="logo">📖</div><h3>'+esc(x.title)+'</h3><p>'+esc(x.desc)+'</p><div class="actions"><button class="primary" data-chess-link="'+esc(x.url)+'">📖 Open Issue</button></div></article>';
  return '<div class="section"><div><h2>♟️ Chess Room</h2><span class="muted">Play chess • study Chess Horizons • work through classic games</span></div><span class="badge">CHESS STUDY ROOM</span></div>'+
@@ -911,7 +914,7 @@ function chessView(){
  '<div class="card"><div class="logo">♟️</div><h3>Lichess</h3><p><b>Free Online Chess</b> • browser chess, puzzles, analysis, and play against people or the computer. Lichess is free and open source. Some casual play is available anonymously; account-only features remain on Lichess.</p><div class="actions"><button class="primary" data-chess-link="https://lichess.org/">♟️ Open Chess Board</button></div></div>'+
  '<div class="section"><div><h2>📚 Chess Horizons Digital Library</h2><span class="muted">Official MACA-hosted digital issues</span></div></div>'+
  '<div class="grid">'+issues.map(card).join('')+'</div>'+
- '<div class="notice"><b>Archive:</b> MACA’s current site describes Chess Horizons as its award-winning quarterly publication, and MACA’s news archive identifies Summer 2018 as a 48-page issue. I’m keeping the index official-source-first and can add additional MACA-hosted issues as they are located.</div>';
+ '<div class="notice"><b>Archive:</b> MACA’s archive confirms additional issues beyond the four original entries. I’ve added three more references: the April–June 2011 issue, the Summer 2013 digital viewing copy, and the Summer 2018 48-page issue. These are links to existing sources; the lounge does not rehost the copyrighted PDFs.</div>';
 }
 function paidView(){
  const rows=streaming.map((x,i)=>'<div class="channel-row"><div class="channel-number">'+(i+1)+'</div><div><div class="channel-name">'+esc(x.name)+'</div><div class="meta">'+esc(x.network||'Paid TV')+'</div></div><div class="meta">Provider login</div><div class="row-actions"><button class="primary" data-paid-open="'+esc(x.id)+'">Sign in / Watch</button></div></div>').join('');
