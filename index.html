@@ -1260,11 +1260,21 @@ function musicUploadOne(file,genre,artist,onProgress){
   });
 }
 async function musicHandleFiles(files){
-  if(!musicIsAdmin()||!files||!files.length)return;
-  const status=document.getElementById('musicUploadStatus'),genre=(document.getElementById('musicUploadGenre')?.value||'').trim(),artist=(document.getElementById('musicUploadArtist')?.value||'').trim();
-  const allowed=/\\.(mp3|m4a|m4r|wav|aac|flac|ogg|oga|opus|mp4)$/i;
+  const status=document.getElementById('musicUploadStatus');
+  if(!files||!files.length)return;
+  if(!musicIsAdmin()){
+    if(status)status.textContent='Your owner session is not active. Please open Admin and sign in again before uploading music.';
+    return;
+  }
+  const genre=(document.getElementById('musicUploadGenre')?.value||'').trim(),artist=(document.getElementById('musicUploadArtist')?.value||'').trim();
+  const allowedExtensions=['mp3','m4a','m4r','wav','aac','flac','ogg','oga','opus','mp4'];
   const selected=Array.from(files);
-  const usable=selected.filter(function(file){return allowed.test(file.name||'')||/^audio\\//i.test(file.type||'')||file.type==='video/mp4'});
+  const usable=selected.filter(function(file){
+    const name=String(file.name||'').toLowerCase();
+    const dot=name.lastIndexOf('.');
+    const ext=dot>=0?name.slice(dot+1):'';
+    return allowedExtensions.includes(ext)||/^audio\\//i.test(file.type||'')||file.type==='video/mp4';
+  });
   const skipped=selected.filter(function(file){return usable.indexOf(file)<0});
   if(status)status.textContent='Selected '+selected.length+' file'+(selected.length===1?'':'s')+'. '+usable.length+' music file'+(usable.length===1?'':'s')+' ready to upload.'+(skipped.length?' '+skipped.length+' non-music file'+(skipped.length===1?' was':'s were')+' skipped.':'');
   if(!usable.length)return;
