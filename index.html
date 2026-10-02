@@ -1408,6 +1408,7 @@ function setTab(t){
   }
  }
  }
+document.addEventListener('click',e=>{const k=['data','chess','link'].join('-');const b=e.target.closest?.('['+k+']');if(b){openWebSafely(b.getAttribute(k));return}},{capture:true});
 document.getElementById('nav').onclick=e=>{const b=e.target.closest('[data-tab]');if(b)setTab(b.dataset.tab)}
 // iPhone/iPad touch fallback: route the TV entry points on pointerup as well as click.
 document.addEventListener('pointerup',e=>{
