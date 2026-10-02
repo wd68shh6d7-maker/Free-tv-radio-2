@@ -896,6 +896,23 @@ function gamesView(){
  '<div class="notice"><b>Games currently covered here:</b> Find Cat; Game Night with Chess, UNO, Gin Rummy, Checkers, Connect 4, Battleship, Yahtzee, Backgammon, Dominoes, Spades, Hearts, Memory and Reversi; plus 8-Ball Pool, Sudoku, word search, mini crosswords, jigsaw puzzles, memory, anagrams, Minesweeper, and the Property Game. Game Night advertises 32 games total, so its catalog includes additional titles beyond the named examples.</div>';
 }
 
+
+function chessView(){
+ const issues=[
+  {title:'January–March 2003 — Volume 35, No. 1',url:'https://masschess.org/Chess_Horizons/Articles/2003-01_Sample_Silicon_Saga.pdf',desc:'MACA-hosted digital sample issue with openings, annotated games, reviews and chess news.'},
+  {title:'October–December 2005 — sample issue',url:'https://masschess.org/Chess_Horizons/Articles/2005-10_sample.pdf',desc:'MACA-hosted digital sample issue with chess features and annotated material.'},
+  {title:'Holidays 2016 — double issue',url:'https://www.masschess.org/chess_horizons/articles/CHHolidays2016.pdf',desc:'MACA-hosted digital double issue with tactics, reviews and annotated games.'},
+  {title:'Summer 2017',url:'https://www.masschess.org/chess_horizons/articles/ch_summer2017.pdf',desc:'MACA-hosted digital issue with openings, lessons and annotated games.'}
+ ];
+ const card=x=>'<article class="card"><div class="logo">📖</div><h3>'+esc(x.title)+'</h3><p>'+esc(x.desc)+'</p><div class="actions"><button class="primary" data-chess-link="'+esc(x.url)+'">📖 Open Issue</button></div></article>';
+ return '<div class="section"><div><h2>♟️ Chess Room</h2><span class="muted">Play chess • study Chess Horizons • work through classic games</span></div><span class="badge">CHESS STUDY ROOM</span></div>'+
+ '<div class="games-note"><b>Welcome to the Chess Room.</b><p>Chess Horizons was MACA’s quarterly publication of regional, national and international chess news and features. We link to the Massachusetts Chess Association’s own digital copies rather than rehosting copyrighted magazine files.</p><p><b>📚 Study a game:</b> Open an issue, find an annotated game or lesson, and use the chess board to reproduce the position move by move.</p><p><b>⚖️ Copyright:</b> We will only copy/rehost the magazine PDFs if MACA gives permission. Until then, the Chess Room points directly to the official source.</p></div>'+
+ '<div class="section"><div><h2>♟️ Play Chess</h2><span class="muted">Free browser chess</span></div></div>'+
+ '<div class="card"><div class="logo">♟️</div><h3>Lichess</h3><p><b>Free Online Chess</b> • browser chess, puzzles, analysis, and play against people or the computer. Lichess is free and open source. Some casual play is available anonymously; account-only features remain on Lichess.</p><div class="actions"><button class="primary" data-chess-link="https://lichess.org/">♟️ Open Chess Board</button></div></div>'+
+ '<div class="section"><div><h2>📚 Chess Horizons Digital Library</h2><span class="muted">Official MACA-hosted digital issues</span></div></div>'+
+ '<div class="grid">'+issues.map(card).join('')+'</div>'+
+ '<div class="notice"><b>Archive:</b> MACA’s current site describes Chess Horizons as its award-winning quarterly publication, and MACA’s news archive identifies Summer 2018 as a 48-page issue. I’m keeping the index official-source-first and can add additional MACA-hosted issues as they are located.</div>';
+}
 function paidView(){
  const rows=streaming.map((x,i)=>'<div class="channel-row"><div class="channel-number">'+(i+1)+'</div><div><div class="channel-name">'+esc(x.name)+'</div><div class="meta">'+esc(x.network||'Paid TV')+'</div></div><div class="meta">Provider login</div><div class="row-actions"><button class="primary" data-paid-open="'+esc(x.id)+'">Sign in / Watch</button></div></div>').join('');
  return '<div class="section guide-title-row"><div><h2>🔐 Paid TV Services</h2><span class="muted">Paid services stay in their own accounts and servers.</span></div><span class="badge">PAID</span></div>'+
