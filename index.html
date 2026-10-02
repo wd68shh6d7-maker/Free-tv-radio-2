@@ -1643,6 +1643,7 @@ document.addEventListener('click',async function(e){
   const prev=e.target.closest?.('[data-music-prev]'); if(prev){musicPrev();return}
   const stop=e.target.closest?.('[data-music-stop]'); if(stop){musicStop();return}
   const dockPlay=e.target.closest?.('[data-music-dock-play]'); if(dockPlay){const a=document.getElementById('musicAudio');if(a&&a.src){if(a.paused)a.play().catch(function(){});else a.pause();musicUpdateDock()}return}
+  const ownerSignin=e.target.closest?.('[data-music-owner-signin]'); if(ownerSignin){tab='admin';render();window.scrollTo({top:0,behavior:'smooth'});return}
   const choose=e.target.closest?.('[data-music-choose-files]'); if(choose){document.getElementById('musicFileInput')?.click();return}
   const make=e.target.closest?.('[data-music-new-playlist]'); if(make){await musicCreatePlaylist();return}
   const addOwner=e.target.closest?.('[data-music-add-owner]'); if(addOwner){await musicAddOwner();return}
