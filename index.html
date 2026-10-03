@@ -368,7 +368,7 @@ const documentaryTV=[
 let guideTV=[...national,...international,...documentaryTV].map((x,i)=>({...x,state:x.state||'NATIONWIDE',guideNo:i+1}));
 let tab='home', q='', guideQuery='', radioQuery='', webQuery='', webStatus='', webUrl='', webTitle='', appUrl='', appTitle='', network='All', city='All', cat='All', guideSource='All', guideMode='live';
 window.noraConversation=false;window.noraListening=false;window.noraRecognition=null;window.noraTranscript='';window.noraVoiceStatus='';window.noraLastAnswer='';
-let roomChannel=null, roomCode='', roomName='', roomJoinCode='', roomDisplayName='', roomClientId=(crypto?.randomUUID?.()||('room-'+Date.now()+'-'+Math.random().toString(36).slice(2))), roomRole='', roomLocalStream=null, roomPeers={}, roomParticipants={}, roomMessages=[], roomStatus='', roomMicOn=false, roomCamOn=false, roomJoined=false;
+let roomChannel=null, roomCode='', roomName='', roomJoinCode='', roomDisplayName='', roomClientId=(crypto?.randomUUID?.()||('room-'+Date.now()+'-'+Math.random().toString(36).slice(2))), roomRole='', roomLocalStream=null, roomPeers={}, roomParticipants={}, roomMessages=[], roomStatus='', roomMicOn=false, roomCamOn=false, roomJoined=false, roomApplyingRemote=false, roomWatchState=null;
 let passwordRecovery=false;
 let webSuggestTimer=null;
 let webSuggestions=[];
@@ -629,11 +629,11 @@ function showPlayer(x){
   const isRadio=x.kind==='radio'||x.kind==='radio-direct';
   if(!isRadio)tab='tv'; document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   const mini=document.getElementById('mini'); if(mini.querySelector('#mainPlayer')){mini.innerHTML='';mini.classList.remove('show')}
-  const dock=document.getElementById('playerDock');dock.innerHTML=playerShell(x);dock.classList.add('show');current=x;render();mountPlayer(x);heartbeatPresence();window.scrollTo({top:0,behavior:'smooth'});
+  const dock=document.getElementById('playerDock');dock.innerHTML=playerShell(x);dock.classList.add('show');current=x;render();mountPlayer(x);heartbeatPresence();window.scrollTo({top:0,behavior:'smooth'});if(!roomApplyingRemote)roomBroadcastCurrentState();
 }
 function minimizePlayer(){const main=document.getElementById('mainPlayer');if(!main)return;const mini=document.getElementById('mini');mini.innerHTML='';mini.appendChild(main);main.classList.add('mini-mode');mini.classList.add('show');document.getElementById('playerDock').classList.remove('show')}
 function restorePlayer(){const mini=document.getElementById('mini');const main=mini.querySelector('#mainPlayer');if(!main)return;document.getElementById('playerDock').appendChild(main);main.classList.remove('mini-mode');mini.classList.remove('show');document.getElementById('playerDock').classList.add('show');window.scrollTo({top:0,behavior:'smooth'})}
-function closePlayer(){const mini=document.getElementById('mini');mini.innerHTML='';mini.classList.remove('show');document.getElementById('playerDock').innerHTML='';document.getElementById('playerDock').classList.remove('show');current=null;heartbeatPresence()}
+function closePlayer(){const mini=document.getElementById('mini');mini.innerHTML='';mini.classList.remove('show');document.getElementById('playerDock').innerHTML='';document.getElementById('playerDock').classList.remove('show');current=null;heartbeatPresence();if(!roomApplyingRemote)roomBroadcastCurrentState()}
 function toggleFullscreen(){const main=document.getElementById('mainPlayer')||document.querySelector('#mini #mainPlayer');if(!main)return;if(document.fullscreenElement){document.exitFullscreen?.()}else{(main.querySelector('iframe')||main).requestFullscreen?.()}}
 function surf(delta){const pool=(current?.kind==='radio'||current?.kind==='radio-direct')?radioRows():guideRows();if(!pool.length)return;const i=pool.findIndex(a=>a.id===current?.id);const base=i<0?(delta>0?0:pool.length-1):i;const next=Math.min(pool.length-1,Math.max(0,base+delta));if(next!==i){const item=pool[next];if(item.type==='directory'||(item.kind==='web'&&!item.stream)){showPlayer(item)}else showPlayer(item)}}
 
@@ -1434,6 +1434,11 @@ function makeRoomCode(){const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let out='
 function roomInviteUrl(){return location.origin+location.pathname+'?room='+encodeURIComponent(roomCode)}
 function roomSetStatus(msg,good){roomStatus=String(msg||'');const el=document.querySelector('[data-room-status]');if(el){el.textContent=roomStatus;el.className='room-status'+(good?' good':'')}}
 function roomSend(event,payload){if(!roomChannel)return;roomChannel.send({type:'broadcast',event,payload}).catch(()=>{})}
+function roomIsHost(){return roomJoined&&roomRole==='host'}
+function roomWatchSnapshot(){const x=current;if(!x)return {mode:'closed'};return {mode:'player',tab:(x.kind==='radio'||x.kind==='radio-direct')?'radio':'tv',current:{id:x.id||'',name:x.name||'',network:x.network||'',category:x.category||'',scope:x.scope||'',provider:x.provider||'',providerId:x.providerId||'',url:x.url||'',stream:x.stream||'',streamCandidates:Array.isArray(x.streamCandidates)?x.streamCandidates.slice(0,6):[],kind:x.kind||'',playable:!!x.playable,sourceLabel:x.sourceLabel||'',countrycode:x.countrycode||'',state:x.state||''}}}
+function roomBroadcastCurrentState(){if(!roomIsHost())return;roomWatchState=roomWatchSnapshot();roomSend('room-state',{roomCode,state:roomWatchState,hostId:roomClientId,sentAt:Date.now()})}
+function roomApplyWatchState(state){if(!roomJoined||!state||state.roomCode&&state.roomCode!==roomCode)return;const s=state.state||state;if(s.mode==='closed'){roomApplyingRemote=true;try{closePlayer()}finally{roomApplyingRemote=false}return}if(s.mode==='player'&&s.current){roomApplyingRemote=true;try{showPlayer({...s.current})}finally{roomApplyingRemote=false}}}
+function roomBroadcastNavigation(target){if(!roomIsHost()||roomApplyingRemote)return;roomSend('room-navigation',{roomCode,target:String(target||''),from:roomClientId})}
 function roomPeopleFromPresence(){
  if(!roomChannel)return;
  const state=roomChannel.presenceState()||{};
@@ -1464,144 +1469,42 @@ async function roomEnsureMedia(){
  if(roomLocalStream)return true;
  try{
   roomSetStatus('Requesting microphone and camera permission…',false);
-  roomLocalStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:{facingMode:'user',width:{ideal:640},height:{ideal:360}}});
-  roomMicOn=true;roomCamOn=true;roomUpdateLocalPreview();
-  Object.keys(roomPeers).forEach(id=>roomAttachTracks(roomPeers[id]));
-  // Adding tracks after a peer connection was created requires renegotiation.
-  Object.keys(roomPeers).forEach(id=>{if(id!==roomClientId&&roomClientId<id)roomRenegotiatePeer(id)});
+  roomLocalStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:{facingMode:'user',width:{ideal:640},height:{ideal:360},frameRate:{ideal:20,max:24}}});
+  roomMicOn=true;roomCamOn=true;roomUpdateLocalPreview();Object.keys(roomPeers).forEach(id=>roomAttachTracks(roomPeers[id]));
   const micBtn=document.querySelector('[data-room-mic]');if(micBtn)micBtn.textContent='🎙️ Mute microphone';
   const camBtn=document.querySelector('[data-room-cam]');if(camBtn)camBtn.textContent='📷 Turn camera off';
-  roomSetStatus('Microphone + camera are on. TV playback remains in the player above.',true);
-  return true;
+  roomSetStatus('Microphone + camera are on. TV playback remains in the player above.',true);return true;
  }catch(err){
-  roomSetStatus('Camera/microphone permission was not granted. You can try again.',false);
-  console.error('Room media error',err);return false;
+  const n=String(err?.name||''),d=n==='NotAllowedError'?' Allow camera and microphone for this website in the browser settings, then tap Try Again.':n==='NotFoundError'?' No camera or microphone was found on this device.':n==='NotReadableError'?' The camera or microphone is already in use by another app.':'';
+  roomSetStatus('Camera/microphone could not start.'+d,false);console.error('Room media error',err);return false;
  }
 }
-function roomAttachTracks(pc){
- if(!pc||!roomLocalStream)return;
- const existing=pc.getSenders().map(s=>s.track).filter(Boolean);
- roomLocalStream.getTracks().forEach(track=>{if(!existing.includes(track))pc.addTrack(track,roomLocalStream)});
-}
+function roomAttachTracks(pc){if(!pc||!roomLocalStream)return;const existing=pc.getSenders().map(s=>s.track).filter(Boolean);roomLocalStream.getTracks().forEach(track=>{if(!existing.includes(track))pc.addTrack(track,roomLocalStream)})}
+async function roomRenegotiatePeer(peerId){const pc=roomPeers[peerId];if(!pc||!roomLocalStream||pc.signalingState!=='stable'||pc.__makingOffer)return;try{pc.__makingOffer=true;await pc.setLocalDescription();roomSend('signal',{kind:'offer',from:roomClientId,to:peerId,sdp:pc.localDescription})}catch(err){console.error('Room renegotiation error',err)}finally{pc.__makingOffer=false}}
 async function roomMakePeer(peerId,peerName,shouldOffer){
  if(roomPeers[peerId])return roomPeers[peerId];
- const pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
- roomPeers[peerId]=pc;
+ const pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun.cloudflare.com:3478'},{urls:'stun:stun1.l.google.com:19302'}]});
+ pc.__peerId=peerId;pc.__peerName=peerName||'Guest';pc.__polite=roomClientId>peerId;pc.__makingOffer=false;pc.__ignoreOffer=false;roomPeers[peerId]=pc;
  pc.onicecandidate=e=>{if(e.candidate)roomSend('signal',{kind:'ice',from:roomClientId,to:peerId,candidate:e.candidate})};
  pc.ontrack=e=>{const stream=e.streams?.[0]||new MediaStream([e.track]);roomAddTile(peerId,peerName,stream)};
- pc.onconnectionstatechange=()=>{if(['failed','closed','disconnected'].includes(pc.connectionState)&&roomPeers[peerId]===pc){if(pc.connectionState==='failed')pc.restartIce?.();roomRemoveTile(peerId)}};
- roomAttachTracks(pc);
- if(shouldOffer){
-  try{const offer=await pc.createOffer();await pc.setLocalDescription(offer);roomSend('signal',{kind:'offer',from:roomClientId,to:peerId,sdp:pc.localDescription})}catch(err){console.error('Room offer error',err)}
- }
- return pc;
+ pc.onconnectionstatechange=()=>{if(['failed','closed'].includes(pc.connectionState)&&roomPeers[peerId]===pc)roomRemoveTile(peerId)};
+ pc.onnegotiationneeded=()=>roomRenegotiatePeer(peerId);
+ roomAttachTracks(pc);if(shouldOffer)roomRenegotiatePeer(peerId);return pc;
 }
 async function roomSignal(msg){
- if(!msg||msg.to!==roomClientId)return;
- const peer=roomParticipants[msg.from]||{name:'Guest'};
+ if(!msg||msg.to!==roomClientId)return;const peer=roomParticipants[msg.from]||{name:'Guest'};let pc=roomPeers[msg.from];
  if(msg.kind==='offer'){
-  const pc=await roomMakePeer(msg.from,peer.name,false);
+  if(!pc)pc=await roomMakePeer(msg.from,peer.name,false);
   try{
+   const ready=!pc.__makingOffer&&(pc.signalingState==='stable'||pc.signalingState==='have-remote-offer'),collision=msg.sdp?.type==='offer'&&!ready;pc.__ignoreOffer=!pc.__polite&&collision;if(pc.__ignoreOffer)return;
    await pc.setRemoteDescription(msg.sdp);
-   roomAttachTracks(pc);
-   const answer=await pc.createAnswer();await pc.setLocalDescription(answer);
-   roomSend('signal',{kind:'answer',from:roomClientId,to:msg.from,sdp:pc.localDescription});
-  }catch(err){console.error('Room answer error',err)}
- }else if(msg.kind==='answer'){
-  const pc=roomPeers[msg.from];if(pc)try{await pc.setRemoteDescription(msg.sdp)}catch(err){console.error('Room set answer error',err)}
- }else if(msg.kind==='ice'){
-  const pc=roomPeers[msg.from];if(pc)try{await pc.addIceCandidate(msg.candidate)}catch(err){console.warn('Room ICE error',err)}
- }
+   if(msg.sdp?.type==='offer'){await pc.setLocalDescription();roomSend('signal',{kind:'answer',from:roomClientId,to:msg.from,sdp:pc.localDescription})}
+  }catch(err){console.error('Room offer handling error',err)}
+ }else if(msg.kind==='answer'){if(pc)try{await pc.setRemoteDescription(msg.sdp)}catch(err){console.error('Room set answer error',err)}
+ }else if(msg.kind==='ice'){if(pc)try{await pc.addIceCandidate(msg.candidate)}catch(err){if(!pc.__ignoreOffer)console.warn('Room ICE error',err)}}
 }
-async function roomOfferToPeer(peerId,peerName){
- if(roomClientId>=peerId||!roomLocalStream)return;
- if(!roomPeers[peerId]){
-  await roomMakePeer(peerId,peerName,true);
- }else{
-  await roomRenegotiatePeer(peerId);
- }
-}
-function roomHandlePresenceSync(){
- roomPeopleFromPresence();
- Object.keys(roomParticipants).forEach(id=>{
-  if(id!==roomClientId&&roomLocalStream)roomOfferToPeer(id,roomParticipants[id].name);
- });
-}
-async function roomRenegotiatePeer(peerId){
- const pc=roomPeers[peerId];if(!pc||!roomLocalStream)return;
- if(pc.signalingState!=='stable')return;
- try{
-  roomAttachTracks(pc);
-  const offer=await pc.createOffer();
-  await pc.setLocalDescription(offer);
-  roomSend('signal',{kind:'offer',from:roomClientId,to:peerId,sdp:pc.localDescription});
- }catch(err){console.error('Room renegotiation error',err)}
-}
-async function startRoomSession(code,name,role){
- if(!supabaseClient){roomSetStatus('Realtime room service is unavailable right now.',false);return false}
- await leaveRoom(false);
- roomCode=String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,12);
- roomDisplayName=(String(name||'Guest').trim().slice(0,32)||'Guest');
- roomRole=role||'member';roomJoined=false;roomMessages=[];roomStatus='Connecting to room…';
- roomChannel=supabaseClient.channel('room:'+roomCode,{config:{broadcast:{self:false},presence:{key:roomClientId}}});
- roomChannel.on('broadcast',{event:'signal'},p=>roomSignal(p.payload))
-  .on('broadcast',{event:'chat'},p=>{const m=p.payload;if(!m||m.roomCode!==roomCode)return;roomMessages.push({name:m.name||'Guest',text:String(m.text||'').slice(0,300)});roomRenderChat()})
-  .on('presence',{event:'sync'},roomHandlePresenceSync)
-  .on('presence',{event:'join'},roomHandlePresenceSync)
-  .on('presence',{event:'leave'},({leftPresences})=>{(leftPresences||[]).forEach(p=>{if(p.clientId){const pc=roomPeers[p.clientId];if(pc)pc.close();delete roomPeers[p.clientId];roomRemoveTile(p.clientId)}});roomPeopleFromPresence()});
- return new Promise(resolve=>{
-  roomChannel.subscribe(async status=>{
-   if(status==='SUBSCRIBED'){
-    roomJoined=true;
-    await roomChannel.track({clientId:roomClientId,name:roomDisplayName,role:roomRole,online_at:new Date().toISOString()});
-    roomSetStatus('Room connected. Start your microphone and camera when you are ready.',true);
-    roomPeopleFromPresence();
-    renderRoomOnly();
-    resolve(true);
-   }else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){
-    roomSetStatus('Room connection failed. Check your connection and try again.',false);resolve(false);
-   }
-  });
- });
-}
-function renderRoomOnly(){if(tab==='rooms'){app.innerHTML=roomsView();roomUpdateLocalPreview();roomRenderChat();roomPeopleFromPresence();}}
-async function createRoom(){
- const name=document.getElementById('roomCreateName')?.value||'';
- roomCode=makeRoomCode();roomName=(name.trim()||'My Watch Room').slice(0,60);
- roomJoinCode=roomCode;roomDisplayName=(document.getElementById('roomDisplayName')?.value||'').trim().slice(0,32)||'Host';
- renderRoomOnly();
- const ok=await startRoomSession(roomCode,roomDisplayName,'host');
- if(ok)await roomEnsureMedia();
- renderRoomOnly();
- if(ok)roomHandlePresenceSync();
-}
-async function joinRoom(){
- const code=(document.getElementById('roomJoinCode')?.value||roomJoinCode||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
- const name=(document.getElementById('roomJoinName')?.value||'').trim().slice(0,32)||'Guest';
- if(code.length<4){roomSetStatus('Enter the room code first.',false);return}
- roomCode=code;roomJoinCode=code;roomName='Shared Watch Room';roomDisplayName=name;
- const ok=await startRoomSession(code,name,'member');
- if(ok)await roomEnsureMedia();
- renderRoomOnly();
-}
-async function leaveRoom(showRooms=true){
- if(roomChannel){try{await roomChannel.untrack()}catch(_){}try{await supabaseClient?.removeChannel(roomChannel)}catch(_){}}
- Object.values(roomPeers).forEach(pc=>{try{pc.close()}catch(_){}});roomPeers={};
- Object.values(roomParticipants).forEach(p=>{if(p.id!==roomClientId)roomRemoveTile(p.id)});
- if(roomLocalStream){roomLocalStream.getTracks().forEach(t=>t.stop());roomLocalStream=null}
- roomChannel=null;roomJoined=false;roomParticipants={};roomStatus='';roomMicOn=false;roomCamOn=false;roomMessages=[];
- if(showRooms){tab='rooms';render()}
-}
-async function toggleRoomMedia(kind){
- if(!roomJoined){roomSetStatus('Create or join a room first.',false);return}
- if(!roomLocalStream){const ok=await roomEnsureMedia();if(!ok)return}
- const track=kind==='mic'?roomLocalStream.getAudioTracks()[0]:roomLocalStream.getVideoTracks()[0];
- if(!track){roomSetStatus('That device does not have the requested track.',false);return}
- track.enabled=!track.enabled;
- if(kind==='mic')roomMicOn=track.enabled;else roomCamOn=track.enabled;
- const b=document.querySelector('[data-room-'+kind+']');if(b)b.textContent=(kind==='mic'?(roomMicOn?'🎙️ Mute microphone':'🔇 Unmute microphone'):(roomCamOn?'📷 Turn camera off':'📷 Turn camera on'));
- roomSetStatus(kind==='mic'?(roomMicOn?'Microphone is on.':'Microphone is muted.'):(roomCamOn?'Camera is on.':'Camera is off.'),true);
-}
+function roomOfferToPeer(peerId,peerName){if(roomClientId===peerId||!roomLocalStream)return;if(!roomPeers[peerId])roomMakePeer(peerId,peerName,true);else roomRenegotiatePeer(peerId)}
+function roomHandlePresenceSync(){roomPeopleFromPresence();Object.keys(roomParticipants).forEach(id=>{if(id!==roomClientId&&roomLocalStream)roomOfferToPeer(id,roomParticipants[id].name)});if(roomIsHost()&&roomWatchState)setTimeout(roomBroadcastCurrentState,80)}
 function roomRenderChat(){
  const log=document.querySelector('[data-room-chat-log]');if(!log)return;
  log.innerHTML=roomMessages.map(m=>'<div class="room-chat-msg"><b>'+esc(m.name)+'</b>: '+esc(m.text)+'</div>').join('')||'<span class="muted">Room chat is ready.</span>';
@@ -1636,7 +1539,8 @@ function render(){const view=passwordRecovery?passwordRecoveryView():(tab==='hom
 function setTab(t){
  tab=t;
  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
- if(t==='gold'||t==='alex'||t==='bible'||t==='maxvelocity')openResourceWindow(t);
+ if(t==='gold'||t==='alex'||t==='bible'||t==='maxvelocity'){if(!roomApplyingRemote)openResourceWindow(t)}
+ if(!roomApplyingRemote)roomBroadcastNavigation(t);
  try{render()}catch(err){
   console.error('Free TV & Radio render failed:',err);
   if(t==='tv'){
