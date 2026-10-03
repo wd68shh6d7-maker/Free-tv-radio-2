@@ -920,11 +920,14 @@ function gamesView(){
 
 
 function chessView(){
- return '<div class="section"><div><h2>♟️ Chess Room</h2><span class="muted">Free chess with a friend — no account required</span></div><span class="badge">PLAY CHESS</span></div>'+
- '<div class="games-note"><b>♟️ Play Chess With a Friend</b><p>Create a private chess game, then send the game link to your friend. When they open the link, they take the other side and you can play together in real time.</p><p><b>📱 No login:</b> Knight Boards says neither player needs an account, and the board works on phones, tablets and computers. You can choose 5, 10 or 30 minutes per side, or play untimed.</p><p><b>☕️ Simple:</b> The Lounge does not create or manage chess accounts. The chess game stays on the chess service.</p></div>'+
- '<div class="card"><div class="logo">♟️</div><h3>Knight Boards</h3><p><b>Free two-player chess.</b> Create a game, choose your side and clock, copy the private link, and send it to a friend. No sign-up or download is required.</p><div class="actions"><a class="primary" href="https://knightboards.com/" target="_blank" rel="noopener noreferrer">♟️ Create Chess Game</a></div></div>'+
- '<div class="notice"><b>How it works:</b> 1) Tap Create Chess Game. 2) Copy the private game link. 3) Text or send the link to your friend. 4) They open it and take the other side. Anyone else with the link can watch.</div>'+
- '<div class="notice"><b>Verification status:</b> The service currently advertises free, no-account friend play and phone/tablet/computer support. We are keeping the Lounge change limited to this external link rather than adding chess infrastructure to the Lounge itself.</div>';
+ return '<div class="section"><div><h2>♟️ Chess Room</h2><span class="muted">Play a friend or play the computer — no account required</span></div><span class="badge">PLAY CHESS</span></div>'+
+ '<div class="games-note"><b>♟️ Two easy ways to play</b><p>Choose <b>Play a Friend</b> for a private game link, or choose <b>Play the Computer</b> to start against a chess engine.</p><p><b>📱 No login:</b> Both options are designed to work in a normal browser without creating a chess account.</p></div>'+
+ '<div class="grid">'+
+ '<div class="card"><div class="logo">♟️</div><h3>Play a Friend</h3><p><b>Private two-player chess.</b> Knight Boards says no sign-up or download is required.</p><div class="actions"><a class="primary" href="https://knightboards.com/" target="_blank" rel="noopener noreferrer">♟️ Create Friend Game</a></div></div>'+
+ '<div class="card"><div class="logo">🤖</div><h3>Play the Computer</h3><p><b>Start immediately.</b> ChessFree offers seven computer strength levels and lets you choose White or Black, with no account or download.</p><div class="actions"><a class="primary" href="https://www.chessfree.net/play-chess-against-computer" target="_blank" rel="noopener noreferrer">🤖 Play Computer</a></div></div>'+
+ '</div>'+
+ '<div class="notice"><b>Play the computer:</b> Tap Play Computer, choose the computer opponent and strength, choose White or Black, and make your first move. ChessFree says the engine runs on your device and works in a mobile browser.</div>'+
+ '<div class="notice"><b>Verification status:</b> ChessFree currently advertises free, no-account computer play with seven strength levels and mobile-browser support. Knight Boards remains the separate friend-play option.</div>';
 }
 function paidView(){
  const rows=streaming.map((x,i)=>'<div class="channel-row"><div class="channel-number">'+(i+1)+'</div><div><div class="channel-name">'+esc(x.name)+'</div><div class="meta">'+esc(x.network||'Paid TV')+'</div></div><div class="meta">Provider login</div><div class="row-actions"><button class="primary" data-paid-open="'+esc(x.id)+'">Sign in / Watch</button></div></div>').join('');
