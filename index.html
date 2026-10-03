@@ -1594,9 +1594,35 @@ if(musicAudio){
   musicAudio.addEventListener('error',function(){musicUpdateDock()});
 }
 
+async function askNoraFromSite(){
+ const input=document.getElementById('noraQuestion');
+ const v=(input?.value||'').trim();
+ if(!v)return;
+ const button=document.querySelector('[data-nora-ask]');
+ window.noraHistory=Array.isArray(window.noraHistory)?window.noraHistory:[];
+ window.noraHistory.push({role:'user',content:v});
+ window.noraLastAnswer='Nora is thinking…';
+ if(input)input.value='';
+ if(button){button.disabled=true;button.textContent='Thinking…'}
+ render();
+ try{
+  const response=await fetch('/api/nora',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:window.noraHistory})});
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(result.error||'Nora could not answer right now.');
+  window.noraLastAnswer=String(result.answer||'I’m sorry, I didn’t get an answer back.');
+  window.noraHistory.push({role:'assistant',content:window.noraLastAnswer});
+  window.noraHistory=window.noraHistory.slice(-12);
+ }catch(err){
+  console.error('Nora chat failed:',err);
+  window.noraLastAnswer=err?.message||'Nora is temporarily unavailable. Please try again.';
+ }finally{
+  render();
+  setTimeout(()=>document.getElementById('noraQuestion')?.focus(),0);
+ }
+}
 document.getElementById('app').onclick=async e=>{
  const noraInfo=e.target.closest('[data-nora-info]');if(noraInfo){setTab('info');return}
- const noraAsk=e.target.closest('[data-nora-ask]');if(noraAsk){const v=(document.getElementById('noraQuestion')?.value||'').trim();if(!v)return;window.noraConversation=false;window.noraLastAnswer=noraCommand(v);render();setTimeout(()=>{document.getElementById('noraQuestion')?.focus()},0);return}
+ const noraAsk=e.target.closest('[data-nora-ask]');if(noraAsk){await askNoraFromSite();return}
  const openResourceLive=e.target.closest('[data-open-resource-live]');if(openResourceLive){openResourceLive(openResourceLive.dataset.openResourceLive);return} const openResource=e.target.closest('[data-open-resource]');if(openResource){openResourceWindow(openResource.dataset.openResource);return}
  const focusApp=e.target.closest('[data-focus-provider]');if(focusApp){if(!focusProviderApp()&&providerWindowUrl){openAppInHub(providerWindowUrl,appTitle||'Streaming App')}return}
  const closeApp=e.target.closest('[data-close-app-room]');if(closeApp){closeAppInHub();return}
