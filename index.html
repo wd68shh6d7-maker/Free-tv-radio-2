@@ -1462,7 +1462,7 @@ function roomAddTile(peerId,name,stream){
 function roomRemoveTile(peerId){const tile=document.querySelector('[data-room-peer="'+CSS.escape(peerId)+'"]');if(tile)tile.remove()}
 function roomUpdateLocalPreview(){
  const v=document.querySelector('[data-room-local-video]');
- if(v&&roomLocalStream)v.srcObject=roomLocalStream;
+ if(v&&roomLocalStream){v.srcObject=roomLocalStream;v.muted=true;v.autoplay=true;v.playsInline=true;v.play?.().catch(()=>{})}
 }
 async function roomEnsureMedia(){
  if(!navigator.mediaDevices?.getUserMedia){roomSetStatus('This browser does not provide camera/microphone access.',false);return false}
@@ -1523,7 +1523,7 @@ function copyRoomInvite(){
 function roomsView(){
  if(roomJoined)return '<div class="section"><div><h2>👥 '+esc(roomName||'Watch Room')+'</h2><span class="muted">Watch TV together • talk • use video</span></div><span class="badge"><span data-room-count>1</span> people</span></div>'+
  '<div class="room-panel"><div class="section" style="margin-top:0"><div><h3 style="margin:0">Room code</h3><span class="muted">Share this link or code with your guests.</span></div></div><div class="room-code">'+esc(roomCode)+'</div><div class="room-controls"><button class="primary" data-room-copy>🔗 Copy room link</button><button class="secondary" data-room-media>🎥 Start microphone & camera</button><button class="secondary" data-room-mic>🎙️ Toggle microphone</button><button class="secondary" data-room-cam>📷 Toggle camera</button><button class="secondary" data-room-leave>Leave room</button></div><div class="room-status" data-room-status>'+esc(roomStatus||'Room connected.')+'</div><div class="room-people" data-room-people></div></div>'+
- '<div class="room-panel"><h3 style="margin-top:0">Your video</h3><p class="muted">Your camera preview stays separate from the TV player. Microphone echo cancellation is requested by the browser; headphones can further reduce TV sound being picked up by a microphone.</p><div class="room-video-grid"><div class="room-tile"><video data-room-local-video autoplay muted playsinline></video><span class="room-tile-label">You</span></div><div data-room-video-grid class="room-video-grid" style="margin-top:0;display:contents"></div></div></div>'+
+ '<div class="room-panel"><h3 style="margin-top:0">Your video</h3><p class="muted">Your camera preview stays separate from the TV player. Microphone echo cancellation is requested by the browser; headphones can further reduce TV sound being picked up by a microphone.</p><div class="room-video-grid"><div class="room-tile"><video data-room-local-video autoplay muted playsinline webkit-playsinline></video><span class="room-tile-label">You</span></div><div data-room-video-grid class="room-video-grid" style="margin-top:0;display:contents"></div></div></div>'+
  '<div class="room-chat"><div style="padding:10px 12px"><b>💬 Room chat</b></div><div class="room-chat-log" data-room-chat-log></div><div class="room-chat-form"><input id="roomChatInput" placeholder="Type a message…"><button class="primary" data-room-send-chat>Send</button></div></div>'+
  '<div class="notice"><b>TV + conversation test:</b> Keep Live TV playing in the player above while you turn the microphone and camera on. The room sends your camera/mic through WebRTC separately from the TV player. We will test whether TV audio, room audio, and video continue without one stopping the other.</div>';
  return '<div class="section"><div><h2>👥 Rooms</h2><span class="muted">Watch TV together, talk and use video.</span></div><span class="badge">EASY ROOM SETUP</span></div>'+
