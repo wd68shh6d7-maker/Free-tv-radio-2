@@ -2,7 +2,7 @@ const crypto = require('crypto');
 
 function b64url(value) {
   return Buffer.from(value).toString('base64')
-    .replace(/=/g, '').replace(/\\+/g, '-').replace(/\\//g, '_');
+    .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
 }
 
 function signJwt(payload, secret) {
