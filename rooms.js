@@ -178,3 +178,13 @@ async function toggleRoomMedia(kind){
 window.addEventListener('beforeunload', () => {
   try { roomChannel?.untrack(); } catch(_) {}
 });
+
+
+// When media is enabled after people are already in the room, start WebRTC offers
+// to the existing participants. This keeps TV watching independent from camera/mic.
+const _roomEnsureMediaOriginal = roomEnsureMedia;
+roomEnsureMedia = async function(){
+  const ok = await _roomEnsureMediaOriginal();
+  if(ok) roomHandlePresenceSync();
+  return ok;
+};
