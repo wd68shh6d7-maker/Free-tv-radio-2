@@ -10,7 +10,7 @@ function signJwt(payload, secret) {
   const body = b64url(JSON.stringify(payload));
   const unsigned = header + '.' + body;
   const signature = crypto.createHmac('sha256', secret).update(unsigned).digest('base64')
-    .replace(/=/g, '').replace(/\\+/g, '-').replace(/\\//g, '_');
+    .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
   return unsigned + '.' + signature;
 }
 
