@@ -920,22 +920,11 @@ function gamesView(){
 
 
 function chessView(){
- const issues=[
-  {title:'January–March 2003 — Volume 35, No. 1',url:'https://masschess.org/Chess_Horizons/Articles/2003-01_Sample_Silicon_Saga.pdf',desc:'MACA-hosted digital issue with openings, annotated games, reviews and chess news.'},
-  {title:'October–December 2005 — sample issue',url:'https://masschess.org/Chess_Horizons/Articles/2005-10_sample.pdf',desc:'MACA-hosted sample issue featuring chess analysis and the “Dark Horse Theory” article.'},
-  {title:'Holidays 2016 — double issue',url:'https://www.masschess.org/chess_horizons/articles/CHHolidays2016.pdf',desc:'MACA-hosted digital double issue with tactics, reviews and annotated games.'},
-  {title:'Summer 2017',url:'https://www.masschess.org/chess_horizons/articles/ch_summer2017.pdf',desc:'MACA-hosted digital issue with openings, lessons and annotated games.'},
-  {title:'Summer 2013 — MACA archive reference',url:'https://www.masschess.org/about/chess_news.aspx?nYear=2013',desc:'Official MACA 2013 news archive, including the Summer 2013 Chess Horizons release.'},
-  {title:'Summer 2018 — MACA archive reference',url:'https://www.masschess.org/about/chess_news.aspx?nYear=2018',desc:'Official MACA 2018 news archive, including the Summer 2018 Chess Horizons release.'}
- ];
- const card=x=>'<article class="card"><div class="logo">📖</div><h3>'+esc(x.title)+'</h3><p>'+esc(x.desc)+'</p><div class="actions"><a class="primary" href="'+esc(x.url)+'" target="_blank" rel="noopener noreferrer">📖 Open Issue</a></div></article>';
- return '<div class="section"><div><h2>♟️ Chess Room</h2><span class="muted">Play chess • study Chess Horizons • work through classic games</span></div><span class="badge">CHESS STUDY ROOM</span></div>'+
- '<div class="games-note"><b>Welcome to the Chess Room.</b><p>Chess Horizons was MACA’s quarterly publication of regional, national and international chess news and features. The Lounge sends you directly to MACA’s hosted material instead of copying the magazine files.</p><p><b>📚 Study a game:</b> Open an issue, find an annotated game or lesson, and use the chess board to reproduce the position move by move.</p><p><b>📱 iPhone/iPad:</b> each booklet now uses a normal external link, so the device’s own PDF viewer handles the document instead of relying on an embedded reader inside the Lounge.</p></div>'+
- '<div class="section"><div><h2>♟️ Play Chess</h2><span class="muted">Free browser chess</span></div></div>'+
- '<div class="card"><div class="logo">♟️</div><h3>Lichess</h3><p><b>Free Online Chess</b> • browser chess, puzzles, analysis, and play against people or the computer. Some casual play is available anonymously; account-only features remain on Lichess.</p><div class="actions"><a class="primary" href="https://lichess.org/" target="_blank" rel="noopener noreferrer">♟️ Open Chess Board</a></div></div>'+
- '<div class="section"><div><h2>📚 Chess Horizons Digital Library</h2><span class="muted">Direct links to MACA-hosted issues and archive pages</span></div></div>'+
- '<div class="grid">'+issues.map(card).join('')+'</div>'+
- '<div class="notice"><b>Reader design:</b> The Lounge does not fake an embedded booklet reader when the source is an external PDF. Each issue opens in a separate tab, where the phone/tablet/desktop PDF viewer can provide page turning, zoom and navigation.</div>';
+ return '<div class="section"><div><h2>♟️ Chess Room</h2><span class="muted">Free chess with a friend — no account required</span></div><span class="badge">PLAY CHESS</span></div>'+
+ '<div class="games-note"><b>♟️ Play Chess With a Friend</b><p>Create a private chess game, then send the game link to your friend. When they open the link, they take the other side and you can play together in real time.</p><p><b>📱 No login:</b> Knight Boards says neither player needs an account, and the board works on phones, tablets and computers. You can choose 5, 10 or 30 minutes per side, or play untimed.</p><p><b>☕️ Simple:</b> The Lounge does not create or manage chess accounts. The chess game stays on the chess service.</p></div>'+
+ '<div class="card"><div class="logo">♟️</div><h3>Knight Boards</h3><p><b>Free two-player chess.</b> Create a game, choose your side and clock, copy the private link, and send it to a friend. No sign-up or download is required.</p><div class="actions"><a class="primary" href="https://knightboards.com/" target="_blank" rel="noopener noreferrer">♟️ Create Chess Game</a></div></div>'+
+ '<div class="notice"><b>How it works:</b> 1) Tap Create Chess Game. 2) Copy the private game link. 3) Text or send the link to your friend. 4) They open it and take the other side. Anyone else with the link can watch.</div>'+
+ '<div class="notice"><b>Verification status:</b> The service currently advertises free, no-account friend play and phone/tablet/computer support. We are keeping the Lounge change limited to this external link rather than adding chess infrastructure to the Lounge itself.</div>';
 }
 function paidView(){
  const rows=streaming.map((x,i)=>'<div class="channel-row"><div class="channel-number">'+(i+1)+'</div><div><div class="channel-name">'+esc(x.name)+'</div><div class="meta">'+esc(x.network||'Paid TV')+'</div></div><div class="meta">Provider login</div><div class="row-actions"><button class="primary" data-paid-open="'+esc(x.id)+'">Sign in / Watch</button></div></div>').join('');
