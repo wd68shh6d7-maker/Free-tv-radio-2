@@ -1,8 +1,7 @@
 export default async function handler(req, res) {
   const station = String(req.query?.station || '').toLowerCase();
   const sources = {
-    kvmr: 'http://live.kvmr.org:8000/aac96',
-    kwmv: 'https://rdo.to/KWMV'
+    kvmr: 'http://live.kvmr.org:8000/aac96'
   };
   const source = sources[station];
   if (!source) {
