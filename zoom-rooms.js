@@ -55,9 +55,9 @@
     z.client.on('peer-video-state-change',async function(p){if(p.action==='Start')await attach(p.userId);else remove(p.userId);people()});
     z.client.on('chat-on-message',function(p){if(p&&p.message)z.messages.push({name:p.sender&&p.sender.name||'Guest',text:p.message});chat()});
     z.client.on('command-channel-message',function(p){var m;try{m=JSON.parse(p.text||'')}catch(_){return}if(m.type==='room-state'&&!z.host)apply(m.state);if(m.type==='room-state-request'&&z.host)broadcast()});
-    z.client.on('auto-play-audio-failed',function(){setStatus('Room joined. Tap the audio button once to enable room sound.')});
+    z.client.on('auto-play-audio-failed',function(){setStatus('Room joined. Tap the audio button once to enable room sound.')});\n    z.client.on('active-media-failed',function(p){console.warn('room media failed:',p);if(p&&p.type&&String(p.type).toLowerCase().indexOf('audio')>=0)setStatus('Room audio needs attention. Tap the audio button again and allow microphone access.');else if(p&&p.type&&String(p.type).toLowerCase().indexOf('video')>=0)setStatus('Room camera needs attention. Tap the camera button again and allow camera access.')});
   }
-  async function attach(id){
+  async function attachSelf(){if(!z.stream||!z.client)return;var box=document.querySelector('[data-zself]');if(!box)return;try{var me=z.client.getCurrentUserInfo().userId;if(!z.selfVideo){var v=await z.stream.attachVideo(me,3);box.innerHTML='';box.appendChild(v);z.selfVideo=true}}catch(e){console.warn('self video:',e);box.innerHTML='<div class="zoom-note">Your camera is on, but your phone could not render the self-view.</div>'}}\n  function detachSelf(){if(!z.stream||!z.client)return;try{z.stream.detachVideo(z.client.getCurrentUserInfo().userId)}catch(_){}z.selfVideo=false;var box=document.querySelector('[data-zself]');if(box)box.innerHTML='<div class="zoom-note">Camera is off. Tap “Turn camera on/off” when you want to be seen.</div>'}\n  async function attach(id){
     if(!z.stream||z.videos[id])return;
     try{var v=await z.stream.attachVideo(id,3),u=document.createElement('div');u.className='zoom-person';u.dataset.zuser=id;u.innerHTML='<span class="zoom-name">Guest</span>';u.prepend(v);document.querySelector('[data-zpeople]')?.appendChild(u);z.videos[id]=1;people()}catch(e){console.warn(e)}
   }
@@ -79,7 +79,7 @@
   }
   async function video(){
     if(!z.stream)return;
-    try{var me=z.client.getAllUser().find(function(u){return u.userId===z.client.getCurrentUserInfo().userId});if(me&&me.bVideoOn){await z.stream.stopVideo()}else{await z.stream.startVideo()}people()}catch(e){setStatus('Camera could not start. Please allow camera access for the lounge and try again.')}
+    try{var me=z.client.getAllUser().find(function(u){return u.userId===z.client.getCurrentUserInfo().userId});if(me&&me.bVideoOn){await z.stream.stopVideo();detachSelf();setStatus('Your camera is off.')}else{await z.stream.startVideo();await attachSelf();setStatus('Your camera is on. Guests can see you when their video view is active.')}people()}catch(e){console.warn('camera:',e);setStatus('Camera could not start. Please allow camera access for the lounge and try again.')}
   }
   function snapshot(){return typeof roomWatchSnapshot==='function'?roomWatchSnapshot():(typeof current!=='undefined'&&current?{mode:'player',current:current}:{mode:'closed'})}
   function broadcast(){if(z.host&&z.command)try{z.command.send(JSON.stringify({type:'room-state',state:snapshot()}))}catch(e){}}
@@ -92,7 +92,7 @@
   async function leave(show){
     try{if(z.client)await z.client.leave(!!show)}catch(_){}
     try{z.client&&z.client.destroy&&z.client.destroy()}catch(_){}
-    z.client=null;z.stream=null;z.chat=null;z.command=null;z.joined=false;z.topic='';z.name='';z.host=false;z.videos={};z.messages=[];
+    z.client=null;z.stream=null;z.chat=null;z.command=null;z.joined=false;z.topic='';z.name='';z.host=false;z.videos={};z.selfVideo=false;z.messages=[];
     if(show){setStatus('You left the lounge room.');rerender()}
   }
   window.zoomRoomsCreate=function(){connect(code(),(document.getElementById('zoomCreateUser')?.value||'Host').trim()||'Host',1,(document.getElementById('zoomCreateName')?.value||'').trim()||'Lounge Watch Room')};
