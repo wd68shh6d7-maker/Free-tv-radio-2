@@ -1733,7 +1733,20 @@ async function toggleRoomMedia(kind){
  if(!roomJoined){roomSetStatus('Create or join a room first.',false);return}
  const want=kind==='mic'?{audio:true,video:false}:{audio:false,video:true};
  const has=kind==='mic'?!!roomLocalStream?.getAudioTracks().length:!!roomLocalStream?.getVideoTracks().length;
- if(!has){const ok=await roomEnsureMedia(want);if(!ok)return}
+ if(!has){
+  const ok=await roomEnsureMedia(want);
+  if(!ok)return;
+  const freshTrack=kind==='mic'?roomLocalStream?.getAudioTracks()[0]:roomLocalStream?.getVideoTracks()[0];
+  if(!freshTrack)return;
+  if(kind==='mic')roomMicOn=!!freshTrack.enabled;else roomCamOn=!!freshTrack.enabled;
+  roomBroadcastMediaState();
+  const b=document.querySelector('[data-room-'+kind+']');
+  if(b)b.textContent=kind==='mic'?(roomMicOn?'🎙️ Mute mic':'🔇 Unmute mic'):(roomCamOn?'📷 Camera off':'📷 Camera on');
+  const tile=document.querySelector('[data-room-peer-tile="'+CSS.escape(roomClientId)+'"]');
+  if(tile)tile.classList.toggle('off',!roomCamOn);
+  roomSetStatus(kind==='mic'?'Microphone is on.':'Camera is on.',true);
+  return;
+ }
  const track=kind==='mic'?roomLocalStream?.getAudioTracks()[0]:roomLocalStream?.getVideoTracks()[0];
  if(!track)return;
  track.enabled=!track.enabled;
