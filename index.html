@@ -565,19 +565,13 @@ function isBannedGameUrl(value){
  }
 }
 function openGameOverlay(url,title){
- const raw=String(url||'').trim();
- const label=String(title||'Game');
- if(!raw||isBannedGameUrl(raw))return;
- const existing=document.getElementById('gameOverlay');
- if(existing)existing.remove();
- const overlay=document.createElement('div');
- overlay.id='gameOverlay';
- overlay.className='game-overlay';
- overlay.innerHTML='<div class="game-overlay-bar"><button type="button" data-game-overlay-close>← Game Room</button><div class="game-overlay-title">🎮 '+esc(label)+'</div><button type="button" data-game-overlay-new>↗ New Tab</button></div><iframe class="game-overlay-frame" title="'+esc(label)+'" src="'+esc(raw)+'" allow="autoplay; fullscreen; gamepad; microphone; camera; clipboard-read; clipboard-write" referrerpolicy="strict-origin-when-cross-origin"></iframe><div class="game-overlay-note">If this game provider does not allow in-page embedding, use <b>New Tab</b>.</div>';
+ const existing=document.getElementById('gameOverlay'); if(existing) existing.remove();
+ const overlay=document.createElement('div'); overlay.id='gameOverlay'; overlay.className='game-overlay';
+ overlay.innerHTML='<div class="game-overlay-bar"><button type="button" data-game-overlay-close>← Game Room</button><div class="game-overlay-title">🎮 '+esc(title||'Game')+'</div><button type="button" data-game-overlay-new>↗ New Tab</button></div><iframe class="game-overlay-frame" title="'+esc(title||'Game')+'" src="'+esc(url)+'" allow="autoplay; fullscreen; gamepad; microphone; camera; clipboard-read; clipboard-write" referrerpolicy="strict-origin-when-cross-origin"></iframe>';
  document.body.appendChild(overlay);
  overlay.addEventListener('click',e=>{
   if(e.target.closest('[data-game-overlay-close]')){overlay.remove();return}
-  if(e.target.closest('[data-game-overlay-new]')){window.open(raw,'_blank','noopener,noreferrer');return}
+  if(e.target.closest('[data-game-overlay-new]')){if(!isBannedGameUrl(url))window.open(url,'_blank','noopener,noreferrer');return}
  });
 }
 function openExternal(item){window.open(item.url,'_blank','noopener,noreferrer')}
