@@ -206,7 +206,7 @@ body{font-size:1rem}
 <script>
 const SUPABASE_URL="https://doxzuuzzcxaozkyojybu.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY="sb_publishable_U2DbudIt9o0D8UO1R0hWuw_yTsJBPFq";
-const supabaseClient=window.supabase?window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
+const supabaseClient=window.supabase?window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;window.supabaseClient=supabaseClient;
 const ADMIN_EMAILS=['rneal1776j@gmail.com'];
 const nav=document.getElementById('nav');
 const app=document.getElementById('app');
