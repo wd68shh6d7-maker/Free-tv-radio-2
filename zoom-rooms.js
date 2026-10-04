@@ -1,6 +1,7 @@
 
 (function(){
   var CDN='https://source.zoom.us/videosdk/zoom-video-2.3.15.min.js';
+  var MAX_ROOM_PARTICIPANTS=8;
   var z={client:null,stream:null,chat:null,command:null,signal:null,signalReady:false,joined:false,topic:'',name:'',host:false,roomName:'',status:'',messages:[],videos:{},selfVideo:false,playbackTimer:null};
 
   function style(){
@@ -44,6 +45,8 @@ function rerender(){if(typeof render==='function')render();setTimeout(function()
       if(req&&!req.audio)throw new Error('This browser does not support the room audio needed here.');
       z.client=ZoomVideo.createClient();await z.client.init('en-US','Global',{patchJsMedia:true,stayAwake:true,leaveOnPageUnload:true});
       await z.client.join(topic,await token(topic,name,role),name,'');
+      var joinedUsers=z.client.getAllUser?z.client.getAllUser():[];
+      if(joinedUsers.length>MAX_ROOM_PARTICIPANTS){try{await z.client.leave(true)}catch(_){}throw new Error('This lounge room is full. The maximum is 8 people.');}
       z.stream=z.client.getMediaStream();z.chat=z.client.getChatClient&&z.client.getChatClient();z.command=z.client.getCommandClient&&z.client.getCommandClient();
       await connectSignal();
       wire();z.joined=true;setStatus(z.host?'Room ready. You are the host.':'You are in the room. Start audio/camera when you want.');rerender();setTimeout(function(){if(z.selfVideo)attachSelf();people()},80);
@@ -53,7 +56,7 @@ function rerender(){if(typeof render==='function')render();setTimeout(function()
   function wire(){
     z.client.on('active-share-change',async function(p){try{var holder=document.querySelector('[data-zshare-remote]');if(!holder){holder=document.createElement('div');holder.setAttribute('data-zshare-remote','');holder.style.marginTop='12px';holder.style.border='1px solid var(--line)';holder.style.borderRadius='14px';holder.style.overflow='hidden';var title=document.createElement('div');title.textContent='🖥️ Host shared Lounge screen';title.style.padding='8px 10px';title.style.background='#0b1424';title.style.color='#cbd6e9';holder.appendChild(title);var box=document.createElement('div');box.setAttribute('data-zshare-remote-box','');holder.appendChild(box);document.querySelector('.zoom-panel')?.appendChild(holder)}var box=document.querySelector('[data-zshare-remote-box]');if(p.state==='Active'){box.innerHTML='';var el=await z.stream.attachShareView(p.userId);box.appendChild(el)}else{box.innerHTML='';holder.remove()}}catch(e){console.warn(e)}});
     z.client.on('peer-share-state-change',async function(p){try{if(p.action==='Start'){var holder=document.querySelector('[data-zshare-remote]');if(!holder){holder=document.createElement('div');holder.setAttribute('data-zshare-remote','');holder.style.marginTop='12px';holder.style.border='1px solid var(--line)';holder.style.borderRadius='14px';holder.style.overflow='hidden';var title=document.createElement('div');title.textContent='🖥️ Host shared Lounge screen';title.style.padding='8px 10px';title.style.background='#0b1424';title.style.color='#cbd6e9';holder.appendChild(title);var box=document.createElement('div');box.setAttribute('data-zshare-remote-box','');holder.appendChild(box);document.querySelector('.zoom-panel')?.appendChild(holder)}var box=document.querySelector('[data-zshare-remote-box]');box.innerHTML='';var el=await z.stream.attachShareView(p.userId);box.appendChild(el)}else if(p.action==='Stop'){var holder=document.querySelector('[data-zshare-remote]');if(holder)holder.remove()}}catch(e){console.warn(e)}});
-    z.client.on('user-added',function(){people();if(z.host)setTimeout(broadcast,200)});
+    z.client.on('user-added',function(){var all=z.client.getAllUser?z.client.getAllUser():[];if(all.length>MAX_ROOM_PARTICIPANTS){setStatus('This room is full (8 people maximum).');return}people();if(z.host)setTimeout(broadcast,200)});
     z.client.on('user-updated',people);z.client.on('user-removed',people);
     z.client.on('peer-video-state-change',async function(p){if(p.action==='Start')await attach(p.userId);else remove(p.userId);people()});
     z.client.on('chat-on-message',function(p){if(p&&p.message)z.messages.push({name:p.sender&&p.sender.name||'Guest',text:p.message});chat()});
@@ -89,7 +92,7 @@ function rerender(){if(typeof render==='function')render();setTimeout(function()
   }
   function signalTopic(){return 'zoom-lounge-sync:'+String(z.topic||'').replace(/[^A-Z0-9_-]/gi,'').slice(0,80)}
 async function connectSignal(){
-  if(!window.supabaseClient||!z.topic)return;
+  if(!(typeof supabaseClient!=='undefined'?supabaseClient:window.supabaseClient)||!z.topic)return;
   try{
     if(z.signal&&window.supabaseClient.removeChannel)try{await window.supabaseClient.removeChannel(z.signal)}catch(_){}
     z.signal=window.supabaseClient.channel(signalTopic(),{config:{broadcast:{self:false,ack:true}}});
