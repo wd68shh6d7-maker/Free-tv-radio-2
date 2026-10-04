@@ -1418,9 +1418,12 @@ function openWebSafely(value){
  if(isXRatedRequest(raw)){webStatus='BLOCKED • X-rated websites and searches are not available.';render();return}
  const direct=normalizeWebInput(raw);
  const u=direct||('https://www.google.com/search?safe=active&q='+encodeURIComponent(raw));
+ // Keep the popup call directly inside the user's click gesture. Rendering first can
+ // consume the browser's transient user activation, especially on iPhone/iPad Safari.
+ const w=window.open('about:blank','_blank','noopener,noreferrer');
+ if(!w){webStatus='POPUP BLOCKED • Allow new tabs for Free TV & Radio.';render();return}
+ try{w.location.href=u}catch(_){try{w.document.location=u}catch(__){}}
  webUrl=u;webTitle=raw;webQuery=raw;webStatus='OPEN • Opening '+raw+' in a new browser tab.';render();
- const w=window.open(u,'_blank','noopener,noreferrer');
- if(!w){webStatus='POPUP BLOCKED • Allow new tabs for Free TV & Radio.';render()}
 }
 function toggleWebFilter(){webFilter=true;localStorage.setItem('ftvr2-web-filter','on')}
 async function fetchWebSuggestions(value){
