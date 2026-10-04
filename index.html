@@ -1659,9 +1659,23 @@ function roomSendChat(){
  const m={roomCode,name:roomDisplayName||'Guest',text:textVal.slice(0,300)};
  roomMessages.push({name:m.name,text:m.text});roomRenderChat();roomSend('chat',m);if(input){input.value='';input.focus()}
 }
-function copyRoomInvite(){
- const url=roomInviteUrl();if(navigator.clipboard?.writeText)navigator.clipboard.writeText(url);
- roomSetStatus('Room link copied. Send it to the people you want to join.',true);
+async function copyRoomInvite(){
+ const url=roomInviteUrl();
+ const code=roomCode;
+ const shareData={title:'Join my Free TV & Radio room',text:'Join my private fellowship room. Room code: '+code+'\\nTap the link to join: '+url,url};
+ try{
+  if(navigator.share){
+   await navigator.share(shareData);
+   roomSetStatus('Invite shared. The room code is '+code+'.',true);
+   return;
+  }
+ }catch(err){if(err?.name==='AbortError'){roomSetStatus('Invite sharing canceled. Room code: '+code,true);return}}
+ try{
+  await navigator.clipboard?.writeText(shareData.text);
+  roomSetStatus('Invite copied. Room code: '+code+' — paste it into a text message.',true);
+ }catch(_){
+  roomSetStatus('Room code: '+code+' • Invite link: '+url,true);
+ }
 }
 function roomsView(){
  const initials=(name)=>String(name||'?').trim().split(/\\s+/).map(x=>x[0]||'').join('').slice(0,2).toUpperCase()||'?';
@@ -1676,11 +1690,11 @@ function roomsView(){
     '<div class="rooms-v2-tile-label"><span>'+esc(label)+'</span><span>'+((local?roomRole:(p.role||'member'))==='host'?'HOST':'')+'</span></div></div>';
   }).join('');
   return '<div class="section"><div><h2>👥 '+esc(roomName||'Room')+'</h2><span class="muted">Private fellowship room • up to 8 people</span></div><span class="badge"><span data-room-count>1</span>/8</span></div>'+
-   '<div class="rooms-v2-room"><div class="rooms-v2-topbar"><div class="rooms-v2-title"><strong>'+esc(roomName||'Private Room')+'</strong><small>Only people with this room link/code can join.</small></div><span class="rooms-v2-live">PRIVATE</span></div>'+
+   '<div class="rooms-v2-room"><div class="rooms-v2-topbar"><div class="rooms-v2-title"><strong>'+esc(roomName||'Private Room')+'</strong><small>Private • Room code: <b>'+esc(roomCode)+'</b></small></div><button class="rooms-v2-live" data-room-copy>INVITE</button></div>'+
    '<div class="rooms-v2-stage" data-room-video-grid-v2>'+tiles+'</div>'+
    '<div class="rooms-v2-status" data-room-status>'+esc(roomStatus||'Room connected.')+'</div>'+
    '<div class="rooms-v2-controls">'+
-    '<button class="primary" data-room-copy>🔗 Invite</button>'+
+    '<button class="primary" data-room-copy>🔗 Share invite + code</button>'+
     '<button data-room-media>🎥 Camera + mic</button>'+
     '<button data-room-mic>'+(roomMicOn?'🎙️ Mute mic':'🔇 Unmute mic')+'</button>'+
     '<button data-room-cam>'+(roomCamOn?'📷 Camera off':'📷 Camera on')+'</button>'+
@@ -1874,6 +1888,11 @@ document.addEventListener('change',e=>{
  else if(v.startsWith('provider:')){setTab('tv');app.innerHTML=providerView(v.slice(9))}
  jump.value='';
 });
+(function restoreRoomInviteFromUrl(){
+ const params=new URLSearchParams(location.search||'');
+ const incoming=(params.get('room')||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+ if(incoming){roomJoinCode=incoming;tab='rooms';}
+})();
 render();initAuth();checkPasswordRecovery();startPresence();
 if('speechSynthesis' in window){try{speechSynthesis.getVoices()}catch(_){}}
 
