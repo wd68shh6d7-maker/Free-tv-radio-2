@@ -671,10 +671,42 @@ function renderPresenceStats(){
  states.forEach(function(el){el.innerHTML=el.closest('.presence-livebar')?(stateNames||'No active U.S. states yet.'):(presenceStats.us_states||[]).map(function(x){return '<div class="presence-row"><span>'+esc(US_STATE_NAMES[x.code]||x.code||'Other U.S. region')+'</span><span>'+Number(x.count||0)+'</span></div>'}).join('')||'<div class="presence-empty">No active U.S. viewers yet.</div>'});
 }
 async function heartbeatPresence(){
+ const payload={sessionId:presenceSessionId,mode:presenceMode()};
  try{
-  const res=await fetch('/api/presence',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:presenceSessionId,mode:presenceMode()})});
-  if(!res.ok)return;
-  const data=await res.json();presenceStats=data||presenceStats;renderPresenceStats();
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),8000);
+  const res=await fetch('/api/presence',{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',signal:controller.signal,body:JSON.stringify(payload)});
+  clearTimeout(timeout);
+  if(res.ok){
+   const raw=await res.text();
+   let data=null;
+   try{data=JSON.parse(raw)}catch(_){}
+   if(data&&typeof data==='object'&&Number.isFinite(Number(data.total))){
+    presenceStats=data;
+    renderPresenceStats();
+    return;
+   }
+  }
+ }catch(_){}
+ // Fallback: use the same Supabase RPC directly if the Vercel API path is unavailable.
+ // This keeps the live count working without exposing IP/location data to the browser.
+ try{
+  if(supabaseClient){
+   const {data,error}=await supabaseClient.rpc('record_viewer_presence',{
+    p_session_id:payload.sessionId,
+    p_mode:payload.mode,
+    p_country_code:null,
+    p_region_code:null
+   });
+   if(!error&&data&&typeof data==='object'){
+    presenceStats=data;
+    renderPresenceStats();
+    const countries=document.querySelectorAll('[data-presence-countries]');
+    countries.forEach(el=>{if(el.closest('.presence-livebar')&&!((data.countries||[]).length))el.textContent='Live count connected';});
+    const states=document.querySelectorAll('[data-presence-states]');
+    states.forEach(el=>{if(el.closest('.presence-livebar')&&!((data.us_states||[]).length))el.textContent='Region data unavailable';});
+   }
+  }
  }catch(_){}
 }
 function startPresence(){
