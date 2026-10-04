@@ -205,14 +205,15 @@ body{font-size:1rem}
 .rooms-v2-topbar{display:flex;align-items:center;gap:9px;padding:11px 12px;background:#0d1728;border-bottom:1px solid var(--line)}
 .rooms-v2-title{flex:1;min-width:0}.rooms-v2-title strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rooms-v2-title small{color:var(--muted)}
 .rooms-v2-live{border:1px solid #3b536e;border-radius:999px;padding:6px 9px;font-size:.75rem;font-weight:850}
-.rooms-v2-stage{padding:10px;display:grid;grid-template-columns:1.55fr 1fr 1fr;gap:8px;min-height:360px}
-.rooms-v2-tile{position:relative;min-height:170px;border:1px solid #263953;border-radius:15px;overflow:hidden;background:#0b1320}
-.rooms-v2-tile.host{grid-row:span 2;min-height:348px}
-.rooms-v2-tile video{width:100%;height:100%;min-height:170px;display:block;object-fit:cover;background:#02060b}
-.rooms-v2-tile.host video{min-height:348px}
+.rooms-v2-stage{padding:10px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;min-height:360px}
+.rooms-v2-tile{position:relative;min-height:150px;border:1px solid #263953;border-radius:15px;overflow:hidden;background:#0b1320}
+.rooms-v2-tile:nth-child(-n+2){grid-column:span 2;min-height:270px}
+.rooms-v2-tile video{width:100%;height:100%;min-height:150px;display:block;object-fit:cover;background:#02060b}
+.rooms-v2-tile:nth-child(-n+2) video{min-height:270px}
 .rooms-v2-tile.off video{opacity:0}
 .rooms-v2-avatar{position:absolute;inset:0;display:grid;place-items:center;font-size:2rem;font-weight:900;color:#dbe7f7;background:radial-gradient(circle at 50% 35%,#1a304d,#08111f 70%);z-index:0}.rooms-v2-tile.has-video .rooms-v2-avatar{display:none}.rooms-v2-tile video{position:relative;z-index:1}
-.rooms-v2-tile-label{position:absolute;left:8px;right:8px;bottom:8px;display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 8px;border-radius:10px;background:rgba(0,0,0,.72);font-size:.78rem}
+.rooms-v2-tile audio{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.rooms-v2-tile-label{position:absolute;left:8px;right:8px;bottom:8px;display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 8px;border-radius:10px;background:rgba(0,0,0,.72);font-size:.78rem;z-index:3}
 .rooms-v2-tile-label span:last-child{opacity:.7}
 .rooms-v2-controls{display:flex;gap:8px;flex-wrap:wrap;padding:10px;border-top:1px solid var(--line);background:#0b1423}
 .rooms-v2-controls button{min-height:46px;border:1px solid var(--line);background:#16243a;color:#fff;border-radius:10px;padding:9px 12px;font-weight:800}
@@ -223,10 +224,9 @@ body{font-size:1rem}
 .rooms-v2-status{padding:0 10px 10px;color:#cbd6e8;font-size:.86rem}
 @media(max-width:760px){
  .rooms-v2-grid{grid-template-columns:1fr}.rooms-v2-form{grid-template-columns:1fr}.rooms-v2-stage{grid-template-columns:1fr 1fr;min-height:0}
- .rooms-v2-tile.host{grid-column:1/-1;grid-row:auto;min-height:230px}.rooms-v2-tile.host video{min-height:230px}
+ .rooms-v2-tile:nth-child(-n+2){grid-column:auto;min-height:220px}.rooms-v2-tile:nth-child(-n+2) video{min-height:220px}
  .rooms-v2-tile video{min-height:150px}.rooms-v2-controls{position:sticky;bottom:0;z-index:5}
-}
-</style><style>
+}</style><style>
 .nora-hero{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(180px,.7fr);gap:14px;align-items:stretch}
 .nora-avatar{border:1px solid var(--line);border-radius:22px;background:linear-gradient(135deg,#132742,#0b1527);display:grid;place-items:center;min-height:190px;font-size:5rem}
 .nora-chat{border:1px solid var(--line);border-radius:18px;background:#0b1527;padding:14px;margin-top:14px}
@@ -1493,42 +1493,35 @@ function roomPeopleFromPresence(){
 }
 function roomSyncParticipantTiles(){
  const grid=document.querySelector('[data-room-video-grid-v2]');if(!grid)return;
- const ids=new Set(Object.keys(roomParticipants));
- Object.values(roomParticipants).forEach((p,i)=>{
-  if(p.id===roomClientId)return;
+ const people=Object.values(roomParticipants).slice(0,8);
+ const ids=new Set(people.map(p=>p.id));
+ people.forEach((p,index)=>{
   let tile=grid.querySelector('[data-room-peer-tile="'+CSS.escape(p.id)+'"]');
   if(!tile){
    tile=document.createElement('div');tile.className='rooms-v2-tile';tile.dataset.roomPeerTile=p.id;
-   tile.innerHTML='<div class="rooms-v2-avatar">'+esc(String(p.name||'Guest').trim().split(/\\s+/).map(x=>x[0]||'').join('').slice(0,2).toUpperCase()||'G')+'</div><video autoplay playsinline></video><audio autoplay playsinline></audio><div class="rooms-v2-tile-label"><span>'+esc(p.name||'Guest')+'</span><span>'+((p.role||'member')==='host'?'HOST':'')+'</span></div>';
+   const initials=String(p.name||'Guest').trim().split(/\s+/).map(x=>x[0]||'').join('').slice(0,2).toUpperCase()||'G';
+   tile.innerHTML='<div class="rooms-v2-avatar">'+esc(initials)+'</div><video autoplay playsinline '+(p.id===roomClientId?'muted':'')+'></video><audio autoplay></audio><div class="rooms-v2-tile-label"><span>'+esc(p.id===roomClientId?(roomDisplayName||'You'):(p.name||'Guest'))+'</span><span>'+((p.role||'member')==='host'?'HOST':'')+'</span></div>';
    grid.appendChild(tile);
+  }
+  tile.classList.toggle('local-tile',p.id===roomClientId);
+  tile.classList.toggle('host',index===0);
+  if(p.id===roomClientId){
+   const v=tile.querySelector('video');if(v&&roomLocalStream){v.srcObject=roomLocalStream;v.muted=true;v.play?.().catch(()=>{});}
   }
  });
  Array.from(grid.querySelectorAll('[data-room-peer-tile]')).forEach(tile=>{
   const id=tile.getAttribute('data-room-peer-tile');
-  if(id!==roomClientId&&!ids.has(id))tile.remove();
+  if(!ids.has(id))tile.remove();
  });
 }
 function roomAddTile(peerId,name,stream){
  const grid=document.querySelector('[data-room-video-grid-v2]');if(!grid)return;
  let tile=grid.querySelector('[data-room-peer-tile="'+CSS.escape(peerId)+'"]');
- if(!tile){
-  tile=document.createElement('div');tile.className='rooms-v2-tile';tile.dataset.roomPeerTile=peerId;
-  tile.innerHTML='<div class="rooms-v2-avatar">'+esc(String(name||'Guest').trim().split(/\\s+/).map(x=>x[0]||'').join('').slice(0,2).toUpperCase()||'G')+'</div><video autoplay playsinline></video><audio autoplay playsinline></audio><div class="rooms-v2-tile-label"><span>'+esc(name||'Guest')+'</span><span>GUEST</span></div>';
-  grid.appendChild(tile);
- }
- const v=tile.querySelector('video');
- const a=tile.querySelector('audio');
- if(v&&stream){
-  if(v.srcObject!==stream)v.srcObject=stream;
-  v.autoplay=true;v.playsInline=true;v.muted=false;
-  tile.classList.add('has-video');
-  v.play?.().catch(()=>{});
- }
- if(a&&stream){
-  if(a.srcObject!==stream)a.srcObject=stream;
-  a.autoplay=true;a.playsInline=true;
-  a.play?.().catch(()=>{});
- }
+ if(!tile){roomSyncParticipantTiles();tile=grid.querySelector('[data-room-peer-tile="'+CSS.escape(peerId)+'"]');}
+ if(!tile)return;
+ const v=tile.querySelector('video');const audio=tile.querySelector('audio');
+ if(v&&stream){v.srcObject=stream;v.autoplay=true;v.playsInline=true;v.muted=false;tile.classList.add('has-video');v.play?.().catch(()=>{});}
+ if(audio&&stream){audio.srcObject=stream;audio.autoplay=true;audio.playsInline=true;audio.muted=false;audio.play?.().catch(()=>{});}
 }
 function roomRemoveTile(peerId){const tile=document.querySelector('[data-room-peer-tile="'+CSS.escape(peerId)+'"]');if(tile)tile.remove()}
 function roomUpdateLocalPreview(){
