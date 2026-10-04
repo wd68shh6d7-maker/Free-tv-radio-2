@@ -1763,6 +1763,7 @@ if(e.target.closest('[data-hoopla-open]')){window.open('https://www.hoopladigita
  if(e.target.closest('[data-web-clear]')){webQuery='';webStatus='';render();return}
  if(e.target.closest('[data-web-quick]')){const u=e.target.closest('[data-web-quick]').dataset.webQuick;webQuery=u;openWebSafely(u);return}
  if(e.target.closest('[data-web-open]')){openWebSafely((document.getElementById('webQuery')?.value||'').trim());return}
+ if(e.target.closest('[data-admin-browser]')){const v=(document.getElementById('adminWeb')?.value||'').trim();if(v){openWebSafely(v)}return}
  if(e.target.closest('[data-room-create]')){createRoom();return}
  if(e.target.closest('[data-room-join]')){joinRoom();return}
  if(e.target.closest('[data-room-media]')){roomEnsureMedia();return}
