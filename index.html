@@ -1551,37 +1551,45 @@ function roomAttachTracks(pc){
  if(!pc||!roomLocalStream)return;
  const senders=pc.getSenders();
  roomLocalStream.getTracks().forEach(track=>{
-  const sameKind=senders.find(s=>s.track&&s.track.kind===track.kind);
-  if(sameKind&&sameKind.track!==track){sameKind.replaceTrack(track).catch(()=>{})}
-  else if(!sameKind)pc.addTrack(track,roomLocalStream);
+  const sender=senders.find(x=>x.track?.kind===track.kind);
+  if(sender){if(sender.track!==track)sender.replaceTrack(track).catch(()=>{});}
+  else pc.addTrack(track,roomLocalStream);
  });
+}
+async function roomEnsureMedia(want={audio:true,video:true}){
+ if(!roomJoined){roomSetStatus('Create or join a room first.',false);return false}
+ if(!navigator.mediaDevices?.getUserMedia){roomSetStatus('This browser does not provide camera/microphone access.',false);return false}
+ const needAudio=!!want.audio&&!roomLocalStream?.getAudioTracks().length;
+ const needVideo=!!want.video&&!roomLocalStream?.getVideoTracks().length;
+ if(!needAudio&&!needVideo)return true;
+ try{
+  roomSetStatus('Requesting '+(needAudio&&needVideo?'microphone and camera':needAudio?'microphone':'camera')+' permission…',false);
+  const stream=await navigator.mediaDevices.getUserMedia({
+   audio:needAudio?{echoCancellation:true,noiseSuppression:true,autoGainControl:true}:false,
+   video:needVideo?{facingMode:roomFacingMode,width:{ideal:640},height:{ideal:360}}:false
+  });
+  roomLocalStream=new MediaStream([...(roomLocalStream?.getTracks()||[]),...stream.getTracks()]);
+  roomMicOn=!!roomLocalStream.getAudioTracks().some(t=>t.enabled);
+  roomCamOn=!!roomLocalStream.getVideoTracks().some(t=>t.enabled);
+  roomUpdateLocalPreview();
+  Object.keys(roomPeers).forEach(id=>roomAttachTracks(roomPeers[id]));
+  Object.keys(roomPeers).forEach(id=>roomRenegotiatePeer(id));
+  roomSetStatus('Your selected media is on. You can turn the camera or microphone off anytime.',true);
+  return true;
+ }catch(err){roomSetStatus('No media was turned on. You can stay in the room without a camera or microphone.',false);console.error('Room media error',err);return false}
 }
 async function roomMakePeer(peerId,peerName,shouldOffer){
  if(roomPeers[peerId])return roomPeers[peerId];
  const pc=new RTCPeerConnection({iceServers:[
-  {urls:'stun:stun.l.google.com:19302'},
-  {urls:'stun:stun1.l.google.com:19302'},
-  {urls:'stun:stun2.l.google.com:19302'}
+  {urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:'stun:stun2.l.google.com:19302'}
  ]});
- roomPeers[peerId]=pc;
- roomPendingIce[peerId]=roomPendingIce[peerId]||[];
+ roomPeers[peerId]=pc;roomPendingIce[peerId]=roomPendingIce[peerId]||[];
  pc.onicecandidate=e=>{if(e.candidate)roomSend('signal',{kind:'ice',from:roomClientId,to:peerId,candidate:e.candidate})};
- pc.ontrack=e=>{
-  const stream=e.streams?.[0]||new MediaStream();
-  if(!stream.getTracks().includes(e.track))stream.addTrack(e.track);
-  roomAddTile(peerId,peerName,stream);
- };
- pc.onconnectionstatechange=()=>{
-  if(pc.connectionState==='connected')roomSetStatus('Room media connected. Everyone in the room can see and hear connected participants.',true);
-  if(['failed','closed'].includes(pc.connectionState)&&roomPeers[peerId]===pc){roomRemoveTile(peerId)}
- };
- pc.oniceconnectionstatechange=()=>{
-  if(pc.iceConnectionState==='failed')roomSetStatus('A participant connection could not be established. Trying again…',false);
- };
- roomAttachTracks(pc);
- if(shouldOffer){
-  try{const offer=await pc.createOffer({offerToReceiveAudio:true,offerToReceiveVideo:true});await pc.setLocalDescription(offer);roomSend('signal',{kind:'offer',from:roomClientId,to:peerId,sdp:pc.localDescription})}catch(err){console.error('Room offer error',err)}
- }
+ pc.ontrack=e=>{const stream=e.streams?.[0]||new MediaStream();if(!stream.getTracks().includes(e.track))stream.addTrack(e.track);roomAddTile(peerId,peerName,stream)};
+ pc.onconnectionstatechange=()=>{if(pc.connectionState==='connected')roomSetStatus('Room media connected. Everyone in the room can see and hear connected participants.',true);if(['failed','closed'].includes(pc.connectionState)&&roomPeers[peerId]===pc)roomRemoveTile(peerId)};
+ pc.oniceconnectionstatechange=()=>{if(pc.iceConnectionState==='failed')roomSetStatus('A participant connection could not be established. Trying again…',false)};
+ if(roomLocalStream)roomAttachTracks(pc);else{pc.addTransceiver('audio',{direction:'recvonly'});pc.addTransceiver('video',{direction:'recvonly'})}
+ if(shouldOffer)try{const offer=await pc.createOffer();await pc.setLocalDescription(offer);roomSend('signal',{kind:'offer',from:roomClientId,to:peerId,sdp:pc.localDescription})}catch(err){console.error('Room offer error',err)}
  return pc;
 }
 async function roomFlushIce(peerId){
@@ -1710,7 +1718,7 @@ async function createRoom(){
  roomJoinCode=roomCode;roomDisplayName=(document.getElementById('roomDisplayName')?.value||'').trim().slice(0,32)||'Host';
  renderRoomOnly();
  const ok=await startRoomSession(roomCode,roomDisplayName,'host');
- if(ok){await roomEnsureMedia();roomHandlePresenceSync();}
+ if(ok){roomHandlePresenceSync();}
  renderRoomOnly();
  if(ok)roomHandlePresenceSync();
 }
@@ -1733,12 +1741,15 @@ async function leaveRoom(showRooms=true){
 }
 async function toggleRoomMedia(kind){
  if(!roomJoined){roomSetStatus('Create or join a room first.',false);return}
- if(!roomLocalStream){const ok=await roomEnsureMedia();if(!ok)return}
- const track=kind==='mic'?roomLocalStream.getAudioTracks()[0]:roomLocalStream.getVideoTracks()[0];
- if(!track){roomSetStatus('That device does not have the requested track.',false);return}
+ const want=kind==='mic'?{audio:true,video:false}:{audio:false,video:true};
+ const has=kind==='mic'?!!roomLocalStream?.getAudioTracks().length:!!roomLocalStream?.getVideoTracks().length;
+ if(!has){const ok=await roomEnsureMedia(want);if(!ok)return}
+ const track=kind==='mic'?roomLocalStream?.getAudioTracks()[0]:roomLocalStream?.getVideoTracks()[0];
+ if(!track)return;
  track.enabled=!track.enabled;
  if(kind==='mic')roomMicOn=track.enabled;else roomCamOn=track.enabled;
- const b=document.querySelector('[data-room-'+kind+']');if(b)b.textContent=(kind==='mic'?(roomMicOn?'🎙️ Mute microphone':'🔇 Unmute microphone'):(roomCamOn?'📷 Turn camera off':'📷 Turn camera on'));
+ const b=document.querySelector('[data-room-'+kind+']');if(b)b.textContent=kind==='mic'?(roomMicOn?'🎙️ Mute mic':'🔇 Unmute mic'):(roomCamOn?'📷 Camera off':'📷 Camera on');
+ const tile=document.querySelector('[data-room-peer-tile="'+CSS.escape(roomClientId)+'"]');if(tile)tile.classList.toggle('off',!roomCamOn);
  roomSetStatus(kind==='mic'?(roomMicOn?'Microphone is on.':'Microphone is muted.'):(roomCamOn?'Camera is on.':'Camera is off.'),true);
 }
 function roomRenderChat(){
