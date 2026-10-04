@@ -1034,7 +1034,7 @@ async function loadRadioCatalog(force=false){
 function radioRows(){
  const qv=(radioQuery||'').trim().toLowerCase();
  const dynamic=radioCatalog.filter(function(x){return !qv||[x.name,x.network,x.category,x.scope,x.country,x.state,x.language].join(' ').toLowerCase().includes(qv);});
- const featured=stations.filter(function(x){return !qv||JSON.stringify(x).toLowerCase().includes(qv);}).map(function(x){return {...x,type:'featured',kind:'radio-direct',stream:''};});
+ const featured=stations.filter(function(x){return !qv||JSON.stringify(x).toLowerCase().includes(qv);}).map(function(x){return {...x,type:'featured',kind:x.id==='first-up-christian-hip-hop'?'radio':'radio-direct',stream:x.id==='ceol-fm'?x.stream:''};});
  const dirs=radioDirectories.filter(function(x){return !qv||JSON.stringify(x).toLowerCase().includes(qv);}).map(function(x){return {id:'dir-'+x.id,name:x.name+' • Directory',network:x.name,category:'Radio Directory',scope:x.count,url:x.url,kind:'web',type:'directory'};});
  const seen=new Set();
  return featured.concat(dynamic,dirs).filter(x=>{if(seen.has(x.id))return false;seen.add(x.id);return true;});
