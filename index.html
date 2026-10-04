@@ -1533,11 +1533,16 @@ function roomAttachTracks(pc){
  const senders=pc.getSenders();
  roomLocalStream.getTracks().forEach(track=>{
   const sender=senders.find(x=>x.track?.kind===track.kind);
-  if(sender){if(sender.track!==track)sender.replaceTrack(track).catch(()=>{});}
-  else pc.addTrack(track,roomLocalStream);
+  if(sender){
+   const transceiver=pc.getTransceivers().find(x=>x.sender===sender);
+   if(transceiver&&(transceiver.direction==='recvonly'||transceiver.direction==='inactive'))transceiver.direction='sendrecv';
+   if(sender.track!==track)sender.replaceTrack(track).catch(err=>console.warn('Room replaceTrack error',err));
+  }else{
+   pc.addTrack(track,roomLocalStream);
+  }
  });
 }
-async function roomEnsureMedia(want={audio:true,video:true}){
+function roomEnsureMedia(want={audio:true,video:true}){
  if(!roomJoined){roomSetStatus('Create or join a room first.',false);return false}
  if(!navigator.mediaDevices?.getUserMedia){roomSetStatus('This browser does not provide camera/microphone access.',false);return false}
  const needAudio=!!want.audio&&!roomLocalStream?.getAudioTracks().length;
@@ -1560,18 +1565,30 @@ async function roomEnsureMedia(want={audio:true,video:true}){
   return true;
  }catch(err){roomSetStatus('No media was turned on. You can stay in the room without a camera or microphone.',false);console.error('Room media error',err);return false}
 }
-async function roomMakePeer(peerId,peerName,shouldOffer){
+async function roomMakePeer(peerId,peerName){
  if(roomPeers[peerId])return roomPeers[peerId];
  const pc=new RTCPeerConnection({iceServers:[
   {urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:'stun:stun2.l.google.com:19302'}
  ]});
+ pc.roomPolite=roomClientId>peerId;
+ pc.roomMakingOffer=false;
+ pc.roomIgnoreOffer=false;
+ pc.roomSettingRemoteAnswer=false;
  roomPeers[peerId]=pc;roomPendingIce[peerId]=roomPendingIce[peerId]||[];
  pc.onicecandidate=e=>{if(e.candidate)roomSend('signal',{kind:'ice',from:roomClientId,to:peerId,candidate:e.candidate})};
  pc.ontrack=e=>{const stream=e.streams?.[0]||new MediaStream();if(!stream.getTracks().includes(e.track))stream.addTrack(e.track);roomAddTile(peerId,peerName,stream)};
  pc.onconnectionstatechange=()=>{if(pc.connectionState==='connected')roomSetStatus('Room media connected. Everyone in the room can see and hear connected participants.',true);if(['failed','closed'].includes(pc.connectionState)&&roomPeers[peerId]===pc)roomRemoveTile(peerId)};
  pc.oniceconnectionstatechange=()=>{if(pc.iceConnectionState==='failed')roomSetStatus('A participant connection could not be established. Trying again…',false)};
- if(roomLocalStream)roomAttachTracks(pc);else{pc.addTransceiver('audio',{direction:'recvonly'});pc.addTransceiver('video',{direction:'recvonly'})}
- if(shouldOffer)try{const offer=await pc.createOffer();await pc.setLocalDescription(offer);roomSend('signal',{kind:'offer',from:roomClientId,to:peerId,sdp:pc.localDescription})}catch(err){console.error('Room offer error',err)}
+ pc.onnegotiationneeded=async()=>{
+  if(pc.signalingState!=='stable'||pc.roomMakingOffer)return;
+  try{
+   pc.roomMakingOffer=true;
+   await pc.setLocalDescription();
+   roomSend('signal',{kind:'offer',from:roomClientId,to:peerId,sdp:pc.localDescription});
+  }catch(err){console.warn('Room negotiation error',err)}
+  finally{pc.roomMakingOffer=false}
+ };
+ if(roomLocalStream)roomAttachTracks(pc);
  return pc;
 }
 async function roomFlushIce(peerId){
@@ -1588,39 +1605,30 @@ function roomApplyRemoteMediaState(peerId,state){
  if(label&&state){let status=label.querySelector('.remote-media-status');if(!status){status=document.createElement('span');status.className='remote-media-status';label.appendChild(status);}status.textContent=(state.mic===false?'🔇':'')+(state.video===false?' 📷':'');}
 }
 function roomBroadcastMediaState(){if(!roomChannel||!roomJoined)return;roomSend('media-state',{roomCode,from:roomClientId,video:!!roomCamOn,mic:!!roomMicOn});roomApplyRemoteMediaState(roomClientId,{video:roomCamOn,mic:roomMicOn});}
-async function roomHandleMediaState(payload){if(!payload||payload.roomCode!==roomCode||payload.from===roomClientId)return;roomRemoteMedia[payload.from]={video:payload.video!==false,mic:payload.mic!==false};roomApplyRemoteMediaState(payload.from,roomRemoteMedia[payload.from]);if(roomClientId<payload.from&&roomLocalStream)await roomRenegotiatePeer(payload.from);}
-async function roomSignal(msg){
+async function roomHandleMediaState(payload){if(!payload||payload.roomCode!==roomCode||payload.from===roomClientId)return;roomRemoteMedia[payload.from]={video:payload.video!==false,mic:payload.mic!==false};roomApplyRemoteMediaState(payload.from,roomRemoteMedia[payload.from]);}
+function roomSignal(msg){
  if(!msg||msg.to!==roomClientId)return;
  const peer=roomParticipants[msg.from]||{name:'Guest'};
+ const pc=await roomMakePeer(msg.from,peer.name);
  if(msg.kind==='offer'){
-  const pc=await roomMakePeer(msg.from,peer.name,false);
   try{
+   const readyForOffer=!pc.roomMakingOffer&&(pc.signalingState==='stable'||pc.roomSettingRemoteAnswer);
+   const offerCollision=!readyForOffer;
+   pc.roomIgnoreOffer=!pc.roomPolite&&offerCollision;
+   if(pc.roomIgnoreOffer)return;
    await pc.setRemoteDescription(msg.sdp);
    await roomFlushIce(msg.from);
-   roomAttachTracks(pc);
-   const answer=await pc.createAnswer();await pc.setLocalDescription(answer);
-   roomSend('signal',{kind:'answer',from:roomClientId,to:msg.from,sdp:pc.localDescription});
-   // The answering side also sends a fresh offer after the answer. This makes
-   // the media direction explicitly bidirectional when both phones joined
-   // before their cameras/microphones were ready.
-   setTimeout(async()=>{
-    const current=roomPeers[msg.from];
-    if(!current||current.signalingState!=='stable'||!roomLocalStream)return;
-    try{
-     roomAttachTracks(current);
-     const followUp=await current.createOffer();
-     await current.setLocalDescription(followUp);
-     roomSend('signal',{kind:'offer',from:roomClientId,to:msg.from,sdp:current.localDescription});
-    }catch(err){console.warn('Room bidirectional media offer error',err)}
-   },250);
-  }catch(err){console.error('Room answer error',err);roomSetStatus('Room call negotiation failed. Please leave and rejoin if this persists.',false)}
+   if(msg.sdp?.type==='offer'){
+    roomAttachTracks(pc);
+    await pc.setLocalDescription();
+    roomSend('signal',{kind:'answer',from:roomClientId,to:msg.from,sdp:pc.localDescription});
+   }
+  }catch(err){console.error('Room offer handling error',err);roomSetStatus('Room call negotiation failed. Please leave and rejoin if this persists.',false)}
  }else if(msg.kind==='answer'){
-  const pc=roomPeers[msg.from];
-  if(pc)try{await pc.setRemoteDescription(msg.sdp);await roomFlushIce(msg.from)}catch(err){console.error('Room set answer error',err)}
+  try{pc.roomSettingRemoteAnswer=true;await pc.setRemoteDescription(msg.sdp);await roomFlushIce(msg.from)}catch(err){console.error('Room set answer error',err)}finally{pc.roomSettingRemoteAnswer=false}
  }else if(msg.kind==='ice'){
-  const pc=roomPeers[msg.from];
-  if(!pc||!pc.remoteDescription){(roomPendingIce[msg.from]||(roomPendingIce[msg.from]=[])).push(msg.candidate);return}
-  try{await pc.addIceCandidate(msg.candidate)}catch(err){console.warn('Room ICE error',err)}
+  if(!pc.remoteDescription){(roomPendingIce[msg.from]||(roomPendingIce[msg.from]=[])).push(msg.candidate);return}
+  try{await pc.addIceCandidate(msg.candidate)}catch(err){if(!pc.roomIgnoreOffer)console.warn('Room ICE error',err)}
  }
 }
 async function roomFlipCamera(){
@@ -1652,9 +1660,8 @@ async function roomFlipCamera(){
  }
 }
 async function roomOfferToPeer(peerId,peerName){
- if(roomClientId>=peerId)return;
- if(!roomPeers[peerId])await roomMakePeer(peerId,peerName,true);
- else if(roomLocalStream)await roomRenegotiatePeer(peerId);
+ if(peerId===roomClientId)return;
+ await roomMakePeer(peerId,peerName);
 }
 function roomHandlePresenceSync(){
  roomPeopleFromPresence();
@@ -1663,14 +1670,8 @@ function roomHandlePresenceSync(){
  });
 }
 async function roomRenegotiatePeer(peerId){
- const pc=roomPeers[peerId];if(!pc||!roomLocalStream||roomClientId>peerId)return;
- if(pc.signalingState!=='stable')return;
- try{
-  roomAttachTracks(pc);
-  const offer=await pc.createOffer();
-  await pc.setLocalDescription(offer);
-  roomSend('signal',{kind:'offer',from:roomClientId,to:peerId,sdp:pc.localDescription});
- }catch(err){console.error('Room renegotiation error',err)}
+ const pc=roomPeers[peerId];if(!pc||!roomLocalStream)return;
+ roomAttachTracks(pc);
 }
 async function startRoomSession(code,name,role){
  if(!supabaseClient){roomSetStatus('Realtime room service is unavailable right now.',false);return false}
