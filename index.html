@@ -572,7 +572,7 @@ function openGameOverlay(url,title){
   overlay.addEventListener('click',e=>{if(e.target.closest('[data-game-overlay-close]'))overlay.remove()});
   return;
  }
- if(/silvergames\\.com/i.test(String(url||''))){
+ if(/silvergames\\.com|y8\\.com/i.test(String(url||'')) && /find[_-]?the[_-]?cat/i.test(String(url||'')+' '+String(title||'')){
   const w=window.open(url,'_blank','noopener,noreferrer');
   if(!w){
    const existing=document.getElementById('gameOverlay');if(existing)existing.remove();
@@ -926,7 +926,7 @@ function appsView(){
 }
 function gamesView(){
  const games=[
-  {name:'Find the Cat',icon:'🐈‍⬛',provider:'SilverGames',url:'https://www.silvergames.com/en/find-the-cat-spot-it',desc:'A literal Find the Cat hidden-object game: spot the cats in each picture. Free browser play with mouse or touchscreen on computer, phone and tablet.',tags:['Find the Cat','Touchscreen','No account']},
+  {name:'Find the Cat',icon:'🐈‍⬛',provider:'SilverGames',url:'https://www.y8.com/games/find_the_cats',desc:'A literal Find the Cat hidden-object game: spot the cats in each picture. Free browser play with mouse or touchscreen on computer, phone and tablet.',tags:['Find the Cat','Touchscreen','No account']},
   {name:'Game Night',icon:'🎲',provider:'Game Night',url:'https://gamenight.zone/',desc:'One doorway to 32 free browser games, including Chess, UNO, Gin Rummy, Checkers, Battleship, Hearts, Spades, Backgammon, Yahtzee and more.',tags:['32 games','Multiplayer','No account']},
   {name:'8-Ball Pool',icon:'🎱',provider:'60AndOver Games',url:'https://60andover.net/8-ball-pool-game-for-seniors/',desc:'A phone-friendly 8-ball pool game with separate Aim, Power and Shoot controls. No account or download required.',tags:['Pool','No account','Mobile'],howTitle:'Here’s how to play 8-Ball Pool',how:'Tap Aim to line up your cue, choose your power, then press Shoot when you are ready. The game does not fire just because you lift your finger. On a phone, turn sideways for a larger table.'},
   {name:'Sudoku + Puzzles',icon:'🔢',provider:'Boatload Puzzles',url:'https://playboatloadpuzzles.com/',desc:'Free Sudoku, word search, mini crosswords, jigsaw puzzles, memory, anagrams, Minesweeper and more.',tags:['Sudoku','Crosswords','Word Search']},
