@@ -565,28 +565,20 @@ function isBannedGameUrl(value){
  }
 }
 function openGameOverlay(url,title){
- if(isBannedGameUrl(url)||/\\broblox\\b/i.test(String(title||''))){
-  const existing=document.getElementById('gameOverlay');if(existing)existing.remove();
-  const overlay=document.createElement('div');overlay.id='gameOverlay';overlay.className='game-overlay';
-  overlay.innerHTML='<div class="game-overlay-bar"><button type="button" data-game-overlay-close>← Game Room</button><div class="game-overlay-title">🚫 Roblox Blocked</div></div><div style="flex:1;display:flex;align-items:center;justify-content:center;padding:28px;text-align:center;background:#030914"><div style="max-width:620px"><div style="font-size:3rem">🚫</div><h2>Roblox is not permitted in the Lounge Game Room.</h2><p style="color:#cbd6e9;line-height:1.5">This game is blocked here and will not open from the Lounge.</p><button class="primary" type="button" data-game-overlay-close>← Return to Game Room</button></div></div>';
-  document.body.appendChild(overlay);
-  overlay.addEventListener('click',e=>{if(e.target.closest('[data-game-overlay-close]'))overlay.remove()});
-  return;
- }
- if(/silvergames\\.com|y8\\.com/i.test(String(url||'')) && /find[_-]?the[_-]?cat/i.test(String(url||'')+' '+String(title||'')){
-  const w=window.open(url,'_blank','noopener,noreferrer');
-  if(!w){
-   const existing=document.getElementById('gameOverlay');if(existing)existing.remove();
-   const overlay=document.createElement('div');overlay.id='gameOverlay';overlay.className='game-overlay';
-   overlay.innerHTML='<div class="game-overlay-bar"><button type="button" data-game-overlay-close>← Game Room</button><div class="game-overlay-title">🐈‍⬛ Find The Cat</div></div><div style="flex:1;display:flex;align-items:center;justify-content:center;padding:28px;text-align:center;background:#030914"><div style="max-width:620px"><div style="font-size:3rem">🐈‍⬛</div><h2>Find The Cat needs a separate browser tab.</h2><p style="color:#cbd6e9;line-height:1.5">Your browser blocked the new tab. Please allow pop-ups for the Lounge, then tap Open Game again.</p><button class="primary" type="button" data-game-overlay-close>← Return to Game Room</button></div></div>';
-   document.body.appendChild(overlay);
-  }
-  return;
- }
- const existing=document.getElementById('gameOverlay');if(existing)existing.remove();
- const overlay=document.createElement('div');overlay.id='gameOverlay';overlay.className='game-overlay';overlay.innerHTML='<div class="game-overlay-bar"><button type="button" data-game-overlay-close>← Game Room</button><div class="game-overlay-title">🎮 '+esc(title||'Game')+'</div><button type="button" data-game-overlay-new>↗ New Tab</button></div><iframe class="game-overlay-frame" title="'+esc(title||'Game')+'" src="'+esc(url)+'" allow="autoplay; fullscreen; gamepad; microphone; camera; clipboard-read; clipboard-write" referrerpolicy="strict-origin-when-cross-origin"></iframe><div class="game-overlay-note">Your lounge radio/music stays in the same page while the game is open. If this game provider does not allow in-page embedding, use <b>New Tab</b>; iPhone/iPad may then apply its own background-audio rules.</div>';
+ const raw=String(url||'').trim();
+ const label=String(title||'Game');
+ if(!raw||isBannedGameUrl(raw))return;
+ const existing=document.getElementById('gameOverlay');
+ if(existing)existing.remove();
+ const overlay=document.createElement('div');
+ overlay.id='gameOverlay';
+ overlay.className='game-overlay';
+ overlay.innerHTML='<div class="game-overlay-bar"><button type="button" data-game-overlay-close>← Game Room</button><div class="game-overlay-title">🎮 '+esc(label)+'</div><button type="button" data-game-overlay-new>↗ New Tab</button></div><iframe class="game-overlay-frame" title="'+esc(label)+'" src="'+esc(raw)+'" allow="autoplay; fullscreen; gamepad; microphone; camera; clipboard-read; clipboard-write" referrerpolicy="strict-origin-when-cross-origin"></iframe><div class="game-overlay-note">If this game provider does not allow in-page embedding, use <b>New Tab</b>.</div>';
  document.body.appendChild(overlay);
- overlay.addEventListener('click',e=>{if(e.target.closest('[data-game-overlay-close]')){overlay.remove();return}if(e.target.closest('[data-game-overlay-new]')){if(!isBannedGameUrl(url))window.open(url,'_blank','noopener,noreferrer');return}});
+ overlay.addEventListener('click',e=>{
+  if(e.target.closest('[data-game-overlay-close]')){overlay.remove();return}
+  if(e.target.closest('[data-game-overlay-new]')){window.open(raw,'_blank','noopener,noreferrer');return}
+ });
 }
 function openExternal(item){window.open(item.url,'_blank','noopener,noreferrer')}
 function openYouTubeApp(webUrl='https://www.youtube.com/'){const u=String(webUrl||'https://www.youtube.com/');const path=u.replace(/^https?:\/\/www\.youtube\.com/i,'')||'/';const appUrl='youtube://'+path;try{window.location.href=appUrl}catch(_){ }setTimeout(()=>{if(document.visibilityState==='visible')window.location.href=u},900)}
