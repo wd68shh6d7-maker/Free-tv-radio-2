@@ -567,7 +567,7 @@ function isBannedGameUrl(value){
 function openGameOverlay(url,title){
  const existing=document.getElementById('gameOverlay'); if(existing) existing.remove();
  const overlay=document.createElement('div'); overlay.id='gameOverlay'; overlay.className='game-overlay';
- overlay.innerHTML='<div class="game-overlay-bar"><button type="button" data-game-overlay-close>← Game Room</button><div class="game-overlay-title">🎮 '+esc(title||'Game')+'</div><button type="button" data-game-overlay-new>↗ New Tab</button></div><iframe class="game-overlay-frame" title="'+esc(title||'Game')+'" src="'+esc(url)+'" allow="autoplay; fullscreen; gamepad; microphone; camera; clipboard-read; clipboard-write" referrerpolicy="strict-origin-when-cross-origin"></iframe>';
+ overlay.innerHTML='<div class="game-overlay-bar"><button type="button" data-game-overlay-close>← Game Room</button><div class="game-overlay-title">🎮 '+esc(title||'Game')+'</div><button type="button" data-game-overlay-new>↗ New Tab</button></div><iframe class="game-overlay-frame" title="'+esc(title||'Game')+'" src="'+esc(url)+'" allow="autoplay; gamepad; microphone; camera; clipboard-read; clipboard-write" referrerpolicy="strict-origin-when-cross-origin"></iframe>';
  document.body.appendChild(overlay);
  overlay.addEventListener('click',e=>{
   if(e.target.closest('[data-game-overlay-close]')){overlay.remove();return}
