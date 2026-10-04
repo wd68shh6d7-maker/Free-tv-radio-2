@@ -1661,17 +1661,14 @@ async function roomFlipCamera(){
  }
 }
 async function roomOfferToPeer(peerId,peerName){
- if(roomClientId>=peerId||!roomLocalStream)return;
- if(!roomPeers[peerId]){
-  await roomMakePeer(peerId,peerName,true);
- }else{
-  await roomRenegotiatePeer(peerId);
- }
+ if(roomClientId>=peerId)return;
+ if(!roomPeers[peerId])await roomMakePeer(peerId,peerName,true);
+ else if(roomLocalStream)await roomRenegotiatePeer(peerId);
 }
 function roomHandlePresenceSync(){
  roomPeopleFromPresence();
  Object.keys(roomParticipants).forEach(id=>{
-  if(id!==roomClientId&&roomLocalStream)roomOfferToPeer(id,roomParticipants[id].name);
+  if(id!==roomClientId)roomOfferToPeer(id,roomParticipants[id].name);
  });
 }
 async function roomRenegotiatePeer(peerId){
