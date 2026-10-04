@@ -1601,6 +1601,19 @@ async function roomSignal(msg){
    roomAttachTracks(pc);
    const answer=await pc.createAnswer();await pc.setLocalDescription(answer);
    roomSend('signal',{kind:'answer',from:roomClientId,to:msg.from,sdp:pc.localDescription});
+   // The answering side also sends a fresh offer after the answer. This makes
+   // the media direction explicitly bidirectional when both phones joined
+   // before their cameras/microphones were ready.
+   setTimeout(async()=>{
+    const current=roomPeers[msg.from];
+    if(!current||current.signalingState!=='stable'||!roomLocalStream)return;
+    try{
+     roomAttachTracks(current);
+     const followUp=await current.createOffer();
+     await current.setLocalDescription(followUp);
+     roomSend('signal',{kind:'offer',from:roomClientId,to:msg.from,sdp:current.localDescription});
+    }catch(err){console.warn('Room bidirectional media offer error',err)}
+   },250);
   }catch(err){console.error('Room answer error',err);roomSetStatus('Room call negotiation failed. Please leave and rejoin if this persists.',false)}
  }else if(msg.kind==='answer'){
   const pc=roomPeers[msg.from];
