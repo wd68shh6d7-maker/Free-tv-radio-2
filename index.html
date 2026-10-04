@@ -349,6 +349,10 @@ const international=[
  {id:'the-filipino-channel',name:'The Filipino Channel',network:'International',category:'Filipino • Entertainment',language:'Filipino',culture:'Philippines',scope:'Provider-controlled',url:'https://www.sling.com/freestream/international',kind:'web'}
 ];
 const stations=[
+ {id:'adagio-fm',name:'Adagio.FM',network:'Adagio.FM',category:'Classical • Orchestral • 24/7',scope:'Community-supported classical internet radio • official direct stream',url:'https://adagio.fm/',stream:'https://adagio.fm/live',kind:'radio-direct',provider:'Adagio.FM'},
+ {id:'wrti-classical',name:'WRTI All-Classical',network:'WRTI',category:'Classical • 24 Hours',scope:'Philadelphia public radio • official direct MP3 stream',url:'https://www.wrti.org/listen-live-to-wrti',stream:'https://wrti-live.streamguys1.com/classical-mp3',kind:'radio-direct',provider:'WRTI'},
+ {id:'chinese-classical',name:'Chinese Classical Music Radio',network:'Chinese Music World',category:'Chinese Classical • Instrumental • 24/7',scope:'Pure Chinese music • no ads • no DJs • official direct MP3 stream',url:'https://chinesemusicworld.com/radio/',stream:'https://radio.chinesemusicworld.com/chinesemusic.mp3',kind:'radio-direct',provider:'Chinese Music World'},
+ {id:'native-radio-contemporary',name:'Native Radio — Contemporary Music',network:'Native Radio',category:'Native American • New Age • Instrumental',scope:'Taos, New Mexico • frequent R. Carlos Nakai, Native flute and contemporary new-age music',url:'https://www.nativeradio.com/',stream:'https://cast1.asurahosting.com/proxy/nativera/stream',kind:'radio-direct',provider:'Native Radio'},
  {id:'klove',name:'K-LOVE',network:'K-LOVE',category:'Christian • Live Radio',scope:'Official K-LOVE web player',url:'https://www.klove.com/?channel=live',kind:'radio',provider:'K-LOVE'},
  {id:'air1',name:'Air1',network:'Air1',category:'Christian • Live Radio',scope:'Official Air1 web player',url:'https://www.air1.com/?channel=live',kind:'radio',provider:'Air1'},
  {id:'iheartradio',name:'iHeartRadio',network:'iHeart',category:'Radio • Many stations',scope:'Official iHeart live radio',url:'https://www.iheart.com/live/',kind:'radio',provider:'iHeartRadio'},
@@ -1022,7 +1026,7 @@ async function loadRadioCatalog(force=false){
 }
 function radioRows(){
  const qv=(radioQuery||'').trim().toLowerCase();
- const dynamic=radioCatalog.filter(function(x){return !qv||[x.name,x.network,x.category,x.scope,x.country,x.state,x.language].join(' ').toLowerCase().includes(qv);});
+ const dynamic=radioCatalog.filter(function(x){const text=[x.name,x.network,x.category,x.scope,x.country,x.state,x.language].join(' ').toLowerCase();if(/\\bkbmr\\b/.test(text))return false;return !qv||text.includes(qv);});
  const featured=stations.filter(function(x){return !qv||JSON.stringify(x).toLowerCase().includes(qv);}).map(function(x){return {...x,type:'featured',kind:'radio-direct',stream:''};});
  const dirs=radioDirectories.filter(function(x){return !qv||JSON.stringify(x).toLowerCase().includes(qv);}).map(function(x){return {id:'dir-'+x.id,name:x.name+' • Directory',network:x.name,category:'Radio Directory',scope:x.count,url:x.url,kind:'web',type:'directory'};});
  const seen=new Set();
