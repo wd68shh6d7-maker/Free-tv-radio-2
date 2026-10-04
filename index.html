@@ -211,7 +211,7 @@ body{font-size:1rem}
 .rooms-v2-tile video{width:100%;height:100%;min-height:170px;display:block;object-fit:cover;background:#02060b}
 .rooms-v2-tile.host video{min-height:348px}
 .rooms-v2-tile.off video{opacity:0}
-.rooms-v2-avatar{position:absolute;inset:0;display:grid;place-items:center;font-size:2rem;font-weight:900;color:#dbe7f7;background:radial-gradient(circle at 50% 35%,#1a304d,#08111f 70%)}
+.rooms-v2-avatar{position:absolute;inset:0;display:grid;place-items:center;font-size:2rem;font-weight:900;color:#dbe7f7;background:radial-gradient(circle at 50% 35%,#1a304d,#08111f 70%);z-index:0}.rooms-v2-tile.has-video .rooms-v2-avatar{display:none}.rooms-v2-tile video{position:relative;z-index:1}
 .rooms-v2-tile-label{position:absolute;left:8px;right:8px;bottom:8px;display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 8px;border-radius:10px;background:rgba(0,0,0,.72);font-size:.78rem}
 .rooms-v2-tile-label span:last-child{opacity:.7}
 .rooms-v2-controls{display:flex;gap:8px;flex-wrap:wrap;padding:10px;border-top:1px solid var(--line);background:#0b1423}
@@ -415,7 +415,7 @@ const documentaryTV=[
 let guideTV=[...national,...international,...documentaryTV].map((x,i)=>({...x,state:x.state||'NATIONWIDE',guideNo:i+1}));
 let tab='home', q='', guideQuery='', radioQuery='', webQuery='', webStatus='', webUrl='', webTitle='', appUrl='', appTitle='', network='All', city='All', cat='All', guideSource='All', guideMode='live';
 window.noraConversation=false;window.noraListening=false;window.noraRecognition=null;window.noraTranscript='';window.noraVoiceStatus='';window.noraLastAnswer='';
-let roomChannel=null, roomCode='', roomName='', roomJoinCode='', roomDisplayName='', roomClientId=(crypto?.randomUUID?.()||('room-'+Date.now()+'-'+Math.random().toString(36).slice(2))), roomRole='', roomLocalStream=null, roomPeers={}, roomParticipants={}, roomMessages=[], roomStatus='', roomMicOn=false, roomCamOn=false, roomJoined=false;
+let roomChannel=null, roomCode='', roomName='', roomJoinCode='', roomDisplayName='', roomClientId=(crypto?.randomUUID?.()||('room-'+Date.now()+'-'+Math.random().toString(36).slice(2))), roomRole='', roomLocalStream=null, roomPeers={}, roomPendingIce={}, roomParticipants={}, roomMessages=[], roomStatus='', roomMicOn=false, roomCamOn=false, roomFacingMode='user', roomMicOn=false, roomCamOn=false, roomJoined=false;
 let passwordRecovery=false;
 let webSuggestTimer=null;
 let webSuggestions=[];
@@ -1488,36 +1488,66 @@ function roomPeopleFromPresence(){
  });
  if(!list.some(x=>x.id===roomClientId))list.push({id:roomClientId,name:roomDisplayName||'You',role:roomRole||'member'});
  roomParticipants={};list.forEach(x=>roomParticipants[x.id]=x);
- const count=document.querySelector('[data-room-count]');if(count)count.textContent=String(list.length);
+ const count=document.querySelector('[data-room-count]');if(count)count.textContent=String(Math.min(list.length,8));
+ roomSyncParticipantTiles();
+}
+function roomSyncParticipantTiles(){
+ const grid=document.querySelector('[data-room-video-grid-v2]');if(!grid)return;
+ const ids=new Set(Object.keys(roomParticipants));
+ Object.values(roomParticipants).forEach((p,i)=>{
+  if(p.id===roomClientId)return;
+  let tile=grid.querySelector('[data-room-peer-tile="'+CSS.escape(p.id)+'"]');
+  if(!tile){
+   tile=document.createElement('div');tile.className='rooms-v2-tile';tile.dataset.roomPeerTile=p.id;
+   tile.innerHTML='<div class="rooms-v2-avatar">'+esc(String(p.name||'Guest').trim().split(/\\s+/).map(x=>x[0]||'').join('').slice(0,2).toUpperCase()||'G')+'</div><video autoplay playsinline></video><audio autoplay playsinline></audio><div class="rooms-v2-tile-label"><span>'+esc(p.name||'Guest')+'</span><span>'+((p.role||'member')==='host'?'HOST':'')+'</span></div>';
+   grid.appendChild(tile);
+  }
+ });
+ Array.from(grid.querySelectorAll('[data-room-peer-tile]')).forEach(tile=>{
+  const id=tile.getAttribute('data-room-peer-tile');
+  if(id!==roomClientId&&!ids.has(id))tile.remove();
+ });
 }
 function roomAddTile(peerId,name,stream){
  const grid=document.querySelector('[data-room-video-grid-v2]');if(!grid)return;
  let tile=grid.querySelector('[data-room-peer-tile="'+CSS.escape(peerId)+'"]');
  if(!tile){
   tile=document.createElement('div');tile.className='rooms-v2-tile';tile.dataset.roomPeerTile=peerId;
-  tile.innerHTML='<div class="rooms-v2-avatar"></div><video autoplay playsinline></video><div class="rooms-v2-tile-label"><span>'+esc(name||'Guest')+'</span><span>GUEST</span></div>';
+  tile.innerHTML='<div class="rooms-v2-avatar">'+esc(String(name||'Guest').trim().split(/\\s+/).map(x=>x[0]||'').join('').slice(0,2).toUpperCase()||'G')+'</div><video autoplay playsinline></video><audio autoplay playsinline></audio><div class="rooms-v2-tile-label"><span>'+esc(name||'Guest')+'</span><span>GUEST</span></div>';
   grid.appendChild(tile);
  }
- const v=tile.querySelector('video');if(v&&stream&&v.srcObject!==stream)v.srcObject=stream;
+ const v=tile.querySelector('video');
+ const a=tile.querySelector('audio');
+ if(v&&stream){
+  if(v.srcObject!==stream)v.srcObject=stream;
+  v.autoplay=true;v.playsInline=true;v.muted=false;
+  tile.classList.add('has-video');
+  v.play?.().catch(()=>{});
+ }
+ if(a&&stream){
+  if(a.srcObject!==stream)a.srcObject=stream;
+  a.autoplay=true;a.playsInline=true;
+  a.play?.().catch(()=>{});
+ }
 }
 function roomRemoveTile(peerId){const tile=document.querySelector('[data-room-peer-tile="'+CSS.escape(peerId)+'"]');if(tile)tile.remove()}
 function roomUpdateLocalPreview(){
  const v=document.querySelector('[data-room-local-video-v2]');
- if(v&&roomLocalStream)v.srcObject=roomLocalStream;
+ if(v&&roomLocalStream){v.srcObject=roomLocalStream;v.muted=true;v.autoplay=true;v.playsInline=true;v.play?.().catch(()=>{})}
 }
 async function roomEnsureMedia(){
  if(!navigator.mediaDevices?.getUserMedia){roomSetStatus('This browser does not provide camera/microphone access.',false);return false}
  if(roomLocalStream)return true;
  try{
   roomSetStatus('Requesting microphone and camera permission…',false);
-  roomLocalStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:{facingMode:'user',width:{ideal:640},height:{ideal:360}}});
+  roomLocalStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:{facingMode:roomFacingMode,width:{ideal:640},height:{ideal:360}}});
   roomMicOn=true;roomCamOn=true;roomUpdateLocalPreview();
   Object.keys(roomPeers).forEach(id=>roomAttachTracks(roomPeers[id]));
-  // Adding tracks after a peer connection was created requires renegotiation.
-  Object.keys(roomPeers).forEach(id=>{if(id!==roomClientId&&roomClientId<id)roomRenegotiatePeer(id)});
+  Object.keys(roomPeers).forEach(id=>roomRenegotiatePeer(id));
   const micBtn=document.querySelector('[data-room-mic]');if(micBtn)micBtn.textContent='🎙️ Mute microphone';
   const camBtn=document.querySelector('[data-room-cam]');if(camBtn)camBtn.textContent='📷 Turn camera off';
   roomSetStatus('Microphone + camera are on. Your room is separate from the lounge TV/radio.',true);
+  roomHandlePresenceSync();
   return true;
  }catch(err){
   roomSetStatus('Camera/microphone permission was not granted. You can try again.',false);
@@ -1526,21 +1556,46 @@ async function roomEnsureMedia(){
 }
 function roomAttachTracks(pc){
  if(!pc||!roomLocalStream)return;
- const existing=pc.getSenders().map(s=>s.track).filter(Boolean);
- roomLocalStream.getTracks().forEach(track=>{if(!existing.includes(track))pc.addTrack(track,roomLocalStream)});
+ const senders=pc.getSenders();
+ roomLocalStream.getTracks().forEach(track=>{
+  const sameKind=senders.find(s=>s.track&&s.track.kind===track.kind);
+  if(sameKind&&sameKind.track!==track){sameKind.replaceTrack(track).catch(()=>{})}
+  else if(!sameKind)pc.addTrack(track,roomLocalStream);
+ });
 }
 async function roomMakePeer(peerId,peerName,shouldOffer){
  if(roomPeers[peerId])return roomPeers[peerId];
- const pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
+ const pc=new RTCPeerConnection({iceServers:[
+  {urls:'stun:stun.l.google.com:19302'},
+  {urls:'stun:stun1.l.google.com:19302'},
+  {urls:'stun:stun2.l.google.com:19302'}
+ ]});
  roomPeers[peerId]=pc;
+ roomPendingIce[peerId]=roomPendingIce[peerId]||[];
  pc.onicecandidate=e=>{if(e.candidate)roomSend('signal',{kind:'ice',from:roomClientId,to:peerId,candidate:e.candidate})};
- pc.ontrack=e=>{const stream=e.streams?.[0]||new MediaStream([e.track]);roomAddTile(peerId,peerName,stream)};
- pc.onconnectionstatechange=()=>{if(['failed','closed','disconnected'].includes(pc.connectionState)&&roomPeers[peerId]===pc){if(pc.connectionState==='failed')pc.restartIce?.();roomRemoveTile(peerId)}};
+ pc.ontrack=e=>{
+  const stream=e.streams?.[0]||new MediaStream();
+  if(!stream.getTracks().includes(e.track))stream.addTrack(e.track);
+  roomAddTile(peerId,peerName,stream);
+ };
+ pc.onconnectionstatechange=()=>{
+  if(pc.connectionState==='connected')roomSetStatus('Room media connected. Everyone in the room can see and hear connected participants.',true);
+  if(['failed','closed'].includes(pc.connectionState)&&roomPeers[peerId]===pc){roomRemoveTile(peerId)}
+ };
+ pc.oniceconnectionstatechange=()=>{
+  if(pc.iceConnectionState==='failed')roomSetStatus('A participant connection could not be established. Trying again…',false);
+ };
  roomAttachTracks(pc);
  if(shouldOffer){
-  try{const offer=await pc.createOffer();await pc.setLocalDescription(offer);roomSend('signal',{kind:'offer',from:roomClientId,to:peerId,sdp:pc.localDescription})}catch(err){console.error('Room offer error',err)}
+  try{const offer=await pc.createOffer({offerToReceiveAudio:true,offerToReceiveVideo:true});await pc.setLocalDescription(offer);roomSend('signal',{kind:'offer',from:roomClientId,to:peerId,sdp:pc.localDescription})}catch(err){console.error('Room offer error',err)}
  }
  return pc;
+}
+async function roomFlushIce(peerId){
+ const pc=roomPeers[peerId];if(!pc||!pc.remoteDescription)return;
+ const pending=roomPendingIce[peerId]||[];
+ roomPendingIce[peerId]=[];
+ for(const c of pending){try{await pc.addIceCandidate(c)}catch(err){console.warn('Room queued ICE error',err)}}
 }
 async function roomSignal(msg){
  if(!msg||msg.to!==roomClientId)return;
@@ -1549,14 +1604,46 @@ async function roomSignal(msg){
   const pc=await roomMakePeer(msg.from,peer.name,false);
   try{
    await pc.setRemoteDescription(msg.sdp);
+   await roomFlushIce(msg.from);
    roomAttachTracks(pc);
    const answer=await pc.createAnswer();await pc.setLocalDescription(answer);
    roomSend('signal',{kind:'answer',from:roomClientId,to:msg.from,sdp:pc.localDescription});
-  }catch(err){console.error('Room answer error',err)}
+  }catch(err){console.error('Room answer error',err);roomSetStatus('Room call negotiation failed. Please leave and rejoin if this persists.',false)}
  }else if(msg.kind==='answer'){
-  const pc=roomPeers[msg.from];if(pc)try{await pc.setRemoteDescription(msg.sdp)}catch(err){console.error('Room set answer error',err)}
+  const pc=roomPeers[msg.from];
+  if(pc)try{await pc.setRemoteDescription(msg.sdp);await roomFlushIce(msg.from)}catch(err){console.error('Room set answer error',err)}
  }else if(msg.kind==='ice'){
-  const pc=roomPeers[msg.from];if(pc)try{await pc.addIceCandidate(msg.candidate)}catch(err){console.warn('Room ICE error',err)}
+  const pc=roomPeers[msg.from];
+  if(!pc||!pc.remoteDescription){(roomPendingIce[msg.from]||(roomPendingIce[msg.from]=[])).push(msg.candidate);return}
+  try{await pc.addIceCandidate(msg.candidate)}catch(err){console.warn('Room ICE error',err)}
+ }
+}
+async function roomFlipCamera(){
+ if(!roomJoined||!roomLocalStream){roomSetStatus('Turn the camera on first.',false);return}
+ const oldVideo=roomLocalStream.getVideoTracks()[0];
+ if(!oldVideo){roomSetStatus('This device does not have a switchable camera.',false);return}
+ const next=roomFacingMode==='user'?'environment':'user';
+ try{
+  const temp=await navigator.mediaDevices.getUserMedia({video:{facingMode:{exact:next},width:{ideal:640},height:{ideal:360}}});
+  const newVideo=temp.getVideoTracks()[0];
+  if(!newVideo)throw new Error('No camera track');
+  newVideo.enabled=roomCamOn;
+  roomFacingMode=next;
+  const oldAudio=roomLocalStream.getAudioTracks()[0];
+  const newStream=new MediaStream();
+  if(oldAudio)newStream.addTrack(oldAudio);
+  newStream.addTrack(newVideo);
+  roomLocalStream=newStream;
+  Object.values(roomPeers).forEach(pc=>{
+   const sender=pc.getSenders().find(s=>s.track?.kind==='video');
+   if(sender)sender.replaceTrack(newVideo).catch(()=>{});
+  });
+  oldVideo.stop();
+  roomUpdateLocalPreview();
+  roomSetStatus(next==='environment'?'Rear camera is on.':'Front camera is on.',true);
+ }catch(err){
+  roomSetStatus('This device could not switch to the other camera.',false);
+  console.error('Room flip camera error',err);
  }
 }
 async function roomOfferToPeer(peerId,peerName){
@@ -1831,6 +1918,7 @@ if(e.target.closest('[data-hoopla-open]')){window.open('https://www.hoopladigita
  if(e.target.closest('[data-room-media]')){roomEnsureMedia();return}
  if(e.target.closest('[data-room-mic]')){toggleRoomMedia('mic');return}
  if(e.target.closest('[data-room-cam]')){toggleRoomMedia('cam');return}
+ if(e.target.closest('[data-room-flip]')){roomFlipCamera();return}
  if(e.target.closest('[data-room-copy]')){copyRoomInvite();return}
  if(e.target.closest('[data-room-leave]')){leaveRoom(true);return}
  if(e.target.closest('[data-room-send-chat]')){roomSendChat();return}
