@@ -18,7 +18,7 @@
     style();
     if(!z.joined)return '<div class="section"><div><h2>👥 Lounge Rooms</h2><span class="muted">Stay inside the lounge while you watch, talk and see each other.</span></div><span class="badge">ZOOM VIDEO SDK</span></div>'+
       '<div class="zoom-panel"><h3>🏠 Create a lounge room</h3><p class="muted">Create it here. Guests join here. Nobody leaves the lounge and guests do not need Zoom accounts.</p><div class="zoom-form"><label>Room name<input id="zoomCreateName" placeholder="Saturday Night Watch Room"></label><label>Your name<input id="zoomCreateUser" placeholder="Robert"></label><div class="zoom-actions"><button class="primary" data-zcreate>➕ Create Lounge Room</button></div></div></div>'+
-      '<div class="zoom-panel"><h3>🚪 Join a lounge room</h3><p class="muted">Use the 8-character room code from the host.</p><div class="zoom-form"><label>Room code<input id="zoomJoinCode" placeholder="ABCDEFGH"></label><label>Your name<input id="zoomJoinUser" placeholder="Your name"></label><div class="zoom-actions"><button class="primary" data-zjoin>🚪 Join Lounge Room</button></div></div></div>'+
+      '<div class="zoom-panel"><h3>🚪 Join a lounge room</h3><p class="muted">Use the 8-character room code from the host. Each private lounge room holds up to 8 people total.</p><div class="zoom-form"><label>Room code<input id="zoomJoinCode" value="${z.topic?escz(z.topic):''}" placeholder="ABCDEFGH"></label><label>Your name<input id="zoomJoinUser" placeholder="Your name"></label><div class="zoom-actions"><button class="primary" data-zjoin>🚪 Join Lounge Room</button></div></div></div>'+
       '<div class="zoom-note"><b>TV stays in the lounge.</b> The room handles people, camera, microphone and chat. The host controls the lounge TV; guests follow the host\'s current lounge player when that source can be played in their browser.</div>'+
       (z.status?'<div class="notice">'+escz(z.status)+'</div>':'');
     return '<div class="section"><div><h2>👥 '+escz(z.roomName||'Lounge Room')+'</h2><span class="muted">'+(z.host?'You are the host/controller.':'You are a guest.')+'</span></div><span class="badge">ROOM '+escz(z.topic)+'</span></div>'+
@@ -92,17 +92,18 @@ function rerender(){if(typeof render==='function')render();setTimeout(function()
   }
   function signalTopic(){return 'zoom-lounge-sync:'+String(z.topic||'').replace(/[^A-Z0-9_-]/gi,'').slice(0,80)}
 async function connectSignal(){
-  if(!(typeof supabaseClient!=='undefined'?supabaseClient:window.supabaseClient)||!z.topic)return;
+  var sb=(typeof supabaseClient!=='undefined'?supabaseClient:window.supabaseClient);
+  if(!sb||!z.topic)return;
   try{
-    if(z.signal&&window.supabaseClient.removeChannel)try{await window.supabaseClient.removeChannel(z.signal)}catch(_){}
-    z.signal=window.supabaseClient.channel(signalTopic(),{config:{broadcast:{self:false,ack:true}}});
+    if(z.signal&&sb.removeChannel)try{await sb.removeChannel(z.signal)}catch(_){}
+    z.signal=sb.channel(signalTopic(),{config:{broadcast:{self:false,ack:true}}});
     z.signal.on('broadcast',{event:'room-state'},function(p){if(!z.host&&p&&p.payload)apply(p.payload.state||p.payload)});
     z.signal.on('broadcast',{event:'room-state-request'},function(p){if(z.host)broadcast()});
     z.signal.on('broadcast',{event:'room-navigation'},function(p){if(!z.host&&p&&p.payload)applyNavigation(p.payload.target,p.payload.app)});
     await new Promise(function(resolve){z.signal.subscribe(function(status){if(status==='SUBSCRIBED'){z.signalReady=true;resolve(true)}else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){resolve(false)}})});
   }catch(e){z.signalReady=false;console.warn('Room sync channel:',e)}
 }
-function disconnectSignal(){if(z.signal&&window.supabaseClient)try{window.supabaseClient.removeChannel(z.signal)}catch(_){}z.signal=null;z.signalReady=false}
+function disconnectSignal(){var sb=(typeof supabaseClient!=='undefined'?supabaseClient:window.supabaseClient);if(z.signal&&sb)try{sb.removeChannel(z.signal)}catch(_){}z.signal=null;z.signalReady=false}
 async function signalSend(event,payload){
   if(!z.signal||!z.signalReady)return false;
   try{var r=await z.signal.send({type:'broadcast',event:event,payload:payload});return !r||r==='ok'||r==='OK'||r===true}catch(e){console.warn('Room sync send failed:',event,e);return false}
@@ -133,7 +134,7 @@ function tvChanged(){if(z.joined&&z.host)setTimeout(broadcast,80)}
   window.zoomRoomsLeave=leave;window.zoomRoomsView=view;
   window.roomsView=view;window.createRoom=window.zoomRoomsCreate;window.joinRoom=window.zoomRoomsJoin;window.leaveRoom=window.zoomRoomsLeave;window.toggleRoomMedia=video;
   document.addEventListener('click',function(e){if(e.target.closest?.('[data-zcreate]'))return window.zoomRoomsCreate();if(e.target.closest?.('[data-zjoin]'))return window.zoomRoomsJoin();if(e.target.closest?.('[data-zcopy]'))return copy();if(e.target.closest?.('[data-zaudio]'))return audio();if(e.target.closest?.('[data-zvideo]'))return video();if(e.target.closest?.('[data-zshare]'))return share();if(e.target.closest?.('[data-zleave]'))return leave(true);if(e.target.closest?.('[data-zsend]'))return send()},{capture:true});
-  function handleRoomRoute(){var m=new URLSearchParams(location.search).get('room');if(m){z.topic=String(m).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,12)}}
+  function handleRoomRoute(){var m=new URLSearchParams(location.search).get('room');if(m){z.topic=String(m).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8)}}
   handleRoomRoute();
   var os=window.showPlayer;if(typeof os==='function'&&!os.__zoom){var ws=function(){var r=os.apply(this,arguments);tvChanged();setTimeout(syncRoomStage,0);return r};ws.__zoom=true;window.showPlayer=ws}
   var oc=window.closePlayer;if(typeof oc==='function'&&!oc.__zoom){var wc=function(){var r=oc.apply(this,arguments);tvChanged();setTimeout(syncRoomStage,0);return r};wc.__zoom=true;window.closePlayer=wc}
