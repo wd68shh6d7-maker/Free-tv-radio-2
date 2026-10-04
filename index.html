@@ -415,7 +415,7 @@ const documentaryTV=[
 let guideTV=[...national,...international,...documentaryTV].map((x,i)=>({...x,state:x.state||'NATIONWIDE',guideNo:i+1}));
 let tab='home', q='', guideQuery='', radioQuery='', webQuery='', webStatus='', webUrl='', webTitle='', appUrl='', appTitle='', network='All', city='All', cat='All', guideSource='All', guideMode='live';
 window.noraConversation=false;window.noraListening=false;window.noraRecognition=null;window.noraTranscript='';window.noraVoiceStatus='';window.noraLastAnswer='';
-let roomChannel=null, roomCode='', roomName='', roomJoinCode='', roomDisplayName='', roomClientId=(crypto?.randomUUID?.()||('room-'+Date.now()+'-'+Math.random().toString(36).slice(2))), roomRole='', roomLocalStream=null, roomPeers={}, roomPendingIce={}, roomParticipants={}, roomMessages=[], roomStatus='', roomMicOn=false, roomCamOn=false, roomFacingMode='user', roomMicOn=false, roomCamOn=false, roomJoined=false;
+let roomChannel=null, roomCode='', roomName='', roomJoinCode='', roomDisplayName='', roomClientId=(crypto?.randomUUID?.()||('room-'+Date.now()+'-'+Math.random().toString(36).slice(2))), roomRole='', roomLocalStream=null, roomPeers={}, roomPendingIce={}, roomParticipants={}, roomMessages=[], roomStatus='', roomMicOn=false, roomCamOn=false, roomFacingMode='user', roomJoined=false;
 let passwordRecovery=false;
 let webSuggestTimer=null;
 let webSuggestions=[];
