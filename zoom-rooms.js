@@ -1,7 +1,7 @@
 
 (function(){
   var CDN='https://source.zoom.us/videosdk/zoom-video-2.3.15.min.js';
-  var z={client:null,stream:null,chat:null,command:null,joined:false,topic:'',name:'',host:false,roomName:'',status:'',messages:[],videos:{},selfVideo:false,playbackTimer:null};
+  var z={client:null,stream:null,chat:null,command:null,signal:null,signalReady:false,joined:false,topic:'',name:'',host:false,roomName:'',status:'',messages:[],videos:{},selfVideo:false,playbackTimer:null};
 
   function style(){
     if(document.getElementById('zoom-lounge-style'))return;
@@ -27,7 +27,8 @@
       '<div class="zoom-chat"><div style="padding:10px 12px"><b>💬 Room chat</b></div><div class="zoom-chat-log" data-zchat></div><div class="zoom-chat-form"><input id="zoomChatInput" placeholder="Say something…"><button class="primary" data-zsend>Send</button></div></div>'+
       '<div class="zoom-note"><b>Shared TV:</b> '+(z.host?'You control what everyone follows.':'The host controls what everyone follows. You can still talk and use your camera.')+'</div>';
   }
-  function rerender(){if(typeof render==='function')render();setTimeout(function(){people();chat()},0)}
+  function syncRoomStage(){var center=document.querySelector('[data-zoom-watch-center]');var main=document.getElementById('mainPlayer');if(z.joined&&typeof tab!=='undefined'&&tab==='rooms'&&center&&main){center.innerHTML='';center.appendChild(main);return}if(main&&document.getElementById('playerDock')&&!document.getElementById('playerDock').contains(main))document.getElementById('playerDock').appendChild(main);if(center&&!main)center.innerHTML='<div class="zoom-living-empty">The shared lounge TV will appear here when the host starts a program.</div>'}
+function rerender(){if(typeof render==='function')render();setTimeout(function(){people();chat();syncRoomStage()},0)}
   function load(){
     if(window.WebVideoSDK&&window.WebVideoSDK.default)return Promise.resolve(window.WebVideoSDK.default);
     return new Promise(function(ok,no){var s=document.createElement('script');s.src=CDN;s.onload=function(){ok(window.WebVideoSDK.default)};s.onerror=function(){no(new Error('Zoom Video SDK could not load.'))};document.head.appendChild(s)})
@@ -44,6 +45,7 @@
       z.client=ZoomVideo.createClient();await z.client.init('en-US','Global',{patchJsMedia:true,stayAwake:true,leaveOnPageUnload:true});
       await z.client.join(topic,await token(topic,name,role),name,'');
       z.stream=z.client.getMediaStream();z.chat=z.client.getChatClient&&z.client.getChatClient();z.command=z.client.getCommandClient&&z.client.getCommandClient();
+      await connectSignal();
       wire();z.joined=true;setStatus(z.host?'Room ready. You are the host.':'You are in the room. Start audio/camera when you want.');rerender();setTimeout(function(){if(z.selfVideo)attachSelf();people()},80);
       if(z.host){broadcast();startPlaybackSync()}else requestState();
     }catch(e){console.error('Zoom room:',e);z.joined=false;z.client=null;z.stream=null;z.chat=null;z.command=null;setStatus(e.message||'The lounge room could not connect.');rerender()}
@@ -79,23 +81,40 @@
     b.innerHTML=z.messages.map(function(m){return '<div class="zoom-chat-msg"><b>'+escz(m.name)+'</b>: '+escz(m.text)+'</div>'}).join('')||'<span class="muted">Room chat is ready.</span>';b.scrollTop=b.scrollHeight;
   }
   async function audio(){
-    if(!z.stream)return;try{await z.stream.startAudio();setStatus('Room audio is connected. Use the audio button to mute/unmute.')}catch(e){try{await z.stream.unmuteAudio();setStatus('Room microphone is on.')}catch(_){setStatus('Please tap audio again and allow microphone access.')}}
+    if(!z.stream)return;try{var me=z.client.getCurrentUserInfo();if(!me.audio){await z.stream.startAudio();setStatus('Room audio is connected. Your microphone is on.')}else if(me.muted){await z.stream.unmuteAudio();setStatus('Your microphone is on.')}else{await z.stream.muteAudio();setStatus('Your microphone is muted.')}}catch(e){setStatus('Please tap audio again and allow microphone access.')}
   }
   async function video(){
     if(!z.stream)return;
     try{var me=z.client.getAllUser().find(function(u){return u.userId===z.client.getCurrentUserInfo().userId});if(me&&me.bVideoOn){await z.stream.stopVideo();detachSelf();setStatus('Your camera is off.')}else{await z.stream.startVideo();await attachSelf();setStatus('Your camera is on. Guests can see you when their video view is active.')}people()}catch(e){console.warn('camera:',e);setStatus('Camera could not start. Please allow camera access for the lounge and try again.')}
   }
-  function playbackInfo(){try{var v=document.getElementById('liveVideo'),a=document.getElementById('radioAudio'),el=v||a;if(!el||!Number.isFinite(el.currentTime))return null;var info={time:el.currentTime,sentAt:Date.now(),paused:!!el.paused};try{if(el.seekable&&el.seekable.length){info.seekStart=el.seekable.start(0);info.seekEnd=el.seekable.end(el.seekable.length-1)}}catch(_){}return info}catch(_){return null}}
+  function signalTopic(){return 'zoom-lounge-sync:'+String(z.topic||'').replace(/[^A-Z0-9_-]/gi,'').slice(0,80)}
+async function connectSignal(){
+  if(!window.supabaseClient||!z.topic)return;
+  try{
+    if(z.signal&&window.supabaseClient.removeChannel)try{await window.supabaseClient.removeChannel(z.signal)}catch(_){}
+    z.signal=window.supabaseClient.channel(signalTopic(),{config:{broadcast:{self:false,ack:true}}});
+    z.signal.on('broadcast',{event:'room-state'},function(p){if(!z.host&&p&&p.payload)apply(p.payload.state||p.payload)});
+    z.signal.on('broadcast',{event:'room-state-request'},function(p){if(z.host)broadcast()});
+    z.signal.on('broadcast',{event:'room-navigation'},function(p){if(!z.host&&p&&p.payload)applyNavigation(p.payload.target,p.payload.app)});
+    await new Promise(function(resolve){z.signal.subscribe(function(status){if(status==='SUBSCRIBED'){z.signalReady=true;resolve(true)}else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){resolve(false)}})});
+  }catch(e){z.signalReady=false;console.warn('Room sync channel:',e)}
+}
+function disconnectSignal(){if(z.signal&&window.supabaseClient)try{window.supabaseClient.removeChannel(z.signal)}catch(_){}z.signal=null;z.signalReady=false}
+async function signalSend(event,payload){
+  if(!z.signal||!z.signalReady)return false;
+  try{var r=await z.signal.send({type:'broadcast',event:event,payload:payload});return !r||r==='ok'||r==='OK'||r===true}catch(e){console.warn('Room sync send failed:',event,e);return false}
+}
+function playbackInfo(){try{var v=document.getElementById('liveVideo'),a=document.getElementById('radioAudio'),el=v||a;if(!el||!Number.isFinite(el.currentTime))return null;var info={time:el.currentTime,sentAt:Date.now(),paused:!!el.paused};try{if(el.seekable&&el.seekable.length){info.seekStart=el.seekable.start(0);info.seekEnd=el.seekable.end(el.seekable.length-1)}}catch(_){}return info}catch(_){return null}}
 function snapshot(){var s=typeof roomWatchSnapshot==='function'?roomWatchSnapshot():(typeof current!=='undefined'&&current?{mode:'player',current:current}:{mode:'closed'});if(s&&s.mode==='player'){var p=playbackInfo();if(p)s.playback=p}return s}
 function playbackElement(){return document.getElementById('liveVideo')||document.getElementById('radioAudio')}
 function applyPlayback(p){if(!p)return;var el=playbackElement();if(!el)return;var target=p.time+(Date.now()-Number(p.sentAt||Date.now()))/1000;var correct=function(){try{if(!Number.isFinite(el.currentTime))return false;var drift=target-el.currentTime;if(Math.abs(drift)<0.9)return true;if(el.seekable&&el.seekable.length){var start=el.seekable.start(0),end=el.seekable.end(el.seekable.length-1);target=Math.max(start+0.25,Math.min(end-0.25,target));el.currentTime=target}else{el.playbackRate=Math.max(0.9,Math.min(1.1,1+Math.max(-0.08,Math.min(0.08,drift*0.04))));setTimeout(function(){try{el.playbackRate=1}catch(_){}},2200)}if(!p.paused)el.play?.().catch(()=>{});return true}catch(_){return false}};if(!correct()){var tries=0,t=setInterval(function(){tries++;if(correct()||tries>=10)clearInterval(t)},500)}}
-  function broadcast(){if(z.host&&z.command)try{z.command.send(JSON.stringify({type:'room-state',state:snapshot()}))}catch(e){}}
+  function broadcast(){if(!z.host)return;signalSend('room-state',{state:snapshot(),from:z.name,sentAt:Date.now()});}
 function startPlaybackSync(){if(z.playbackTimer)clearInterval(z.playbackTimer);z.playbackTimer=setInterval(function(){if(z.host&&z.joined)broadcast()},1500)}
 function stopPlaybackSync(){if(z.playbackTimer)clearInterval(z.playbackTimer);z.playbackTimer=null}
-  function requestState(){if(z.command)try{z.command.send(JSON.stringify({type:'room-state-request'}))}catch(e){}}
-  function apply(s){if(!s)return;if(s.mode==='closed'){if(typeof closePlayer==='function'){roomApplyingRemote=true;try{closePlayer()}finally{roomApplyingRemote=false}}return}if(s.mode==='player'&&s.current&&typeof showPlayer==='function'){roomApplyingRemote=true;try{showPlayer(Object.assign({},s.current))}finally{roomApplyingRemote=false}if(s.playback)setTimeout(function(){applyPlayback(s.playback)},450)}}
+  function requestState(){signalSend('room-state-request',{from:z.name,requestedAt:Date.now()});}
+  function apply(s){if(!s)return;var stayInRooms=(typeof tab!=='undefined'&&tab==='rooms');if(s.mode==='closed'){if(typeof closePlayer==='function'){roomApplyingRemote=true;try{closePlayer()}finally{roomApplyingRemote=false}if(stayInRooms){tab='rooms';if(typeof render==='function')render();syncRoomStage()}}return}if(s.mode==='player'&&s.current&&typeof showPlayer==='function'){roomApplyingRemote=true;try{showPlayer(Object.assign({},s.current))}finally{roomApplyingRemote=false}if(stayInRooms){tab='rooms';if(typeof render==='function')render();setTimeout(syncRoomStage,0)}if(s.playback)setTimeout(function(){applyPlayback(s.playback)},450)}}
   function applyNavigation(target,app){if(!target)return;roomApplyingRemote=true;try{if(target==='apps'&&app&&app.url){if(typeof openAppInHub==='function')openAppInHub(app.url,app.title||'Streaming App');else if(typeof setTab==='function')setTab('apps')}else if(typeof setTab==='function')setTab(target)}finally{roomApplyingRemote=false}}
-function navigationChanged(target,app){if(z.host&&z.joined&&!roomApplyingRemote&&z.command)try{z.command.send(JSON.stringify({type:'room-navigation',target:String(target||''),app:app||null}))}catch(_){} }
+function navigationChanged(target,app){if(z.host&&z.joined&&!roomApplyingRemote)signalSend('room-navigation',{target:String(target||''),app:app||null,from:z.name,sentAt:Date.now()});}
 function tvChanged(){if(z.joined&&z.host)setTimeout(broadcast,80)}
   async function share(){if(!z.stream)return;try{if(!z.stream.startShareScreen){setStatus('Screen sharing is not available in this browser. The lounge TV will use synchronized player state instead.');return}var holder=document.querySelector('[data-zshare-view]');if(!holder){holder=document.createElement('div');holder.setAttribute('data-zshare-view','');holder.style.marginTop='12px';holder.style.border='1px solid var(--line)';holder.style.borderRadius='14px';holder.style.overflow='hidden';var title=document.createElement('div');title.textContent='🖥️ Shared Lounge Screen';title.style.padding='8px 10px';title.style.background='#0b1424';title.style.color='#cbd6e9';holder.appendChild(title);var video=document.createElement('video');video.id='zoomHostShareVideo';video.autoplay=true;video.playsInline=true;video.style.width='100%';video.style.display='block';holder.appendChild(video);document.querySelector('.zoom-panel')?.appendChild(holder)}var target=document.getElementById('zoomHostShareVideo');if(z.stream.isStartShareScreenWithVideoElement&&!z.stream.isStartShareScreenWithVideoElement()){setStatus('This browser needs the canvas screen-share path; the lounge will use synchronized TV state instead.');return}await z.stream.startShareScreen(target,{controls:{systemAudio:'include'}});setStatus('Your Lounge screen is being shared. Guests can now see the screen you selected, including content that cannot be synchronized as a player.');}catch(e){console.warn(e);setStatus('Screen sharing could not start. The lounge TV remains available through synchronized state.')}}
   async function copy(){try{await navigator.clipboard.writeText(invite());setStatus('Invite link copied. Send it to your guests.')}catch(_){setStatus('Room code: '+z.topic)}}
@@ -103,7 +122,7 @@ function tvChanged(){if(z.joined&&z.host)setTimeout(broadcast,80)}
   async function leave(show){
     try{if(z.client)await z.client.leave(!!show)}catch(_){}
     try{z.client&&z.client.destroy&&z.client.destroy()}catch(_){}
-    stopPlaybackSync();z.client=null;z.stream=null;z.chat=null;z.command=null;z.joined=false;z.topic='';z.name='';z.host=false;z.videos={};z.selfVideo=false;z.messages=[];
+    stopPlaybackSync();disconnectSignal();z.client=null;z.stream=null;z.chat=null;z.command=null;z.signal=null;z.signalReady=false;z.joined=false;z.topic='';z.name='';z.host=false;z.videos={};z.selfVideo=false;z.messages=[];
     if(show){setStatus('You left the lounge room.');rerender()}
   }
   window.zoomRoomsCreate=function(){connect(code(),(document.getElementById('zoomCreateUser')?.value||'Host').trim()||'Host',1,(document.getElementById('zoomCreateName')?.value||'').trim()||'Lounge Watch Room')};
@@ -113,9 +132,9 @@ function tvChanged(){if(z.joined&&z.host)setTimeout(broadcast,80)}
   document.addEventListener('click',function(e){if(e.target.closest?.('[data-zcreate]'))return window.zoomRoomsCreate();if(e.target.closest?.('[data-zjoin]'))return window.zoomRoomsJoin();if(e.target.closest?.('[data-zcopy]'))return copy();if(e.target.closest?.('[data-zaudio]'))return audio();if(e.target.closest?.('[data-zvideo]'))return video();if(e.target.closest?.('[data-zshare]'))return share();if(e.target.closest?.('[data-zleave]'))return leave(true);if(e.target.closest?.('[data-zsend]'))return send()},{capture:true});
   function handleRoomRoute(){var m=new URLSearchParams(location.search).get('room');if(m){z.topic=String(m).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,12)}}
   handleRoomRoute();
-  var os=window.showPlayer;if(typeof os==='function'&&!os.__zoom){var ws=function(){var r=os.apply(this,arguments);tvChanged();return r};ws.__zoom=true;window.showPlayer=ws}
-  var oc=window.closePlayer;if(typeof oc==='function'&&!oc.__zoom){var wc=function(){var r=oc.apply(this,arguments);tvChanged();return r};wc.__zoom=true;window.closePlayer=wc}
-  var ot=window.setTab;if(typeof ot==='function'&&!ot.__zoom){var wt=function(t){var r=ot.apply(this,arguments);navigationChanged(t,null);return r};wt.__zoom=true;window.setTab=wt}
+  var os=window.showPlayer;if(typeof os==='function'&&!os.__zoom){var ws=function(){var r=os.apply(this,arguments);tvChanged();setTimeout(syncRoomStage,0);return r};ws.__zoom=true;window.showPlayer=ws}
+  var oc=window.closePlayer;if(typeof oc==='function'&&!oc.__zoom){var wc=function(){var r=oc.apply(this,arguments);tvChanged();setTimeout(syncRoomStage,0);return r};wc.__zoom=true;window.closePlayer=wc}
+  var ot=window.setTab;if(typeof ot==='function'&&!ot.__zoom){var wt=function(t){var r=ot.apply(this,arguments);navigationChanged(t,null);setTimeout(syncRoomStage,0);return r};wt.__zoom=true;window.setTab=wt}
   var oa=window.openAppInHub;if(typeof oa==='function'&&!oa.__zoom){var wa=function(url,title){var r=oa.apply(this,arguments);navigationChanged('apps',{url:String(url||''),title:String(title||'Streaming App')});return r};wa.__zoom=true;window.openAppInHub=wa}
   style();if(typeof render==='function')render();
 })();
