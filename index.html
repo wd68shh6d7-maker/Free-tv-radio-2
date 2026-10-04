@@ -189,6 +189,43 @@ body{font-size:1rem}
 .room-people{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.room-person{border:1px solid var(--line);border-radius:999px;padding:7px 9px;background:#102039;color:#dce5f4;font-size:.8rem}
 .room-status{margin-top:10px;color:#cbd6e9;font-size:.86rem}.room-status.good{color:var(--good)}
 @media(max-width:760px){.rooms-steps{grid-template-columns:1fr}.room-form{grid-template-columns:1fr}.room-video-grid{grid-template-columns:1fr 1fr}.room-panel{padding:13px}.room-code{letter-spacing:.12em}}
+</style><style id="rooms-v2-style">
+.rooms-v2-hero{border:1px solid var(--line);border-radius:22px;background:linear-gradient(180deg,#111f36,#0a1424);padding:18px;margin:12px 0}
+.rooms-v2-hero h2{margin:0 0 7px;font-size:1.55rem}.rooms-v2-hero p{margin:0;color:var(--muted);line-height:1.5}
+.rooms-v2-notice{margin-top:12px;padding:12px 14px;border:1px solid #36516f;border-radius:14px;background:#0b1728;line-height:1.45;color:#cbd6e8}
+.rooms-v2-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.rooms-v2-card{border:1px solid var(--line);border-radius:18px;background:#0d182b;padding:16px}
+.rooms-v2-card h3{margin:0 0 7px}.rooms-v2-card p{margin:0;color:var(--muted);line-height:1.45}
+.rooms-v2-form{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;margin-top:12px}
+.rooms-v2-form label{font-size:.85rem;color:#cbd6e8}.rooms-v2-form input{width:100%;margin-top:5px;padding:12px 13px;border:1px solid var(--line);border-radius:11px;background:#071221;color:#fff}
+.rooms-v2-form button{min-height:48px}
+.rooms-v2-rulebox{border:1px solid #5b789f;border-radius:16px;background:#081322;padding:14px;margin-top:12px;line-height:1.5}
+.rooms-v2-rulebox b{color:#fff}
+.rooms-v2-room{border:1px solid var(--line);border-radius:20px;background:#050b15;overflow:hidden;margin-top:12px}
+.rooms-v2-topbar{display:flex;align-items:center;gap:9px;padding:11px 12px;background:#0d1728;border-bottom:1px solid var(--line)}
+.rooms-v2-title{flex:1;min-width:0}.rooms-v2-title strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rooms-v2-title small{color:var(--muted)}
+.rooms-v2-live{border:1px solid #3b536e;border-radius:999px;padding:6px 9px;font-size:.75rem;font-weight:850}
+.rooms-v2-stage{padding:10px;display:grid;grid-template-columns:1.55fr 1fr 1fr;gap:8px;min-height:360px}
+.rooms-v2-tile{position:relative;min-height:170px;border:1px solid #263953;border-radius:15px;overflow:hidden;background:#0b1320}
+.rooms-v2-tile.host{grid-row:span 2;min-height:348px}
+.rooms-v2-tile video{width:100%;height:100%;min-height:170px;display:block;object-fit:cover;background:#02060b}
+.rooms-v2-tile.host video{min-height:348px}
+.rooms-v2-tile.off video{opacity:0}
+.rooms-v2-avatar{position:absolute;inset:0;display:grid;place-items:center;font-size:2rem;font-weight:900;color:#dbe7f7;background:radial-gradient(circle at 50% 35%,#1a304d,#08111f 70%)}
+.rooms-v2-tile-label{position:absolute;left:8px;right:8px;bottom:8px;display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 8px;border-radius:10px;background:rgba(0,0,0,.72);font-size:.78rem}
+.rooms-v2-tile-label span:last-child{opacity:.7}
+.rooms-v2-controls{display:flex;gap:8px;flex-wrap:wrap;padding:10px;border-top:1px solid var(--line);background:#0b1423}
+.rooms-v2-controls button{min-height:46px;border:1px solid var(--line);background:#16243a;color:#fff;border-radius:10px;padding:9px 12px;font-weight:800}
+.rooms-v2-controls button.primary{background:#fff;color:#07101f}
+.rooms-v2-music{margin:10px;border:1px solid #29415d;border-radius:15px;background:#0b1728;padding:12px}
+.rooms-v2-music p{margin:5px 0 0;color:var(--muted);font-size:.86rem;line-height:1.4}
+.rooms-v2-footer{padding:0 10px 12px;color:#91a1b9;font-size:.78rem;line-height:1.45}
+.rooms-v2-status{padding:0 10px 10px;color:#cbd6e8;font-size:.86rem}
+@media(max-width:760px){
+ .rooms-v2-grid{grid-template-columns:1fr}.rooms-v2-form{grid-template-columns:1fr}.rooms-v2-stage{grid-template-columns:1fr 1fr;min-height:0}
+ .rooms-v2-tile.host{grid-column:1/-1;grid-row:auto;min-height:230px}.rooms-v2-tile.host video{min-height:230px}
+ .rooms-v2-tile video{min-height:150px}.rooms-v2-controls{position:sticky;bottom:0;z-index:5}
+}
 </style><style>
 .nora-hero{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(180px,.7fr);gap:14px;align-items:stretch}
 .nora-avatar{border:1px solid var(--line);border-radius:22px;background:linear-gradient(135deg,#132742,#0b1527);display:grid;place-items:center;min-height:190px;font-size:5rem}
@@ -200,7 +237,7 @@ body{font-size:1rem}
 .nora-item{border:1px solid var(--line);border-radius:15px;background:#0b1525;padding:14px}
 .nora-item h3{margin:0 0 6px}.nora-item p{margin:0;color:var(--muted);line-height:1.45}
 @media(max-width:760px){.nora-hero{grid-template-columns:1fr}.nora-avatar{min-height:120px;font-size:4rem}.nora-chat-form{grid-template-columns:1fr 1fr}.nora-chat-form input{grid-column:1/-1}}
-</style></head><body><main class="wrap"><header class="top"><div class="brand">📺 Free TV <span>&</span> 📻 Radio</div><div class="badge">Website 2 • independent</div></header><style id="reading-room-style">.reading-room{border:1px solid var(--line);border-radius:20px;background:linear-gradient(180deg,#101b30,#0b1526);padding:16px;margin:10px 0 18px}.reading-room-hero{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap}.reading-room-hero h2{margin:0 0 6px}.reading-room-hero p{margin:0;color:var(--muted);line-height:1.5;max-width:760px}.reading-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:14px}.reading-card{border:1px solid var(--line);border-radius:16px;background:#0a1425;padding:14px;display:flex;flex-direction:column;min-height:210px}.reading-card .book-icon{font-size:2rem;margin-bottom:8px}.reading-card h3{margin:0 0 6px}.reading-card p{margin:0;color:var(--muted);line-height:1.45;font-size:.92rem}.reading-card .actions{margin-top:auto;padding-top:12px}.reading-credit{margin-top:14px;padding:12px;border:1px solid #29415d;border-radius:14px;background:#0b1728;color:#b8c5d8;line-height:1.5;font-size:.86rem}.app-launch-status{margin:12px 0;padding:12px 14px;border:1px solid #29415d;border-radius:14px;background:#0b1728;color:#cbd6e9}</style><section class="hero"><h1>More TV. Less hunting.</h1><p>A clean guide to free television and radio, with a persistent player, personal favorites, big-screen friendly playback, and a private administrator room.</p></section><nav class="nav" id="nav"><button class="active" data-tab="home">🏠 Home</button><button data-tab="info">ℹ️ Information</button><button data-tab="tv">📺 Live TV</button><button data-tab="radio">📻 Radio</button><button data-tab="games">🎮 Games</button><button data-tab="chess">♟️ Chess Room</button><button data-tab="music">🎵 Robert &amp; Christina’s Music Room</button><button data-tab="apps">📱 Apps</button><button data-tab="free">📡 Free Streaming</button><button data-tab="nora">🧑‍💻 Nora</button><button data-tab="reading">📚 Reading Room</button><button data-tab="hoopla">📚 Hoopla Library</button><button data-tab="openlibrary">📚 Open Library</button><button data-tab="promise">🔐 What We Promise</button><button data-tab="paid">🔐 Paid TV</button><button data-tab="weather">🌦️ Weather</button><button data-tab="favorites">⭐ Favorites</button><button data-tab="stories">📸 Our Photos & Stories</button><button data-tab="gold">🏞️ California’s Gold</button><button data-tab="alex">🎙️ Alex Jones Live</button><button data-tab="bible">📖 Bible</button><button data-tab="maxvelocity">🌩️ Max Velocity — Severe Weather Center</button><button data-tab="admin">🔐 Admin</button><button data-tab="invite">🔗 Invite</button></nav><section id="playerDock" class="player-dock" aria-live="polite"></section><section id="musicDock" class="music-dock" aria-live="polite"><div class="music-dock-inner"><div class="music-dock-title"><span>🎵</span><strong id="musicNowTitle">Music Room</strong><small id="musicNowMeta">Choose a song or playlist</small></div><div class="music-dock-actions"><button type="button" data-music-prev aria-label="Previous song">⏮</button><button type="button" data-music-dock-play aria-label="Play or pause">▶</button><button type="button" data-music-next aria-label="Next song">⏭</button><button type="button" data-music-stop aria-label="Stop music">⏹</button></div><audio id="musicAudio" preload="none"></audio></div></section><section id="app"></section><div id="presenceLiveBar" class="presence-livebar" aria-live="polite"><div class="presence-livebar-inner"><span class="live-dot" aria-hidden="true"></span><strong>👥 <span data-presence-total>0</span> here now</strong><span class="live-sep">•</span><span class="live-detail">🌎 <span data-presence-countries>Connecting…</span></span><span class="live-sep">•</span><span class="live-detail">🇺🇸 <span data-presence-states>U.S. activity loading…</span></span><span class="live-privacy">🔒 Approximate location only</span></div></div><section class="safety"><b>Friendly safety note:</b> We curate links and public streams, but third-party providers control their own content and availability. Keep your device/browser updated, use your normal security protections, and never enter sensitive information into an unfamiliar third-party site.</section><footer class="footer">Free TV & Radio is an independent directory and player interface. Provider names, trademarks and programming belong to their respective owners. We do not promise uninterrupted or buffer-free playback because third-party streams and internet connections vary. <b>Terms • Privacy • Safety</b></footer></main><div id="mini" class="mini"></div>
+</style></head><body><main class="wrap"><header class="top"><div class="brand">📺 Free TV <span>&</span> 📻 Radio</div><div class="badge">Website 2 • independent</div></header><style id="reading-room-style">.reading-room{border:1px solid var(--line);border-radius:20px;background:linear-gradient(180deg,#101b30,#0b1526);padding:16px;margin:10px 0 18px}.reading-room-hero{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap}.reading-room-hero h2{margin:0 0 6px}.reading-room-hero p{margin:0;color:var(--muted);line-height:1.5;max-width:760px}.reading-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:14px}.reading-card{border:1px solid var(--line);border-radius:16px;background:#0a1425;padding:14px;display:flex;flex-direction:column;min-height:210px}.reading-card .book-icon{font-size:2rem;margin-bottom:8px}.reading-card h3{margin:0 0 6px}.reading-card p{margin:0;color:var(--muted);line-height:1.45;font-size:.92rem}.reading-card .actions{margin-top:auto;padding-top:12px}.reading-credit{margin-top:14px;padding:12px;border:1px solid #29415d;border-radius:14px;background:#0b1728;color:#b8c5d8;line-height:1.5;font-size:.86rem}.app-launch-status{margin:12px 0;padding:12px 14px;border:1px solid #29415d;border-radius:14px;background:#0b1728;color:#cbd6e9}</style><section class="hero"><h1>More TV. Less hunting.</h1><p>A clean guide to free television and radio, with a persistent player, personal favorites, private Rooms for fellowship, and a private administrator room.</p></section><nav class="nav" id="nav"><button class="active" data-tab="home">🏠 Home</button><button data-tab="info">ℹ️ Information</button><button data-tab="tv">📺 Live TV</button><button data-tab="radio">📻 Radio</button><button data-tab="games">🎮 Games</button><button data-tab="chess">♟️ Chess Room</button><button data-tab="rooms">👥 Rooms</button><button data-tab="music">🎵 Robert &amp; Christina’s Music Room</button><button data-tab="apps">📱 Apps</button><button data-tab="free">📡 Free Streaming</button><button data-tab="nora">🧑‍💻 Nora</button><button data-tab="reading">📚 Reading Room</button><button data-tab="hoopla">📚 Hoopla Library</button><button data-tab="openlibrary">📚 Open Library</button><button data-tab="promise">🔐 What We Promise</button><button data-tab="paid">🔐 Paid TV</button><button data-tab="weather">🌦️ Weather</button><button data-tab="favorites">⭐ Favorites</button><button data-tab="stories">📸 Our Photos & Stories</button><button data-tab="gold">🏞️ California’s Gold</button><button data-tab="alex">🎙️ Alex Jones Live</button><button data-tab="bible">📖 Bible</button><button data-tab="maxvelocity">🌩️ Max Velocity — Severe Weather Center</button><button data-tab="admin">🔐 Admin</button><button data-tab="invite">🔗 Invite</button></nav><section id="playerDock" class="player-dock" aria-live="polite"></section><section id="musicDock" class="music-dock" aria-live="polite"><div class="music-dock-inner"><div class="music-dock-title"><span>🎵</span><strong id="musicNowTitle">Music Room</strong><small id="musicNowMeta">Choose a song or playlist</small></div><div class="music-dock-actions"><button type="button" data-music-prev aria-label="Previous song">⏮</button><button type="button" data-music-dock-play aria-label="Play or pause">▶</button><button type="button" data-music-next aria-label="Next song">⏭</button><button type="button" data-music-stop aria-label="Stop music">⏹</button></div><audio id="musicAudio" preload="none"></audio></div></section><section id="app"></section><div id="presenceLiveBar" class="presence-livebar" aria-live="polite"><div class="presence-livebar-inner"><span class="live-dot" aria-hidden="true"></span><strong>👥 <span data-presence-total>0</span> here now</strong><span class="live-sep">•</span><span class="live-detail">🌎 <span data-presence-countries>Connecting…</span></span><span class="live-sep">•</span><span class="live-detail">🇺🇸 <span data-presence-states>U.S. activity loading…</span></span><span class="live-privacy">🔒 Approximate location only</span></div></div><section class="safety"><b>Friendly safety note:</b> We curate links and public streams, but third-party providers control their own content and availability. Keep your device/browser updated, use your normal security protections, and never enter sensitive information into an unfamiliar third-party site.</section><footer class="footer">Free TV & Radio is an independent directory and player interface. Provider names, trademarks and programming belong to their respective owners. We do not promise uninterrupted or buffer-free playback because third-party streams and internet connections vary. <b>Terms • Privacy • Safety</b></footer></main><div id="mini" class="mini"></div>
 <!-- JavaScript interaction fix verified -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2"></script><script src="https://cdn.jsdelivr.net/npm/tus-js-client@4.3.1/dist/tus.min.js"></script><script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.15/dist/hls.min.js"></script>
 <script>
@@ -1451,19 +1488,21 @@ function roomPeopleFromPresence(){
  });
  if(!list.some(x=>x.id===roomClientId))list.push({id:roomClientId,name:roomDisplayName||'You',role:roomRole||'member'});
  roomParticipants={};list.forEach(x=>roomParticipants[x.id]=x);
- const people=document.querySelector('[data-room-people]');
- if(people)people.innerHTML=list.map(x=>'<span class="room-person">'+esc(x.name)+(x.id===roomClientId?' • You':'')+'</span>').join('');
  const count=document.querySelector('[data-room-count]');if(count)count.textContent=String(list.length);
 }
 function roomAddTile(peerId,name,stream){
- const grid=document.querySelector('[data-room-video-grid]');if(!grid)return;
- let tile=grid.querySelector('[data-room-peer="'+CSS.escape(peerId)+'"]');
- if(!tile){tile=document.createElement('div');tile.className='room-tile';tile.dataset.roomPeer=peerId;tile.innerHTML='<video autoplay playsinline></video><span class="room-tile-label">'+esc(name||'Guest')+'</span>';grid.appendChild(tile)}
+ const grid=document.querySelector('[data-room-video-grid-v2]');if(!grid)return;
+ let tile=grid.querySelector('[data-room-peer-tile="'+CSS.escape(peerId)+'"]');
+ if(!tile){
+  tile=document.createElement('div');tile.className='rooms-v2-tile';tile.dataset.roomPeerTile=peerId;
+  tile.innerHTML='<div class="rooms-v2-avatar"></div><video autoplay playsinline></video><div class="rooms-v2-tile-label"><span>'+esc(name||'Guest')+'</span><span>GUEST</span></div>';
+  grid.appendChild(tile);
+ }
  const v=tile.querySelector('video');if(v&&stream&&v.srcObject!==stream)v.srcObject=stream;
 }
-function roomRemoveTile(peerId){const tile=document.querySelector('[data-room-peer="'+CSS.escape(peerId)+'"]');if(tile)tile.remove()}
+function roomRemoveTile(peerId){const tile=document.querySelector('[data-room-peer-tile="'+CSS.escape(peerId)+'"]');if(tile)tile.remove()}
 function roomUpdateLocalPreview(){
- const v=document.querySelector('[data-room-local-video]');
+ const v=document.querySelector('[data-room-local-video-v2]');
  if(v&&roomLocalStream)v.srcObject=roomLocalStream;
 }
 async function roomEnsureMedia(){
@@ -1478,7 +1517,7 @@ async function roomEnsureMedia(){
   Object.keys(roomPeers).forEach(id=>{if(id!==roomClientId&&roomClientId<id)roomRenegotiatePeer(id)});
   const micBtn=document.querySelector('[data-room-mic]');if(micBtn)micBtn.textContent='🎙️ Mute microphone';
   const camBtn=document.querySelector('[data-room-cam]');if(camBtn)camBtn.textContent='📷 Turn camera off';
-  roomSetStatus('Microphone + camera are on. TV playback remains in the player above.',true);
+  roomSetStatus('Microphone + camera are on. Your room is separate from the lounge TV/radio.',true);
   return true;
  }catch(err){
   roomSetStatus('Camera/microphone permission was not granted. You can try again.',false);
@@ -1571,14 +1610,14 @@ async function startRoomSession(code,name,role){
   });
  });
 }
-function renderRoomOnly(){if(tab==='rooms'){app.innerHTML=roomsView();roomUpdateLocalPreview();roomRenderChat();roomPeopleFromPresence();}}
+function renderRoomOnly(){if(tab==='rooms'){app.innerHTML=roomsView();roomUpdateLocalPreview();roomPeopleFromPresence();if(roomLocalStream){document.querySelectorAll('[data-room-local-video-v2]').forEach(v=>v.srcObject=roomLocalStream)}}}
 async function createRoom(){
  const name=document.getElementById('roomCreateName')?.value||'';
  roomCode=makeRoomCode();roomName=(name.trim()||'My Watch Room').slice(0,60);
  roomJoinCode=roomCode;roomDisplayName=(document.getElementById('roomDisplayName')?.value||'').trim().slice(0,32)||'Host';
  renderRoomOnly();
  const ok=await startRoomSession(roomCode,roomDisplayName,'host');
- if(ok)await roomEnsureMedia();
+ if(ok){await roomEnsureMedia();roomHandlePresenceSync();}
  renderRoomOnly();
  if(ok)roomHandlePresenceSync();
 }
@@ -1588,7 +1627,7 @@ async function joinRoom(){
  if(code.length<4){roomSetStatus('Enter the room code first.',false);return}
  roomCode=code;roomJoinCode=code;roomName='Shared Watch Room';roomDisplayName=name;
  const ok=await startRoomSession(code,name,'member');
- if(ok)await roomEnsureMedia();
+ if(ok){await roomEnsureMedia();roomHandlePresenceSync();}
  renderRoomOnly();
 }
 async function leaveRoom(showRooms=true){
@@ -1625,21 +1664,45 @@ function copyRoomInvite(){
  roomSetStatus('Room link copied. Send it to the people you want to join.',true);
 }
 function roomsView(){
- if(roomJoined)return '<div class="section"><div><h2>👥 '+esc(roomName||'Watch Room')+'</h2><span class="muted">Watch TV together • talk • use video</span></div><span class="badge"><span data-room-count>1</span> people</span></div>'+
- '<div class="room-panel"><div class="section" style="margin-top:0"><div><h3 style="margin:0">Room code</h3><span class="muted">Share this link or code with your guests.</span></div></div><div class="room-code">'+esc(roomCode)+'</div><div class="room-controls"><button class="primary" data-room-copy>🔗 Copy room link</button><button class="secondary" data-room-media>🎥 Start microphone & camera</button><button class="secondary" data-room-mic>🎙️ Toggle microphone</button><button class="secondary" data-room-cam>📷 Toggle camera</button><button class="secondary" data-room-leave>Leave room</button></div><div class="room-status" data-room-status>'+esc(roomStatus||'Room connected.')+'</div><div class="room-people" data-room-people></div></div>'+
- '<div class="room-panel"><h3 style="margin-top:0">Your video</h3><p class="muted">Your camera preview stays separate from the TV player. Microphone echo cancellation is requested by the browser; headphones can further reduce TV sound being picked up by a microphone.</p><div class="room-video-grid"><div class="room-tile"><video data-room-local-video autoplay muted playsinline></video><span class="room-tile-label">You</span></div><div data-room-video-grid class="room-video-grid" style="margin-top:0;display:contents"></div></div></div>'+
- '<div class="room-chat"><div style="padding:10px 12px"><b>💬 Room chat</b></div><div class="room-chat-log" data-room-chat-log></div><div class="room-chat-form"><input id="roomChatInput" placeholder="Type a message…"><button class="primary" data-room-send-chat>Send</button></div></div>'+
- '<div class="notice"><b>TV + conversation test:</b> Keep Live TV playing in the player above while you turn the microphone and camera on. The room sends your camera/mic through WebRTC separately from the TV player. We will test whether TV audio, room audio, and video continue without one stopping the other.</div>';
- return '<div class="section"><div><h2>👥 Rooms</h2><span class="muted">Watch TV together, talk and use video.</span></div><span class="badge">EASY ROOM SETUP</span></div>'+
- '<div class="notice"><b>Create a room in three simple steps.</b> The room opens immediately, then asks for microphone and camera permission so the host can test the full TV + voice + video experience before inviting anyone.</div>'+
- '<div class="rooms-steps"><div class="room-step"><strong>1. Name it</strong><span>Give your watch room a simple name.</span></div><div class="room-step"><strong>2. Create it</strong><span>We make a short room code and open the room immediately.</span></div><div class="room-step"><strong>3. Invite</strong><span>Copy the room link and send it to your test person.</span></div></div>'+
- '<div class="room-panel"><h3 style="margin-top:0">Create a new room</h3><div class="room-form"><label>Room name<input id="roomCreateName" placeholder="Example: Saturday Night Watch Room"></label><label>Your name<input id="roomDisplayName" placeholder="Your name"></label><button class="primary" data-room-create>➕ Create Room</button></div></div>'+
- '<div class="room-panel"><h3 style="margin-top:0">Join a room</h3><div class="room-form"><label>Room code<input id="roomJoinCode" value="'+esc(roomJoinCode)+'" placeholder="6-character code"></label><label>Your name<input id="roomJoinName" placeholder="Your name"></label><button class="primary" data-room-join>🚪 Join Room</button></div></div>'+
- '<div class="notice"><b>What we will test:</b> microphone, camera, TV audio, room voice, room video, and whether all three can run together without the TV being stopped by the conversation.</div>';
+ const initials=(name)=>String(name||'?').trim().split(/\\s+/).map(x=>x[0]||'').join('').slice(0,2).toUpperCase()||'?';
+ if(roomJoined){
+  const people=Object.values(roomParticipants);
+  const tiles=people.map((p,i)=>{
+   const local=p.id===roomClientId;
+   const label=local?(roomDisplayName||'You'):(p.name||'Guest');
+   return '<div class="rooms-v2-tile '+(i===0?'host ':'')+(local&&!roomCamOn?'off':'')+'" data-room-peer-tile="'+esc(p.id)+'">'+
+    '<div class="rooms-v2-avatar">'+esc(initials(label))+'</div>'+
+    '<video '+(local?'data-room-local-video-v2 muted':'data-room-video-v2')+' autoplay playsinline></video>'+
+    '<div class="rooms-v2-tile-label"><span>'+esc(label)+'</span><span>'+((local?roomRole:(p.role||'member'))==='host'?'HOST':'')+'</span></div></div>';
+  }).join('');
+  return '<div class="section"><div><h2>👥 '+esc(roomName||'Room')+'</h2><span class="muted">Private fellowship room • up to 8 people</span></div><span class="badge"><span data-room-count>1</span>/8</span></div>'+
+   '<div class="rooms-v2-room"><div class="rooms-v2-topbar"><div class="rooms-v2-title"><strong>'+esc(roomName||'Private Room')+'</strong><small>Only people with this room link/code can join.</small></div><span class="rooms-v2-live">PRIVATE</span></div>'+
+   '<div class="rooms-v2-stage" data-room-video-grid-v2>'+tiles+'</div>'+
+   '<div class="rooms-v2-status" data-room-status>'+esc(roomStatus||'Room connected.')+'</div>'+
+   '<div class="rooms-v2-controls">'+
+    '<button class="primary" data-room-copy>🔗 Invite</button>'+
+    '<button data-room-media>🎥 Camera + mic</button>'+
+    '<button data-room-mic>'+(roomMicOn?'🎙️ Mute mic':'🔇 Unmute mic')+'</button>'+
+    '<button data-room-cam>'+(roomCamOn?'📷 Camera off':'📷 Camera on')+'</button>'+
+    '<button data-room-flip>🔄 Flip camera</button>'+
+    '<button data-room-leave>🚪 Leave</button>'+
+   '</div>'+
+   '<div class="rooms-v2-music"><b>🎵 Music works in Rooms</b><p>Your lounge Music Room can keep playing while you fellowship here. We are not tying Rooms to the TV or radio system.</p></div>'+
+   '<div class="rooms-v2-footer">Room rules apply to everyone: no sexual content or nudity, illegal drug use, bullying or harassment, threats, hate, dangerous behavior, or sharing another person’s private information without permission. Reports may be investigated and violations can result in removal or a ban.</div>'+
+   '</div>';
+ }
+ return '<div class="rooms-v2-hero"><h2>👥 Rooms</h2><p>Private, TikTok-style gathering rooms for fellowship, conversation, Bible study, family and friends. Up to eight people can join. Everyone controls their own camera and microphone.</p>'+
+  '<div class="rooms-v2-notice"><b>🔒 Private room:</b> People using the rest of the lounge cannot see or hear your room, and you cannot see or hear theirs.</div>'+
+  '<div class="rooms-v2-rulebox"><b>ROOM RULES & DISCLAIMER</b><br>Be respectful. No sexual content or nudity. No illegal drug use or promotion. No bullying, harassment, threats, hate, or dangerous behavior. Do not share another person’s private information or record/share people without permission.<br><br><b>You are responsible for your own conduct and anything you choose to display, say, or do in a room.</b> Reports may be investigated. Violations can result in removal from a room or a permanent Rooms ban.</div></div>'+
+  '<div class="rooms-v2-grid">'+
+   '<div class="rooms-v2-card"><h3>🎥 Start a private room</h3><p>Create a room, then invite up to seven people. Camera and microphone are optional.</p><div class="rooms-v2-form"><label>Room name<input id="roomCreateName" placeholder="Sunday Fellowship"></label><label>Your name<input id="roomDisplayName" placeholder="Your name"></label><button class="primary" data-room-create>Start Room</button></div></div>'+
+   '<div class="rooms-v2-card"><h3>🚪 Join a room</h3><p>Enter the private room code someone shared with you.</p><div class="rooms-v2-form"><label>Room code<input id="roomJoinCode" value="'+esc(roomJoinCode)+'" placeholder="6-character code"></label><label>Your name<input id="roomJoinName" placeholder="Your name"></label><button class="primary" data-room-join>Join Room</button></div></div>'+
+  '</div>'+
+  '<div class="notice"><b>Music:</b> Rooms does not replace or alter the lounge’s Radio or TV. Your existing music can remain available while the room is open.</div>';
 }
 async function searchOpenLibrary(){const input=document.getElementById('openLibrarySearch');const qv=(input?.value||'').trim();const box=document.getElementById('openLibraryResults');const status=document.getElementById('openLibraryStatus');if(!qv){if(status)status.textContent='Type an author, title, or subject to search.';return}if(status)status.textContent='Searching Open Library…';try{const u='https://openlibrary.org/search.json?q='+encodeURIComponent(qv)+'&fields=key,title,author_name,cover_i,first_publish_year,availability&limit=12';const res=await fetch(u,{headers:{'Accept':'application/json'}});if(!res.ok)throw new Error('Search failed');const data=await res.json();const docs=data.docs||[];if(!box){return}box.innerHTML=docs.map(function(d){const key=d.key||'';const title=d.title||'Untitled';const author=(d.author_name&&d.author_name[0])||'Unknown author';const year=d.first_publish_year||'';const cover=d.cover_i?'https://covers.openlibrary.org/b/id/'+d.cover_i+'-M.jpg':'';const img=cover?'<img src="'+cover+'" alt="">':'';return '<article class="openlibrary-book">'+img+'<h3>'+esc(title)+'</h3><p>'+esc(author)+(year?' • '+esc(String(year)):'')+'</p><div class="actions"><button class="primary" data-open-openlibrary="'+esc(key)+'">📖 Open in Open Library</button><button class="secondary" data-openlibrary-fav="'+esc(key)+'" data-openlibrary-title="'+esc(title)+'">☆ Favorite</button></div></article>'}).join('');status.textContent=docs.length?('Found '+docs.length+' results. Availability varies by edition. Open Library borrowing is free with an Open Library account; no local library card is required.'): 'No results found. Try another title or author.';}catch(err){console.error(err);if(status)status.textContent='Open Library search is temporarily unavailable. You can still open Open Library directly below.';}} 
 function openLibraryView(){return '<div class="section"><div><h2>📚 Open Library</h2><span class="muted">Free digital books • no local library card required</span></div><span class="badge">FREE ACCOUNT</span></div><div class="openlibrary-panel"><h2>📖 A second Reading Room for everyone</h2><p><b>No local library card is necessary.</b> Open Library is a free service of the nonprofit Internet Archive. Visitors can create a free Open Library account and borrow available digital books from participating collections. Borrowable BookReader editions can be read in the browser, and Open Library says borrowable books also have a Listen option.</p><div class="openlibrary-search"><input id="openLibrarySearch" placeholder="Search author, title, or subject…"><button class="primary" data-openlibrary-search>🔎 Search Books</button></div><div id="openLibraryStatus" class="openlibrary-status">Search for Louis L’Amour, Stephen King, Dean Koontz, Conn Iggulden, children’s books, Spanish, Hebrew, Chinese, and more.</div><div id="openLibraryResults" class="openlibrary-results"></div><div class="openlibrary-note"><b>How this works:</b> We provide the doorway and book discovery here. When you choose a book, the actual reading/borrowing happens on official Open Library. Your Open Library account, bookmarks, loans, and reader progress are handled by Open Library—not stored as your outside-service password in our lounge.</div><div class="actions"><button class="secondary" data-open-openlibrary-home>🌐 Open Open Library</button></div></div>';}
-function render(){const view=passwordRecovery?passwordRecoveryView():(tab==='home'?home():tab==='info'?information():tab==='tv'?tv():tab==='radio'?radio():tab==='games'?gamesView():tab==='chess'?chessView():tab==='apps'?appsView():tab==='free'?freeStreamingView():tab==='nora'?noraView():tab==='reading'?readingRoom():tab==='hoopla'?hooplaView():tab==='openlibrary'?openLibraryView():tab==='music'?musicRoom():tab==='promise'?promiseView():tab==='paid'?paidView():tab==='web'?web():tab==='weather'?weather():tab==='favorites'?favView():tab==='stories'?stories():tab==='gold'?resourceView('gold'):tab==='alex'?resourceView('alex'):tab==='bible'?resourceView('bible'):tab==='maxvelocity'?resourceView('maxvelocity'):tab==='admin'?admin():invite());app.innerHTML=view;if(tab==='tv')requestAnimationFrame(()=>{const sc=document.getElementById('guideScroll');if(sc){sc.addEventListener('scroll',saveGuideScrollPosition,{passive:true});restoreGuideToCurrent();requestAnimationFrame(restoreGuideToCurrent)}});if(tab==='radio'&&!radioCatalog.length&&!radioLoading){loadRadioCatalog()}}
+function render(){const view=passwordRecovery?passwordRecoveryView():(tab==='home'?home():tab==='info'?information():tab==='tv'?tv():tab==='radio'?radio():tab==='games'?gamesView():tab==='chess'?chessView():tab==='apps'?appsView():tab==='free'?freeStreamingView():tab==='nora'?noraView():tab==='reading'?readingRoom():tab==='rooms'?roomsView():tab==='hoopla'?hooplaView():tab==='openlibrary'?openLibraryView():tab==='music'?musicRoom():tab==='promise'?promiseView():tab==='paid'?paidView():tab==='web'?web():tab==='weather'?weather():tab==='favorites'?favView():tab==='stories'?stories():tab==='gold'?resourceView('gold'):tab==='alex'?resourceView('alex'):tab==='bible'?resourceView('bible'):tab==='maxvelocity'?resourceView('maxvelocity'):tab==='admin'?admin():invite());app.innerHTML=view;if(tab==='tv')requestAnimationFrame(()=>{const sc=document.getElementById('guideScroll');if(sc){sc.addEventListener('scroll',saveGuideScrollPosition,{passive:true});restoreGuideToCurrent();requestAnimationFrame(restoreGuideToCurrent)}});if(tab==='radio'&&!radioCatalog.length&&!radioLoading){loadRadioCatalog()}}
 function setTab(t){
  tab=t;
  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
