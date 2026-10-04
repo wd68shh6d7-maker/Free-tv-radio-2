@@ -355,11 +355,10 @@ const stations=[
  {id:'native-radio-contemporary',name:'Native Radio — Contemporary Music',network:'Native Radio',category:'Native American • New Age • Instrumental',scope:'Taos, New Mexico • frequent R. Carlos Nakai, Native flute and contemporary new-age music',url:'https://www.nativeradio.com/',stream:'https://cast1.asurahosting.com/proxy/nativera/stream',kind:'radio-direct',provider:'Native Radio'},
  {id:'klove',name:'K-LOVE',network:'K-LOVE',category:'Christian • Live Radio',scope:'Official K-LOVE web player',url:'https://www.klove.com/?channel=live',kind:'radio',provider:'K-LOVE'},
  {id:'air1',name:'Air1',network:'Air1',category:'Christian • Live Radio',scope:'Official Air1 web player',url:'https://www.air1.com/?channel=live',kind:'radio',provider:'Air1'},
- {id:'iheartradio',name:'iHeartRadio',network:'iHeart',category:'Radio • Many stations',scope:'Official iHeart live radio',url:'https://www.iheart.com/live/',kind:'radio',provider:'iHeartRadio'},
  {id:'grace-co',name:'GraceFM Colorado',network:'GraceFM',category:'Christian • Radio',scope:'KXGR 89.7 • Colorado Front Range',url:'https://ice23.securenetsystems.net/KXGRFM',stream:'https://ice23.securenetsystems.net/KXGRFM',kind:'radio-direct',provider:'GraceFM'},
  {id:'npr',name:'NPR',network:'NPR',category:'News • Talk • Culture',scope:'Official NPR site',url:'https://www.npr.org/',kind:'radio',provider:'NPR'},
- {id:'hpr4-bluegrass-gospel',name:'Heartland Public Radio HPR4',network:'Heartland Public Radio',category:'Bluegrass Gospel • 24 Hours',scope:'Commercial-free bluegrass gospel • listener-supported • official stream',url:'https://hpr.org/listen/',stream:'http://67.213.210.8:7739/stream',kind:'radio-direct',provider:'Heartland Public Radio'},
- {id:'radio-siamsa',name:'Radio Siamsa',network:'Radio Siamsa',category:'Irish Traditional • Folk • 24 Hours',scope:'Dublin, Ireland • traditional Irish music all day',url:'https://siamsa.ie/',stream:'https://main.siamsa.ie:8000/radio.mp3',kind:'radio-direct',provider:'Radio Siamsa'}, {id:'ceol-fm',name:'Ceol FM',network:'Ceol FM',category:'Irish Traditional • Folk • Celtic • 24 Hours',scope:'Ireland • traditional Irish and folk music all day • themed streams available',url:'https://ceol.fm/',stream:'https://listen.ceol.fm:8001/live.mp3',kind:'radio-direct',provider:'Ceol FM'}, {id:'kansas-breeze',name:'The Kansas Breeze',network:'Radio Kansas',category:'Ambient • Contemporary Instrumental • 24 Hours',scope:'Radio Kansas HD3 • Official direct stream',url:'https://streams.radiomast.io/a2dd31a2-a524-48ce-baea-8271e1a37ab2',stream:'https://streams.radiomast.io/a2dd31a2-a524-48ce-baea-8271e1a37ab2',kind:'radio-direct',provider:'Radio Kansas'},
+ {id:'hpr4-bluegrass-gospel',name:'Heartland Public Radio HPR4',network:'Heartland Public Radio',category:'Bluegrass Gospel • 24 Hours',scope:'Commercial-free bluegrass gospel • listener-supported • official stream',url:'https://hpr.org/listen/',stream:'https://us2.maindigitalstream.com/ssl/7739',kind:'radio-direct',provider:'Heartland Public Radio'},
+ {id:'radio-siamsa',name:'Radio Siamsa',network:'Radio Siamsa',category:'Irish Traditional • Folk • 24 Hours',scope:'Dublin, Ireland • traditional Irish music all day',url:'https://siamsa.ie/',stream:'https://main.siamsa.ie:8000/radio.mp3',kind:'radio-direct',provider:'Radio Siamsa'},{id:'kansas-breeze',name:'The Kansas Breeze',network:'Radio Kansas',category:'Ambient • Contemporary Instrumental • 24 Hours',scope:'Radio Kansas HD3 • Official direct stream',url:'https://streams.radiomast.io/a2dd31a2-a524-48ce-baea-8271e1a37ab2',stream:'https://streams.radiomast.io/a2dd31a2-a524-48ce-baea-8271e1a37ab2',kind:'radio-direct',provider:'Radio Kansas'},
 ];
 const allTV=[...national];
 const documentaryTV=[
@@ -890,7 +889,6 @@ function appsView(){
   ['YouTube','YouTube','https://www.youtube.com/','▶️','TV'],
   ['Real Life Network','Real Life Network','https://reallifenetwork.com/','❤️','TV'],
   ['Fandango at Home','Fandango','https://athome.fandango.com/','🍿','TV'],
-  ['iHeartRadio','iHeart','https://www.iheart.com/live/','❤️','RADIO'],
   ['TuneIn','TuneIn','https://tunein.com/radio/home/','🎙️','RADIO'],
   ['KXGR GraceFM','GraceFM','https://calvaryco.church/gracefm','✝️','RADIO']
  ];
@@ -1027,7 +1025,7 @@ async function loadRadioCatalog(force=false){
 function radioRows(){
  const qv=(radioQuery||'').trim().toLowerCase();
  const dynamic=radioCatalog.filter(function(x){const text=[x.name,x.network,x.category,x.scope,x.country,x.state,x.language].join(' ').toLowerCase();if(/\\bkvmr\\b/.test(text))return false;return !qv||text.includes(qv);});
- const featured=stations.filter(function(x){return !qv||JSON.stringify(x).toLowerCase().includes(qv);}).map(function(x){return {...x,type:'featured',kind:'radio-direct',stream:''};});
+ const featured=stations.filter(function(x){return !qv||JSON.stringify(x).toLowerCase().includes(qv);}).map(function(x){return {...x,type:'featured',kind:x.kind||'radio-direct'};});
  const dirs=radioDirectories.filter(function(x){return !qv||JSON.stringify(x).toLowerCase().includes(qv);}).map(function(x){return {id:'dir-'+x.id,name:x.name+' • Directory',network:x.name,category:'Radio Directory',scope:x.count,url:x.url,kind:'web',type:'directory'};});
  const seen=new Set();
  return featured.concat(dynamic,dirs).filter(x=>{if(seen.has(x.id))return false;seen.add(x.id);return true;});
@@ -1049,7 +1047,7 @@ function radio(){
  return '<div class="section guide-title-row"><div><h2>📻 Radio Guide</h2><span class="muted">'+esc(status)+' • one continuous list</span></div><span class="badge">EASY SCROLL</span></div>'+
  '<div class="radio-search"><input id="radioSearch" class="search" value="'+esc(radioQuery)+'" placeholder="Search stations, city, genre or language…" aria-label="Search radio"><button class="secondary" data-clear-radio-search>Clear</button></div>'+
  radioCountryBar()+
- '<div class="radio-hub"><div><b>iHeartRadio</b><span>Separate directory • 1,000+ U.S. stations</span></div><button class="primary" data-open-iheart>↗ Open iHeart</button></div>'+
+ 
  '<div class="guide-shell easy-guide-shell"><div class="guide-head"><span>#</span><span>Station</span><span>Region / Format</span><span></span></div><div class="guide-scroll">'+html+'</div></div>'+
  '<div class="radio-next-note">If a station does not come in, don’t fight it. Use the next station. The guide stays here.</div>';
 }
