@@ -415,7 +415,7 @@ const documentaryTV=[
 let guideTV=[...national,...international,...documentaryTV].map((x,i)=>({...x,state:x.state||'NATIONWIDE',guideNo:i+1}));
 let tab='home', q='', guideQuery='', radioQuery='', webQuery='', webStatus='', webUrl='', webTitle='', appUrl='', appTitle='', network='All', city='All', cat='All', guideSource='All', guideMode='live';
 window.noraConversation=false;window.noraListening=false;window.noraRecognition=null;window.noraTranscript='';window.noraVoiceStatus='';window.noraLastAnswer='';
-let roomChannel=null, roomCode='', roomName='', roomJoinCode='', roomDisplayName='', roomClientId=(crypto?.randomUUID?.()||('room-'+Date.now()+'-'+Math.random().toString(36).slice(2))), roomRole='', roomLocalStream=null, roomPeers={}, roomPendingIce={}, roomParticipants={}, roomMessages=[], roomStatus='', roomMicOn=false, roomCamOn=false, roomFacingMode='user', roomJoined=false;
+let roomChannel=null, roomCode='', roomName='', roomJoinCode='', roomDisplayName='', roomClientId=(crypto?.randomUUID?.()||('room-'+Date.now()+'-'+Math.random().toString(36).slice(2))), roomRole='', roomLocalStream=null, roomPeers={}, roomPendingIce={}, roomParticipants={}, roomRemoteMedia={}, roomMessages=[], roomStatus='', roomMicOn=false, roomCamOn=false, roomFacingMode='user', roomJoined=false;
 let passwordRecovery=false;
 let webSuggestTimer=null;
 let webSuggestions=[];
@@ -1528,25 +1528,6 @@ function roomUpdateLocalPreview(){
  const v=document.querySelector('[data-room-local-video-v2]');
  if(v&&roomLocalStream){v.srcObject=roomLocalStream;v.muted=true;v.autoplay=true;v.playsInline=true;v.play?.().catch(()=>{})}
 }
-async function roomEnsureMedia(){
- if(!navigator.mediaDevices?.getUserMedia){roomSetStatus('This browser does not provide camera/microphone access.',false);return false}
- if(roomLocalStream)return true;
- try{
-  roomSetStatus('Requesting microphone and camera permission…',false);
-  roomLocalStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:{facingMode:roomFacingMode,width:{ideal:640},height:{ideal:360}}});
-  roomMicOn=true;roomCamOn=true;roomUpdateLocalPreview();
-  Object.keys(roomPeers).forEach(id=>roomAttachTracks(roomPeers[id]));
-  Object.keys(roomPeers).forEach(id=>roomRenegotiatePeer(id));
-  const micBtn=document.querySelector('[data-room-mic]');if(micBtn)micBtn.textContent='🎙️ Mute microphone';
-  const camBtn=document.querySelector('[data-room-cam]');if(camBtn)camBtn.textContent='📷 Turn camera off';
-  roomSetStatus('Microphone + camera are on. Your room is separate from the lounge TV/radio.',true);
-  roomHandlePresenceSync();
-  return true;
- }catch(err){
-  roomSetStatus('Camera/microphone permission was not granted. You can try again.',false);
-  console.error('Room media error',err);return false;
- }
-}
 function roomAttachTracks(pc){
  if(!pc||!roomLocalStream)return;
  const senders=pc.getSenders();
@@ -1575,6 +1556,7 @@ async function roomEnsureMedia(want={audio:true,video:true}){
   Object.keys(roomPeers).forEach(id=>roomAttachTracks(roomPeers[id]));
   Object.keys(roomPeers).forEach(id=>roomRenegotiatePeer(id));
   roomSetStatus('Your selected media is on. You can turn the camera or microphone off anytime.',true);
+  roomBroadcastMediaState();
   return true;
  }catch(err){roomSetStatus('No media was turned on. You can stay in the room without a camera or microphone.',false);console.error('Room media error',err);return false}
 }
@@ -1598,6 +1580,15 @@ async function roomFlushIce(peerId){
  roomPendingIce[peerId]=[];
  for(const c of pending){try{await pc.addIceCandidate(c)}catch(err){console.warn('Room queued ICE error',err)}}
 }
+function roomApplyRemoteMediaState(peerId,state){
+ const tile=document.querySelector('[data-room-peer-tile="'+CSS.escape(peerId)+'"]');
+ if(!tile)return;
+ if(state&&typeof state.video==='boolean'){tile.classList.toggle('off',!state.video);tile.classList.toggle('has-video',!!state.video);}
+ const label=tile.querySelector('.rooms-v2-tile-label');
+ if(label&&state){let status=label.querySelector('.remote-media-status');if(!status){status=document.createElement('span');status.className='remote-media-status';label.appendChild(status);}status.textContent=(state.mic===false?'🔇':'')+(state.video===false?' 📷':'');}
+}
+function roomBroadcastMediaState(){if(!roomChannel||!roomJoined)return;roomSend('media-state',{roomCode,from:roomClientId,video:!!roomCamOn,mic:!!roomMicOn});roomApplyRemoteMediaState(roomClientId,{video:roomCamOn,mic:roomMicOn});}
+async function roomHandleMediaState(payload){if(!payload||payload.roomCode!==roomCode||payload.from===roomClientId)return;roomRemoteMedia[payload.from]={video:payload.video!==false,mic:payload.mic!==false};roomApplyRemoteMediaState(payload.from,roomRemoteMedia[payload.from]);if(roomClientId<payload.from&&roomLocalStream)await roomRenegotiatePeer(payload.from);}
 async function roomSignal(msg){
  if(!msg||msg.to!==roomClientId)return;
  const peer=roomParticipants[msg.from]||{name:'Guest'};
@@ -1672,7 +1663,7 @@ function roomHandlePresenceSync(){
  });
 }
 async function roomRenegotiatePeer(peerId){
- const pc=roomPeers[peerId];if(!pc||!roomLocalStream)return;
+ const pc=roomPeers[peerId];if(!pc||!roomLocalStream||roomClientId>peerId)return;
  if(pc.signalingState!=='stable')return;
  try{
   roomAttachTracks(pc);
@@ -1686,9 +1677,10 @@ async function startRoomSession(code,name,role){
  await leaveRoom(false);
  roomCode=String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,12);
  roomDisplayName=(String(name||'Guest').trim().slice(0,32)||'Guest');
- roomRole=role||'member';roomJoined=false;roomMessages=[];roomStatus='Connecting to room…';
+ roomRole=role||'member';roomJoined=false;roomRemoteMedia={};roomMessages=[];roomStatus='Connecting to room…';
  roomChannel=supabaseClient.channel('room:'+roomCode,{config:{broadcast:{self:false},presence:{key:roomClientId}}});
  roomChannel.on('broadcast',{event:'signal'},p=>roomSignal(p.payload))
+  .on('broadcast',{event:'media-state'},p=>roomHandleMediaState(p.payload))
   .on('broadcast',{event:'chat'},p=>{const m=p.payload;if(!m||m.roomCode!==roomCode)return;roomMessages.push({name:m.name||'Guest',text:String(m.text||'').slice(0,300)});roomRenderChat()})
   .on('presence',{event:'sync'},roomHandlePresenceSync)
   .on('presence',{event:'join'},roomHandlePresenceSync)
@@ -1725,7 +1717,7 @@ async function joinRoom(){
  if(code.length<4){roomSetStatus('Enter the room code first.',false);return}
  roomCode=code;roomJoinCode=code;roomName='Shared Watch Room';roomDisplayName=name;
  const ok=await startRoomSession(code,name,'member');
- if(ok){await roomEnsureMedia();roomHandlePresenceSync();}
+ if(ok){roomHandlePresenceSync();}
  renderRoomOnly();
 }
 async function leaveRoom(showRooms=true){
@@ -1733,7 +1725,7 @@ async function leaveRoom(showRooms=true){
  Object.values(roomPeers).forEach(pc=>{try{pc.close()}catch(_){}});roomPeers={};
  Object.values(roomParticipants).forEach(p=>{if(p.id!==roomClientId)roomRemoveTile(p.id)});
  if(roomLocalStream){roomLocalStream.getTracks().forEach(t=>t.stop());roomLocalStream=null}
- roomChannel=null;roomJoined=false;roomParticipants={};roomStatus='';roomMicOn=false;roomCamOn=false;roomMessages=[];
+ roomChannel=null;roomJoined=false;roomParticipants={};roomRemoteMedia={};roomStatus='';roomMicOn=false;roomCamOn=false;roomMessages=[];
  if(showRooms){tab='rooms';render()}
 }
 async function toggleRoomMedia(kind){
@@ -1745,6 +1737,7 @@ async function toggleRoomMedia(kind){
  if(!track)return;
  track.enabled=!track.enabled;
  if(kind==='mic')roomMicOn=track.enabled;else roomCamOn=track.enabled;
+ roomBroadcastMediaState();
  const b=document.querySelector('[data-room-'+kind+']');if(b)b.textContent=kind==='mic'?(roomMicOn?'🎙️ Mute mic':'🔇 Unmute mic'):(roomCamOn?'📷 Camera off':'📷 Camera on');
  const tile=document.querySelector('[data-room-peer-tile="'+CSS.escape(roomClientId)+'"]');if(tile)tile.classList.toggle('off',!roomCamOn);
  roomSetStatus(kind==='mic'?(roomMicOn?'Microphone is on.':'Microphone is muted.'):(roomCamOn?'Camera is on.':'Camera is off.'),true);
@@ -1806,11 +1799,11 @@ function roomsView(){
    '<div class="rooms-v2-footer">Room rules apply to everyone: no sexual content or nudity, illegal drug use, bullying or harassment, threats, hate, dangerous behavior, or sharing another person’s private information without permission. Reports may be investigated and violations can result in removal or a ban.</div>'+
    '</div>';
  }
- return '<div class="rooms-v2-hero"><h2>👥 Rooms</h2><p>Private, TikTok-style gathering rooms for fellowship, conversation, Bible study, family and friends. Up to eight people can join. Everyone controls their own camera and microphone.</p>'+
+ return '<div class="rooms-v2-hero"><h2>👥 Rooms</h2><p>Private, TikTok-style gathering rooms for fellowship, conversation, Bible study, family and friends. Up to eight people can join. Everyone starts with camera off and microphone muted, then turns on their own camera and microphone when ready.</p>'+
   '<div class="rooms-v2-notice"><b>🔒 Private room:</b> People using the rest of the lounge cannot see or hear your room, and you cannot see or hear theirs.</div>'+
   '<div class="rooms-v2-rulebox"><b>ROOM RULES & DISCLAIMER</b><br>Be respectful. No sexual content or nudity. No illegal drug use or promotion. No bullying, harassment, threats, hate, or dangerous behavior. Do not share another person’s private information or record/share people without permission.<br><br><b>You are responsible for your own conduct and anything you choose to display, say, or do in a room.</b> Reports may be investigated. Violations can result in removal from a room or a permanent Rooms ban.</div></div>'+
   '<div class="rooms-v2-grid">'+
-   '<div class="rooms-v2-card"><h3>🎥 Start a private room</h3><p>Create a room, then invite up to seven people. Camera and microphone are optional.</p><div class="rooms-v2-form"><label>Room name<input id="roomCreateName" placeholder="Sunday Fellowship"></label><label>Your name<input id="roomDisplayName" placeholder="Your name"></label><button class="primary" data-room-create>Start Room</button></div></div>'+
+   '<div class="rooms-v2-card"><h3>🎥 Start a private room</h3><p>Create a room, then invite up to seven people. Everyone starts with camera off and microphone muted, then turns on their own camera and microphone when ready.</p><div class="rooms-v2-form"><label>Room name<input id="roomCreateName" placeholder="Sunday Fellowship"></label><label>Your name<input id="roomDisplayName" placeholder="Your name"></label><button class="primary" data-room-create>Start Room</button></div></div>'+
    '<div class="rooms-v2-card"><h3>🚪 Join a room</h3><p>Enter the private room code someone shared with you.</p><div class="rooms-v2-form"><label>Room code<input id="roomJoinCode" value="'+esc(roomJoinCode)+'" placeholder="6-character code"></label><label>Your name<input id="roomJoinName" placeholder="Your name"></label><button class="primary" data-room-join>Join Room</button></div></div>'+
   '</div>'+
   '<div class="notice"><b>Music:</b> Rooms does not replace or alter the lounge’s Radio or TV. Your existing music can remain available while the room is open.</div>';
