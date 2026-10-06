@@ -291,6 +291,42 @@ body{font-size:1rem}
   .player-dock .player-actions [data-minimize],
   .player-dock .player-actions [data-fullscreen]{display:none !important}
 }
+</style><style id="player-layout-final-v2">
+/* Laptop-safe TV player: never let the controls create horizontal overflow. */
+.player-dock{
+  left:50% !important;right:auto !important;transform:translateX(-50%) !important;
+  width:min(980px,calc(100vw - 28px)) !important;
+  max-width:calc(100vw - 28px) !important;min-width:0 !important;
+  box-sizing:border-box !important;overflow-x:hidden !important;
+}
+.player-dock .player-bar{
+  display:block !important;width:100% !important;box-sizing:border-box !important;
+  padding:10px 12px !important;overflow:hidden !important;
+}
+.player-dock .player-title{
+  width:100% !important;min-width:0 !important;margin-bottom:8px !important;
+}
+.player-dock .player-actions{
+  display:flex !important;flex-wrap:wrap !important;align-items:stretch !important;
+  justify-content:center !important;gap:7px !important;width:100% !important;
+  min-width:0 !important;overflow:visible !important;
+}
+.player-dock .player-actions > button{
+  flex:0 0 auto !important;white-space:nowrap !important;
+}
+.player-dock .player-actions select{
+  flex:1 1 280px !important;width:auto !important;min-width:220px !important;
+  max-width:100% !important;box-sizing:border-box !important;
+}
+@media(max-width:760px){
+  .player-dock,.player-dock.show{
+    left:7px !important;right:7px !important;transform:none !important;
+    width:auto !important;max-width:none !important;
+  }
+  .player-dock .player-actions{justify-content:stretch !important}
+  .player-dock .player-actions select{flex:1 1 100% !important;min-width:0 !important;order:-1 !important}
+  .player-dock .player-actions button{flex:1 1 auto !important}
+}
 </style></head><body><main class="wrap"><header class="top"><div class="brand">📺 Free TV <span>&</span> 📻 Radio</div><div class="badge">Website 2 • independent</div></header><style id="reading-room-style">.reading-room{border:1px solid var(--line);border-radius:20px;background:linear-gradient(180deg,#101b30,#0b1526);padding:16px;margin:10px 0 18px}.reading-room-hero{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap}.reading-room-hero h2{margin:0 0 6px}.reading-room-hero p{margin:0;color:var(--muted);line-height:1.5;max-width:760px}.reading-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:14px}.reading-card{border:1px solid var(--line);border-radius:16px;background:#0a1425;padding:14px;display:flex;flex-direction:column;min-height:210px}.reading-card .book-icon{font-size:2rem;margin-bottom:8px}.reading-card h3{margin:0 0 6px}.reading-card p{margin:0;color:var(--muted);line-height:1.45;font-size:.92rem}.reading-card .actions{margin-top:auto;padding-top:12px}.reading-credit{margin-top:14px;padding:12px;border:1px solid #29415d;border-radius:14px;background:#0b1728;color:#b8c5d8;line-height:1.5;font-size:.86rem}.app-launch-status{margin:12px 0;padding:12px 14px;border:1px solid #29415d;border-radius:14px;background:#0b1728;color:#cbd6e9}</style><section class="hero"><h1>More TV. Less hunting.</h1><p>A clean guide to free television and radio, with a persistent player, personal favorites, big-screen friendly playback, and a private administrator room.</p></section><nav class="nav" id="nav"><button class="active" data-tab="home">🏠 Home</button><button data-tab="info">ℹ️ Information</button><button data-tab="tv">📺 Live TV</button><button data-tab="radio">📻 Radio</button><button data-tab="games">🎮 Games</button><button data-tab="chess">♟️ Chess Room</button><button data-tab="music">🎵 Robert &amp; Christina’s Music Room</button><button data-tab="apps">📱 Apps</button><button data-tab="free">📡 Free Streaming</button><button data-tab="nora">🧑‍💻 Nora</button><button data-tab="reading">📚 Reading Room</button><button data-tab="hoopla">📚 Hoopla Library</button><button data-tab="openlibrary">📚 Open Library</button><button data-tab="promise">🔐 What We Promise</button><button data-tab="paid">🔐 Paid TV</button><button data-tab="weather">🌦️ Weather</button><button data-tab="favorites">⭐ Favorites</button><button data-tab="stories">📸 Our Photos & Stories</button><button data-tab="gold">🏞️ California’s Gold</button><button data-tab="alex">🎙️ Alex Jones Live</button><button data-tab="bible">📖 Bible</button><button data-tab="maxvelocity">🌩️ Max Velocity — Severe Weather Center</button><button data-tab="admin">🔐 Admin</button><button data-tab="invite">🔗 Invite</button></nav><section id="playerDock" class="player-dock" aria-live="polite"></section><section id="musicDock" class="music-dock" aria-live="polite"><div class="music-dock-inner"><div class="music-dock-title"><span>🎵</span><strong id="musicNowTitle">Music Room</strong><small id="musicNowMeta">Choose a song or playlist</small></div><div class="music-dock-actions"><button type="button" data-music-prev aria-label="Previous song">⏮</button><button type="button" data-music-dock-play aria-label="Play or pause">▶</button><button type="button" data-music-next aria-label="Next song">⏭</button><button type="button" data-music-stop aria-label="Stop music">⏹</button></div><audio id="musicAudio" preload="none"></audio></div></section><section id="app"></section><div id="presenceLiveBar" class="presence-livebar" aria-live="polite"><div class="presence-livebar-inner"><span class="live-dot" aria-hidden="true"></span><strong>👥 <span data-presence-total>0</span> here now</strong><span class="live-sep">•</span><span class="live-detail">🌎 <span data-presence-countries>Connecting…</span></span><span class="live-sep">•</span><span class="live-detail">🇺🇸 <span data-presence-states>U.S. activity loading…</span></span><span class="live-privacy">🔒 Approximate location only</span></div></div><section class="safety"><b>Friendly safety note:</b> We curate links and public streams, but third-party providers control their own content and availability. Keep your device/browser updated, use your normal security protections, and never enter sensitive information into an unfamiliar third-party site.</section><footer class="footer">Free TV & Radio is an independent directory and player interface. Provider names, trademarks and programming belong to their respective owners. We do not promise uninterrupted or buffer-free playback because third-party streams and internet connections vary. <b>Terms • Privacy • Safety</b></footer></main><div id="mini" class="mini"></div>
 <!-- JavaScript interaction fix verified -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2"></script><script defer src="https://cdn.jsdelivr.net/npm/tus-js-client@4.3.1/dist/tus.min.js"></script><script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.6.15/dist/hls.min.js"></script>
