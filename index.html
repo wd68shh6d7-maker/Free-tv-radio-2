@@ -215,6 +215,10 @@ let authUser=null;
 let favorites=[];
 let posts=[];
 let current=null;
+let hiddenGuideIds=new Set(JSON.parse(localStorage.getItem('ftvr2-hidden-guide-ids')||'[]'));
+function saveHiddenGuideIds(){localStorage.setItem('ftvr2-hidden-guide-ids',JSON.stringify([...hiddenGuideIds]));}
+function isHiddenGuideChannel(x){return !!x&&hiddenGuideIds.has(String(x.id));}
+function favoriteItemById(id){const sources=[...allTV,...guideTV,...stations,...streaming];try{sources.push(...providerCatalogRows())}catch(_){}return sources.find(x=>x&&x.id===id)||null;}
 let guideScrollTop=Number(sessionStorage.getItem('ftvr2-guide-scroll-top')||0);
 function saveGuideScrollPosition(){
   const sc=document.getElementById('guideScroll');
@@ -521,7 +525,7 @@ async function loadFavorites(){
   for(const id of localFavorites){
     if(revision!==favoritesLoadRevision)break;
     if(!dbSet.has(id)){
-      const item=[...allTV,...stations].find(x=>x.id===id);
+      const item=favoriteItemById(id);
       if(item){
         await supabaseClient.from('favorites').upsert({user_id:userId,item_type:stations.some(x=>x.id===id)?'radio':'tv',item_key:id},{onConflict:'user_id,item_type,item_key'});
       }
@@ -533,7 +537,7 @@ async function toggleFav(id){
   favorites=was?favorites.filter(x=>x!==id):[...new Set([...favorites,id])];
   localStorage.setItem('ftvr2-favorites',JSON.stringify(favorites));
   if(authUser){
-    const item=[...allTV,...stations].find(x=>x.id===id);
+    const item=favoriteItemById(id);
     if(item){
       const itemType=stations.some(x=>x.id===id)?'radio':'tv';
       let error=null;
@@ -593,7 +597,7 @@ function isExcludedGuideChannel(x){
  const text=[x?.id,x?.name,x?.network,x?.provider,x?.category].filter(Boolean).join(' ').toLowerCase();
  return /(?:^|[\s_-])3abn(?:$|[\s_-])/i.test(text)||text.includes('three angels broadcasting');
 }
-function guidePool(){return guideTV.filter(x=>!isExcludedGuideChannel(x));}
+function guidePool(){return guideTV.filter(x=>!isExcludedGuideChannel(x)&&!isHiddenGuideChannel(x));}
 function filteredGuide(){return guidePool()}
 function guidePosition(x){const pool=guidePool();const i=pool.findIndex(a=>a.id===x.id);return i<0?'—':String(i+1)}
 function card(x){const playable=x.playable===true;const isRadio=x.kind==='radio';const label=isRadio?'▶ Listen Live':playable?'▶ Play Live':'↗ Open Live';return `<article class="card"><div class="logo">${esc(String(x.network||'TV').slice(0,2).toUpperCase())}</div><h3>${esc(x.name)}</h3><p>${x.channel?`<b>Channel ${esc(x.channel)}</b><br>`:''}${esc(x.category||'TV')}<br><span class="muted">${esc(x.scope||'')}</span></p><div class="actions"><button class="primary" data-play="${esc(x.id)}">${label}</button><button class="star ${isFav(x.id)?'on':''}" data-fav="${esc(x.id)}">${isFav(x.id)?'★ Saved':'☆ Favorite'}</button></div></article>`}
@@ -913,9 +917,9 @@ function appsView(){
 }
 function gamesView(){
  const games=[
-  {name:'Find the Cat',icon:'🐈‍⬛',provider:'SilverGames',url:'https://www.y8.com/games/find_the_cats',desc:'A literal Find the Cat hidden-object game: spot the cats in each picture. Free browser play with mouse or touchscreen on computer, phone and tablet.',tags:['Find the Cat','Touchscreen','No account']},
+  {name:'Find the Cat',icon:'🐈‍⬛',provider:'FindCat.io',url:'https://findcat.io/',desc:'A simple hidden-cat game: each picture has a cat hiding somewhere. Tap or click the cat and move to the next picture.',tags:['Find the Cat','Touchscreen','No account']},
   {name:'Game Night',icon:'🎲',provider:'Game Night',url:'https://gamenight.zone/',desc:'One doorway to 32 free browser games, including Chess, UNO, Gin Rummy, Checkers, Battleship, Hearts, Spades, Backgammon, Yahtzee and more.',tags:['32 games','Multiplayer','No account']},
-  {name:'8-Ball Pool',icon:'🎱',provider:'60AndOver Games',url:'https://60andover.net/8-ball-pool-game-for-seniors/',desc:'A phone-friendly 8-ball pool game with separate Aim, Power and Shoot controls. No account or download required.',tags:['Pool','No account','Mobile'],howTitle:'Here’s how to play 8-Ball Pool',how:'Tap Aim to line up your cue, choose your power, then press Shoot when you are ready. The game does not fire just because you lift your finger. On a phone, turn sideways for a larger table.'},
+  {name:'8-Ball Pool',icon:'🎱',provider:'Breakshot 3D',url:'https://breakshot3d.com/',desc:'A realistic 3D browser 8-ball table with cue-ball spin, aiming and shot planning, CPU matches and local two-player play.',tags:['3D Pool','Spin','Aim Guide','CPU','2 Player'],howTitle:'Here’s how to play 8-Ball Pool',how:'Use the cue controls to line up the shot, set your power, and use the spin controls for top, back or side spin. Breakshot 3D also includes rules, aiming and spin guides, CPU play and local two-player play.'},
   {name:'Sudoku + Puzzles',icon:'🔢',provider:'Boatload Puzzles',url:'https://playboatloadpuzzles.com/',desc:'Free Sudoku, word search, mini crosswords, jigsaw puzzles, memory, anagrams, Minesweeper and more.',tags:['Sudoku','Crosswords','Word Search']},
   {name:'Property Game',icon:'🎲',provider:'Web Monopoly',url:'https://web-monopoly.org/en',desc:'A free browser property-trading game with rooms, bots and hot-seat play. It is an independent Monopoly-style game, not an official Hasbro product.',tags:['2–5 players','Rooms','No account'],howTitle:'Here’s how to play Property Game',how:'Roll the dice and move around the board. When you land on an unowned property, you can buy it; if another player owns it, you pay rent. Collect complete color groups so you can build houses and hotels, trade properties and cash with other players, and take part in auctions when a property is not bought. You can play with friends in a room, play against computer opponents, or use hot-seat mode on one device. The goal is to build your property holdings and be the last player with money when the other players go bankrupt.'}
  ];
@@ -1698,7 +1702,7 @@ document.getElementById('app').onclick=async e=>{
  const closeApp=e.target.closest('[data-close-app-room]');if(closeApp){closeAppInHub();return}
  const tm=e.target.closest('[data-tv-menu]');if(tm){setTab('tv');return}
  const rm=e.target.closest('[data-radio-menu]');if(rm){setTab('radio');return}
- const po=e.target.closest('[data-paid-open]');if(po){const x=streaming.find(a=>a.id===po.dataset.paidOpen);if(x)openInSite(x.url,x.name);return}
+ const po=e.target.closest('[data-paid-open]');if(po){const x=streaming.find(a=>a.id===po.dataset.paidOpen);if(x)openAppInHub(x.url,x.name);return}
  const ya=e.target.closest('[data-youtube-app]');if(ya){openYouTubeApp('https://www.youtube.com/');return}const yr=e.target.closest('[data-youtube-return]');if(yr){setTab('tv');return}const yl=e.target.closest('[data-youtube-live]');if(yl){openYouTubeApp('https://www.youtube.com/live');return}const yo=e.target.closest('[data-youtube-open]');if(yo){openYouTubeApp(yo.dataset.youtubeOpen||'https://www.youtube.com/live');return}
  const openGuide=e.target.closest('[data-open-guide]');if(openGuide){setTab('tv');return}
  const hide=e.target.closest('[data-admin-hide]');if(hide&&isAdmin()){hiddenGuideIds.add(hide.dataset.adminHide);saveHiddenGuideIds();render();return}
