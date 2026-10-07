@@ -1550,13 +1550,11 @@ const RESOURCE_LINKS={
 };
 function openResourceWindow(kind){
  const item=RESOURCE_LINKS[kind];if(!item)return false;
- try{
-  const existing=resourceWindows[kind];
-  if(existing&&!existing.closed){existing.focus();return true}
-  const w=window.open(item.url,'ftvr_'+kind);
-  if(w){resourceWindows[kind]=w;try{w.focus()}catch(_){}return true}
- }catch(_){}
- return false;
+ // Keep supported resource pages inside the Lounge player whenever possible.
+ // This gives Robert a real in-Lounge return control instead of sending him away
+ // to a separate provider tab.
+ showPlayer({id:'resource-'+kind,name:item.title,url:item.url,kind:'web',provider:item.title,category:'Official web'});
+ return true;
 }
 function openResourceLive(kind){
  const item=RESOURCE_LINKS[kind];if(!item||!item.liveUrl)return false;
@@ -1583,6 +1581,10 @@ function resourceView(kind){
 
 function openAppInHub(url,title){
  const u=String(url||'').trim();if(!u)return;
+ if(/pluto\.tv/i.test(u)||/pluto\s*tv/i.test(String(title||''))){
+   showPlayer({id:'pluto-app',name:'Pluto TV',url:u,kind:'web',provider:'Pluto TV',category:'Live TV'});
+   return;
+ }
  appUrl=u;appTitle=title||'Streaming App';appLaunchStatus='';
  try{sessionStorage.setItem('ftvr2-return-url',location.href.split('#')[0]);sessionStorage.setItem('ftvr2-provider-title',appTitle)}catch(_){}
  // Use the current browsing context so the browser's normal Back button/gesture returns directly to Free TV & Radio.
@@ -1842,7 +1844,8 @@ function render(){const view=passwordRecovery?passwordRecoveryView():(tab==='hom
 function setTab(t){
  tab=t;
  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
- if(t==='gold'||t==='alex'||t==='bible'||t==='maxvelocity')openResourceWindow(t);
+ // Resource pages now open only when their button is pressed, and the button
+ // keeps them inside the Lounge player instead of immediately leaving the site.
  try{render()}catch(err){
   console.error('Free TV & Radio render failed:',err);
   if(t==='tv'){
