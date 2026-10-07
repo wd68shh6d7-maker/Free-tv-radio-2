@@ -832,7 +832,7 @@ function mountPlayer(x){
     const ok=()=>{if(settled)return;settled=true;status('LIVE • Station connected');setStatus('Live • connected')};
     if(audio&&x.stream){audio.addEventListener('playing',ok,{once:true});audio.addEventListener('error',tryAlternate);playCandidate()}else tryAlternate();
   }else if(x.playable&&x.kind==='embed'){stage.innerHTML='<div class="live-frame"><iframe title="'+esc(x.name)+' live" src="'+esc(x.url)+'" loading="eager" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; picture-in-picture; geolocation; encrypted-media" allowfullscreen></iframe><div class="source-strip">'+esc(x.provider||'Official provider')+' • Provider playback remains inside the guide.</div></div>';status('Provider player loading…');setTimeout(()=>status('If playback does not start, use the next channel.'),5000)}
-  else if(x.kind==='web'&&x.url){const safeUrl=String(x.url||'');stage.innerHTML='<div class="web-player"><div class="web-player-toolbar"><input id="inLoungeUrl" value="'+esc(safeUrl)+'" aria-label="Website address"><button type="button" data-inlounge-go>Go</button><button type="button" data-inlounge-home>Home</button></div><iframe id="inLoungeFrame" title="'+esc(x.name)+'" src="'+esc(safeUrl)+'" loading="eager" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-read; clipboard-write" allowfullscreen></iframe><div class="source-strip">In-lounge web player • Some providers may block embedding.</div></div>';status('Opening inside the lounge…')}
+  else if(x.kind==='web'&&x.url){const safeUrl=String(x.url||'');stage.innerHTML='<div class="web-player"><div class="web-player-toolbar"><input id="inLoungeUrl" value="'+esc(safeUrl)+'" aria-label="Website address"><button type="button" data-inlounge-go>Go</button><button type="button" data-inlounge-home>Home</button></div><iframe id="inLoungeFrame" title="'+esc(x.name)+'" src="'+esc(safeUrl)+'" loading="eager" referrerpolicy="strict-origin-when-cross-origin" sandbox="allow-forms allow-modals allow-popups allow-presentation allow-scripts allow-same-origin" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; clipboard-read; clipboard-write" allowfullscreen></iframe><div class="source-strip">In-lounge web player • Some providers may block embedding.</div></div>';status('Opening inside the lounge…')}
   else if(x.kind==='youtube'&&x.url){stage.innerHTML='<div class="live-frame"><iframe title="'+esc(x.name)+' live" src="'+esc(x.url)+'?autoplay=1&mute=0&rel=0" loading="eager" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen></iframe><div class="source-strip">Official YouTube live source</div></div>';status('LIVE • YouTube source loaded')}
   else if(x.kind==='radio'){stage.innerHTML=providerPanel(x).replace('OFFICIAL PROVIDER','OFFICIAL RADIO PROVIDER');status('Station page ready')}
   else fail('No playable source is currently available for this channel.');
@@ -1571,13 +1571,13 @@ function openResourceWindow(kind){
   }catch(_){}
   return false;
  }
- showPlayer({id:'resource-'+kind,name:item.title,url:item.url,kind:'web',provider:item.title,scope:'Official website',category:'In-lounge web player'});
+ showPlayer({id:'resource-'+kind,name:item.title,url:item.url,kind:'web',provider:item.title,scope:'Official website',category:'In-lounge web player',forceInLounge:true});
  return true;
 }
 function openResourceLive(kind){
  const item=RESOURCE_LINKS[kind];if(!item||!item.liveUrl)return false;
  if(kind==='maxvelocity'){
-  showPlayer({id:'resource-'+kind+'-live',name:item.title+' LIVE',url:item.liveUrl,kind:'youtube',provider:'YouTube',scope:'Official live stream',category:'Live'});
+  showPlayer({id:'resource-'+kind+'-live',name:item.title+' LIVE',url:item.liveUrl,kind:'web',provider:item.title,scope:'Official live stream',category:'Live',forceInLounge:true});
   return true;
  }
  try{
