@@ -392,6 +392,12 @@ let authUser=null;
 let favorites=[];
 let posts=[];
 let current=null;
+/* Channel cleanup is user-controlled. Reset the old bulk-hidden list once so the full guide is restored. */
+const GUIDE_HIDE_RESET_VERSION='2026-10-06-full-guide-restore-v1';
+if(localStorage.getItem('ftvr2-guide-hide-reset-version')!==GUIDE_HIDE_RESET_VERSION){
+  localStorage.removeItem('ftvr2-hidden-guide-ids');
+  localStorage.setItem('ftvr2-guide-hide-reset-version',GUIDE_HIDE_RESET_VERSION);
+}
 let hiddenGuideIds=new Set(JSON.parse(localStorage.getItem('ftvr2-hidden-guide-ids')||'[]'));
 function saveHiddenGuideIds(){localStorage.setItem('ftvr2-hidden-guide-ids',JSON.stringify([...hiddenGuideIds]));}
 function isHiddenGuideChannel(x){return !!x&&hiddenGuideIds.has(String(x.id));}
