@@ -610,10 +610,13 @@ if(!international.some(x=>x.id==='france24-espanol')) international.push({id:'fr
 // Keep the complete editorial lineup in the guide. In-site playback is limited to verified streams;
 // provider-controlled channels such as PBS remain visible and use their official live route.
 
-const FAMELACK_US_GUIDE_URL='https://raw.githubusercontent.com/OwnerPlugins/famelack-data/main/tv/raw/countries/us.json';
+const FAMELACK_US_GUIDE_URLS=[
+ 'https://raw.githubusercontent.com/famelack/famelack-data/main/tv/raw/countries/us.json',
+ 'https://cdn.jsdelivr.net/gh/famelack/famelack-data@main/tv/raw/countries/us.json'
+];
 
 function normalizeFamelackChannel(x,i){
- const streams=[...(x?.sources?.streams||[]),...(x?.stream_urls||[])].filter(u=>/^https?:\/\//i.test(String(u||'')));
+ const streams=[...(x?.sources?.streams||[]),...(x?.stream_urls||[])].filter(u=>/^https:\/\//i.test(String(u||'')));
  const youtube=[...(x?.sources?.youtube||[]),...(x?.youtube_urls||[])].filter(u=>/^https?:\/\//i.test(String(u||'')));
  const source=streams[0]||youtube[0]||'';
  const kind=streams.length?'stream':youtube.length?'youtube':'web';
@@ -639,10 +642,18 @@ function normalizeFamelackChannel(x,i){
 async function loadFamelackUSGuide(){
  famelackGuideLoading=true;famelackGuideError='';
  try{
-  const res=await fetch(FAMELACK_US_GUIDE_URL,{cache:'no-store'});
-  if(!res.ok)throw new Error('Famelack dataset returned '+res.status);
-  const data=await res.json();
-  const rows=(Array.isArray(data)?data:[]).map(normalizeFamelackChannel).filter(x=>!isExcludedGuideChannel(x));
+  let data=null,lastError=null;
+  for(const endpoint of FAMELACK_US_GUIDE_URLS){
+   try{
+    const res=await fetch(endpoint,{cache:'no-store',headers:{'Accept':'application/json'}});
+    if(!res.ok)throw new Error('Famelack dataset returned '+res.status);
+    const candidate=await res.json();
+    if(Array.isArray(candidate)&&candidate.length){data=candidate;break}
+    throw new Error('Famelack dataset was empty');
+   }catch(err){lastError=err}
+  }
+  if(!data)throw lastError||new Error('Famelack dataset unavailable');
+  const rows=data.map(normalizeFamelackChannel).filter(x=>!isExcludedGuideChannel(x));
   if(!rows.length)throw new Error('Famelack dataset was empty');
   guideTV=rows.map((x,i)=>({...x,guideNo:i+1,state:'NATIONWIDE'})).filter(x=>!isExcludedGuideChannel(x));
   // Keep the existing small, verified editorial list as a fallback only; the TV tab now follows
