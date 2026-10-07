@@ -415,6 +415,7 @@ function favoriteItemById(id){
 }
 
 let guideScrollTop=Number(sessionStorage.getItem('ftvr2-guide-scroll-top')||0);
+let returnGuideScrollTop=guideScrollTop;
 function saveGuideScrollPosition(){
   const sc=document.getElementById('guideScroll');
   if(sc){
@@ -837,7 +838,10 @@ function mountPlayer(x){
   else fail('No playable source is currently available for this channel.');
 }
 function showPlayer(x){
-  if(tab==='tv'){saveGuideScrollPosition();}
+  if(tab==='tv'){
+    saveGuideScrollPosition();
+    returnGuideScrollTop=guideScrollTop;
+  }
   const direct=[...(Array.isArray(x.streamCandidates)?x.streamCandidates:[]),x.stream,...(x.kind==='stream'?[]:resolvePublicStreams(x.name))].filter(Boolean).filter((u,i,a)=>a.indexOf(u)===i);
   if(direct.length&&!['radio','radio-direct'].includes(x.kind))x={...x,kind:'stream',stream:direct[0],streamCandidates:direct,playable:true,sourceLabel:x.provider?('Public live source • '+x.provider):'Public live source'};
   const isRadio=x.kind==='radio'||x.kind==='radio-direct';
@@ -2022,7 +2026,28 @@ document.addEventListener('click',e=>{
  if(target.closest('[data-minimize]')){e.preventDefault();minimizePlayer();return}
  if(target.closest('[data-mini-expand]')){e.preventDefault();restorePlayer();return}
  if(target.closest('[data-return-newest]')){e.preventDefault();if(document.fullscreenElement)document.exitFullscreen?.();closePlayer();setTab('home');window.scrollTo({top:0,behavior:'smooth'});return}
- if(target.closest('[data-close]')){e.preventDefault();if(document.fullscreenElement)document.exitFullscreen?.();closePlayer();render();return}
+ if(target.closest('[data-close]')){
+  e.preventDefault();
+  if(document.fullscreenElement)document.exitFullscreen?.();
+  const returnTop=Number(returnGuideScrollTop||guideScrollTop||0);
+  closePlayer();
+  render();
+  if(tab==='tv'&&returnTop>0){
+    requestAnimationFrame(()=>{
+      const sc=document.getElementById('guideScroll');
+      if(sc){
+        sc.scrollTop=returnTop;
+        guideScrollTop=returnTop;
+        sessionStorage.setItem('ftvr2-guide-scroll-top',String(returnTop));
+      }
+      requestAnimationFrame(()=>{
+        const sc2=document.getElementById('guideScroll');
+        if(sc2)sc2.scrollTop=returnTop;
+      });
+    });
+  }
+  return;
+}
  if(target.closest('[data-fullscreen]')){e.preventDefault();toggleFullscreen();return}
 });
 document.addEventListener('change',e=>{
