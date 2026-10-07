@@ -708,6 +708,11 @@ async function loadFavorites(){
   favorites=[...new Set([...dbFavorites,...localFavorites])];
   localStorage.setItem('ftvr2-favorites',JSON.stringify(favorites));
   localStorage.setItem('ftvr2-favorites-owner',userId);
+  for(const id of favorites){
+    const item=favoriteItemById(id);
+    if(item&&!favoriteSnapshots[String(id)])favoriteSnapshots[String(id)]={...item};
+  }
+  saveFavoriteSnapshots();
   for(const id of localFavorites){
     if(revision!==favoritesLoadRevision)break;
     if(!dbSet.has(id)){
