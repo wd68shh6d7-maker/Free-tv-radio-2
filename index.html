@@ -804,7 +804,7 @@ function guidePool(){return guideTV.filter(x=>!isExcludedGuideChannel(x)&&!isHid
 function filteredGuide(){return guidePool()}
 function guidePosition(x){const pool=guidePool();const i=pool.findIndex(a=>a.id===x.id);return i<0?'—':String(i+1)}
 function card(x){const playable=x.playable===true;const isRadio=x.kind==='radio';const label=isRadio?'▶ Listen Live':playable?'▶ Play Live':'↗ Open Live';return `<article class="card"><div class="logo">${esc(String(x.network||'TV').slice(0,2).toUpperCase())}</div><h3>${esc(x.name)}</h3><p>${x.channel?`<b>Channel ${esc(x.channel)}</b><br>`:''}${esc(x.category||'TV')}<br><span class="muted">${esc(x.scope||'')}</span></p><div class="actions"><button class="primary" data-play="${esc(x.id)}">${label}</button><button class="star ${isFav(x.id)?'on':''}" data-fav="${esc(x.id)}">${isFav(x.id)?'★ Saved':'☆ Favorite'}</button></div></article>`}
-function playerShell(x){const isRadio=x.kind==='radio'||x.kind==='radio-direct';const channels=guideRows().map(a=>`<option value="tv:${esc(a.id)}" ${a.id===x.id?'selected':''}>TV • ${esc(a.name)}</option>`).join('');const radios=radioRows().map(a=>`<option value="radio:${esc(a.id)}" ${a.id===x.id?'selected':''}>Radio • ${esc(a.name)}</option>`).join('');const providers=providerGuides.map(a=>`<option value="provider:${esc(a.id)}">Provider • ${esc(a.name)}</option>`).join('');return `<div class="player" id="mainPlayer"><button class="player-close-overlay" type="button" data-return-newest title="Return to The Newest" aria-label="Return to The Newest">← The Newest</button><div id="playerStage"></div><div class="player-bar"><div class="player-title"><strong>${esc(isRadio?`RADIO • ${x.name}`:`CHANNEL ${guidePosition(x)} • ${x.name}`)}</strong><small>${esc(x.scope||'')} • ${esc(x.category||'')} <span id="playerStatus" class="muted">${(x.playable||isRadio)?'Preparing live source…':'Guide information'}</span></small></div><div class="player-actions"><button class="secondary" ${isRadio?'data-radio-menu':'data-tv-menu'}>← ${isRadio?'Radio':'TV'} menu</button><select data-player-jump aria-label="Channel and station menu"><option value="">Channels / stations…</option>${channels}${radios}${providers}</select><button data-prev-channel>${isRadio?'− Station':'− Ch'}</button><button data-next-channel>${isRadio?'Station +':'Ch +'}</button><button data-minimize>↓ Minimize</button><button data-fullscreen>⛶ Full</button>${isAdmin()?'<button class="danger" data-player-delete-channel>🗑 Delete Channel</button>':''}<button data-close>× Close</button></div></div></div>`}
+function playerShell(x){const isRadio=x.kind==='radio'||x.kind==='radio-direct';const channels=guideRows().map(a=>`<option value="tv:${esc(a.id)}" ${a.id===x.id?'selected':''}>TV • ${esc(a.name)}</option>`).join('');const radios=radioRows().map(a=>`<option value="radio:${esc(a.id)}" ${a.id===x.id?'selected':''}>Radio • ${esc(a.name)}</option>`).join('');const providers=providerGuides.map(a=>`<option value="provider:${esc(a.id)}">Provider • ${esc(a.name)}</option>`).join('');return `<div class="player" id="mainPlayer"><button class="player-close-overlay" type="button" data-return-newest title="Back to Lounge" aria-label="Back to Lounge">← Back to Lounge</button><div id="playerStage"></div><div class="player-bar"><div class="player-title"><strong>${esc(isRadio?`RADIO • ${x.name}`:`CHANNEL ${guidePosition(x)} • ${x.name}`)}</strong><small>${esc(x.scope||'')} • ${esc(x.category||'')} <span id="playerStatus" class="muted">${(x.playable||isRadio)?'Preparing live source…':'Guide information'}</span></small></div><div class="player-actions"><button class="secondary" ${isRadio?'data-radio-menu':'data-tv-menu'}>← ${isRadio?'Radio':'TV'} menu</button><select data-player-jump aria-label="Channel and station menu"><option value="">Channels / stations…</option>${channels}${radios}${providers}</select><button data-prev-channel>${isRadio?'− Station':'− Ch'}</button><button data-next-channel>${isRadio?'Station +':'Ch +'}</button><button data-minimize>↓ Minimize</button><button data-fullscreen>⛶ Full</button>${isAdmin()?'<button class="danger" data-player-delete-channel>🗑 Delete Channel</button>':''}<button data-close>× Close</button></div></div></div>`}
 function providerPanel(x){const isWeb=x.kind==='web'&&x.url;const providerUrl=x.url||providerGuides.find(p=>p.id===x.providerId)?.url||'';return `<div class="provider-panel"><div class="provider-badge">OFFICIAL PROVIDER</div><h3>${esc(x.name)}</h3><p>${esc(x.scope||'This channel is controlled by its official provider.')} We do not fake a player when the provider requires its own playback page.</p><div class="provider-actions">${isWeb&&providerUrl?`<button class="primary" type="button" data-open-provider-app="${esc(providerUrl)}" data-open-provider-title="${esc(x.provider||x.network||x.name)}">▶ Watch in ${esc(x.provider||x.network||'Provider')}</button>`:''}<button class="secondary" type="button" data-next-channel>Next channel →</button><button class="secondary" type="button" data-close>← Back to Channel Guide</button></div><small class="muted">The provider opens in the same reusable provider tab used by the Apps shelf. Free TV & Radio stays open in its hub tab.</small></div>`}
 function mountPlayer(x){
   const host=document.getElementById('mainPlayer');if(!host)return;const stage=host.querySelector('#playerStage');if(!stage)return;
@@ -1558,16 +1558,24 @@ const RESOURCE_LINKS={
 };
 function openResourceWindow(kind){
  const item=RESOURCE_LINKS[kind];if(!item)return false;
- try{
-  const existing=resourceWindows[kind];
-  if(existing&&!existing.closed){existing.focus();return true}
-  const w=window.open(item.url,'ftvr_'+kind);
-  if(w){resourceWindows[kind]=w;try{w.focus()}catch(_){}return true}
- }catch(_){}
- return false;
+ if(!['californiasgold','alexjones','maxvelocity'].includes(kind)){
+  try{
+   const existing=resourceWindows[kind];
+   if(existing&&!existing.closed){existing.focus();return true}
+   const w=window.open(item.url,'ftvr_'+kind);
+   if(w){resourceWindows[kind]=w;try{w.focus()}catch(_){}return true}
+  }catch(_){}
+  return false;
+ }
+ showPlayer({id:'resource-'+kind,name:item.title,url:item.url,kind:'web',provider:item.title,scope:'Official website',category:'In-lounge web player'});
+ return true;
 }
 function openResourceLive(kind){
  const item=RESOURCE_LINKS[kind];if(!item||!item.liveUrl)return false;
+ if(kind==='maxvelocity'){
+  showPlayer({id:'resource-'+kind+'-live',name:item.title+' LIVE',url:item.liveUrl,kind:'youtube',provider:'YouTube',scope:'Official live stream',category:'Live'});
+  return true;
+ }
  try{
   const key='ftvr_'+kind+'_live';
   const existing=resourceWindows[key];
