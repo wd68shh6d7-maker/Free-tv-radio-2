@@ -1573,7 +1573,7 @@ function openResourceLive(kind){
   const existing=resourceWindows[key];
   if(existing&&!existing.closed){existing.focus();return true}
   const w=window.open(item.liveUrl,key);
-  if(w){resourceWindows[key]=w;try{w.focus()}catch(_){}return false}
+  if(w){resourceWindows[key]=w;try{w.focus()}catch(_){}return true}
  }catch(_){}
  return false;
 }
