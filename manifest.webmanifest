@@ -8,7 +8,5 @@
   "background_color":"#07101f",
   "theme_color":"#07101f",
   "description":"Free TV & Radio — organized free television, radio, favorites and helpful tools.",
-  "icons":[
-    {"src":"/living-water-home-icon.jpg","sizes":"180x180","type":"image/jpeg","purpose":"any maskable"}
-  ]
+  "icons":[]
 }
