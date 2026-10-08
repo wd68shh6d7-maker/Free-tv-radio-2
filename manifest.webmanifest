@@ -9,6 +9,6 @@
   "theme_color":"#07101f",
   "description":"Free TV & Radio — organized free television, radio, favorites and helpful tools.",
   "icons":[
-    {"src":"/api/apple-touch-icon","sizes":"180x180","type":"image/jpeg","purpose":"any maskable"}
+    {"src":"/api/apple-touch-icon?v=2","sizes":"180x180","type":"image/jpeg","purpose":"any maskable"}
   ]
 }
