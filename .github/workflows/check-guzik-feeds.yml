@@ -1,0 +1,43 @@
+name: Check official Guzik audio feeds
+on:
+  push:
+    branches:
+      - guzik-full-audio-library
+    paths:
+      - '.github/workflows/check-guzik-feeds.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect-feeds:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Check official Enduring Word feed endpoints
+        run: |
+          python - <<'PY'
+          import urllib.request, xml.etree.ElementTree as ET
+          slugs = """genesis exodus leviticus numbers deuteronomy joshua judges ruth 1-samuel 2-samuel 1-kings 2-kings 1-chronicles ezra nehemiah esther job psalms proverbs ecclesiastes song-of-solomon isaiah jeremiah ezekiel daniel matthew mark luke john acts romans 1-corinthians 2-corinthians galatians ephesians philippians colossians 1-thessalonians 2-thessalonians 1-timothy 2-timothy titus philemon hebrews james 1-peter 1-john jude revelation daily-devotional q-and-a through-the-bible topical-teachings church-history""".split()
+          ns = {'itunes':'http://www.itunes.com/dtds/podcast-1.0.dtd'}
+          total = 0
+          ok = 0
+          for slug in slugs:
+              url = f'https://feeds.enduringword.com/feeds/{slug}.xml'
+              try:
+                  req = urllib.request.Request(url, headers={'User-Agent':'LivingWaterLoungeAudioCatalog/1.0'})
+                  with urllib.request.urlopen(req, timeout=15) as r:
+                      raw = r.read()
+                  root = ET.fromstring(raw)
+                  items = root.findall('.//item')
+                  audio = sum(1 for item in items if item.find('enclosure') is not None and (item.find('enclosure').attrib.get('url','').lower().split('?')[0].endswith('.mp3')))
+                  if items:
+                      ok += 1
+                      total += audio
+                  print(f'{slug}: HTTP/XML OK; episodes={len(items)}; direct_mp3={audio}')
+              except Exception as e:
+                  print(f'{slug}: UNAVAILABLE ({type(e).__name__}: {e})')
+          print(f'SUMMARY: {ok}/{len(slugs)} feeds with episodes; {total} direct MP3 entries')
+          PY
