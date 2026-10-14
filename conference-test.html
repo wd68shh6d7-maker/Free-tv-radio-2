@@ -87,14 +87,20 @@
           MOBILE_APP_PROMO:false,
           SHOW_JITSI_WATERMARK:false,
           SHOW_WATERMARK_FOR_GUESTS:false,
-          TOOLBAR_BUTTONS:['microphone','hangup','tileview','settings']
+          TOOLBAR_BUTTONS:['microphone','camera','hangup','tileview','settings','participants-pane']
         }
       });
       joined=true;
-      api.addEventListener('videoConferenceJoined',()=>status('Connected to the test room. Check microphone permission and speak with your other participant.'));
+      api.addEventListener('videoConferenceJoined',()=>status('Connected to the test room. Confirm the microphone is unmuted on both devices. If you still cannot hear each other, open Settings in the call and check the selected microphone and speaker.'));
+      api.addEventListener('connectionEstablished',()=>status('Calling-service connection established. Waiting for the room audio connection…'));
+      api.addEventListener('connectionFailed',e=>status('Calling-service connection failed. Try leaving and rejoining; if it repeats, we will investigate network/service connectivity.'));
+      api.addEventListener('conferenceFailed',e=>status('The call service reported a conference failure. Please leave the test and try again later.'));
+      api.addEventListener('micError',e=>status('The browser/call service reported a microphone error. Check browser microphone permission and the selected input device in call Settings.'));
+      api.addEventListener('cameraError',e=>status('Camera access failed. Check browser camera permission and the selected camera in call Settings. Audio can still be tested without video.'));
+      api.addEventListener('audioMuteStatusChanged',e=>status(e.muted?'Your microphone is muted. Tap the microphone control to unmute.':'Your microphone is marked unmuted. That alone does not prove sound is reaching the other participant.'));
+      api.addEventListener('videoMuteStatusChanged',e=>status(e.muted?'Camera is off.':'Camera is on.'));
       api.addEventListener('readyToClose',()=>{cleanupCall(false);status('You left the call. The test invitation link may still reopen this prototype room.');});
-      api.addEventListener('audioMuteStatusChanged',e=>{if(e.muted)status('Your microphone is muted. Use the microphone control in the call to unmute.');});
-      status('Call is opening. Allow microphone access if your browser asks.');
+      status('Call is opening. Allow microphone access if your browser asks. Use the camera control only if you want to test video.');
     }catch(e){
       status((e&&e.message)||'The call could not start. Please try again.');
       cleanupCall(false);
