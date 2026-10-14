@@ -29,7 +29,7 @@
       <button class="btn" id="endBtn">Leave call</button>
     </div>
     <div id="call" aria-label="Audio call"></div>
-    <div class="diagnostics" id="diagnostics" aria-live="polite"><strong>Connection checks</strong>\nNo call started yet. When you join, this panel will record whether the service detects the other participant and receives their audio/video tracks.</div>
+    <div class="diagnostics" id="diagnostics" aria-live="polite"><strong>Connection checks</strong><br>No call started yet. This panel records supported meeting events and errors from the calling service.</div>
     <div class="notice"><strong>Important test limitation:</strong> This first prototype uses an external Jitsi test service to check basic audio connectivity. It does not yet have our own server-managed rooms, enforced 30-person limit, host moderation, or true link revocation after ending a session. Do not use it for sensitive or private conversations. Those protections must be implemented and tested before this can be considered ready for real use.</div>
   </main>
   <footer>The working Living Water Lounge has not been changed. This is a separate prototype for testing only.</footer>
@@ -41,7 +41,7 @@
   let roomToken=params.get('room')||'';
   let api=null, scriptPromise=null, joined=false, remoteParticipants=new Set(), diagnosticLines=[];
   const status=(msg)=>{$('status').textContent=msg;};
-  function diagnostic(msg){const stamp=new Date().toLocaleTimeString();diagnosticLines.push(stamp+' — '+msg);if(diagnosticLines.length>12)diagnosticLines.shift();$('diagnostics').innerHTML='<strong>Connection checks</strong>\\n'+diagnosticLines.map(x=>escapeText(x)).join('\\n');}
+  function diagnostic(msg){const stamp=new Date().toLocaleTimeString();diagnosticLines.push(stamp+' — '+msg);if(diagnosticLines.length>12)diagnosticLines.shift();$('diagnostics').innerHTML='<strong>Connection checks</strong><br>'+diagnosticLines.map(x=>escapeText(x)).join('<br>');}
   function escapeText(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
   function inviteUrl(){
     const u=new URL(location.href);
