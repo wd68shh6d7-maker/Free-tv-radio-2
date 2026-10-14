@@ -95,7 +95,10 @@
         }
       });
       joined=true;
-      api.addEventListener('videoConferenceJoined',()=>status('You are inside the conference. Confirm the microphone is unmuted on both devices. If no other person appears, the conference has not yet confirmed a remote participant.'));\n      api.addEventListener('participantJoined',e=>status('A remote participant joined the conference. If you still cannot hear or see them, check microphone/speaker and camera controls in the call.'));\n      api.addEventListener('participantLeft',e=>status('A participant left the conference.'));\n      api.addEventListener('trackAdded',e=>status('A remote media track was received. If you cannot hear or see the other person, check the call controls and device output.'));
+      api.addEventListener('videoConferenceJoined',()=>status('You are inside the conference. Confirm the microphone is unmuted on both devices. If no other person appears, the conference has not yet confirmed a remote participant.'));
+      api.addEventListener('participantJoined',e=>status('A remote participant joined the conference. If you still cannot hear or see them, check microphone/speaker and camera controls in the call.'));
+      api.addEventListener('participantLeft',e=>status('A participant left the conference.'));
+      api.addEventListener('trackAdded',e=>status('A remote media track was received. If you cannot hear or see the other person, check the call controls and device output.'));
       api.addEventListener('connectionEstablished',()=>status('Calling-service connection established. Waiting for the room audio connection…'));
       api.addEventListener('connectionFailed',e=>status('Calling-service connection failed. Try leaving and rejoining; if it repeats, we will investigate network/service connectivity.'));
       api.addEventListener('conferenceFailed',e=>status('The call service reported a conference failure. Please leave the test and try again later.'));
