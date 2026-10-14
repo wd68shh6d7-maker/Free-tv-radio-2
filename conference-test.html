@@ -40,7 +40,12 @@
   let roomToken=params.get('room')||'';
   let api=null, scriptPromise=null, joined=false;
   const status=(msg)=>{$('status').textContent=msg;};
-  const inviteUrl=()=>location.href;
+  function inviteUrl(){
+    const u=new URL(location.href);
+    u.search='';u.hash='';
+    if(roomToken)u.searchParams.set('room',roomToken);
+    return u.toString();
+  }
   function randomToken(){const bytes=new Uint8Array(16);crypto.getRandomValues(bytes);return Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');}
   function setRoom(token){
     roomToken=token;
@@ -113,7 +118,10 @@
     if(removeRoom){roomToken='';const u=new URL(location.href);u.searchParams.delete('room');history.replaceState({},'',u);$('inviteActions').hidden=true;$('joinBtn').disabled=true;status('You left this test. This prototype does not yet revoke old links server-side.');}
   }
   $('createBtn').addEventListener('click',()=>{if(api)return;setRoom(randomToken());joinCall();});
-  $('joinBtn').addEventListener('click',joinCall);
+  $('joinBtn').addEventListener('click',()=>{
+    if(!roomToken){status('This invitation is missing its room code. Ask the person who started the call to use Copy invitation link and send that complete link again.');return;}
+    joinCall();
+  });
   $('shareBtn').addEventListener('click',async()=>{
     try{if(navigator.share)await navigator.share({title:'Join my Living Water test call',text:'Join me in this test audio conversation.',url:inviteUrl()});else{await navigator.clipboard.writeText(inviteUrl());status('Invitation link copied. You can paste it into Messenger, a text, or email.');}}
     catch(e){if(e.name!=='AbortError')status('Use Copy invitation link, then paste it into Messenger, text, or email.');}
@@ -124,6 +132,7 @@
   });
   $('endBtn').addEventListener('click',()=>{cleanupCall(true);});
   if(roomToken){$('joinBtn').disabled=false;$('inviteActions').hidden=false;status('You opened a test invitation. Enter a display name, then tap Join this call.');}
+  else{status('No room code was found in this page address. To join Christina or another host, open the complete invitation link they copied from inside the test call.');}
 })();
 </script>
 </body>
