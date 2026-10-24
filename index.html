@@ -74,4 +74,80 @@ let blbFullscreenScrollY=0;function toggleBLBFullscreen(){const p=document.query
   <p>The sermons, teachings, and messages shared here belong to their respective pastors, teachers, ministries, and original creators. The Living Water shares these messages for encouragement, learning, and the spreading of God’s Word. We do not claim authorship or ownership of their content. We are grateful to those who faithfully share the Gospel.</p>
 </section>
 
+
+<script>
+/* Privacy-conscious, first-party analytics for The Living Water.
+   No IP address, full URL, form contents, notes, passwords, or user-agent is collected. */
+(function () {
+  'use strict';
+  const SUPABASE_URL = 'https://doxzuuzzcxaozkyojybu.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_U2DbudIt9o0D8UO1R0hWuw_yTsJBPFq';
+  const SESSION_KEY = 'lw-analytics-session-v1';
+  let sessionId;
+  try {
+    sessionId = sessionStorage.getItem(SESSION_KEY);
+    if (!sessionId) {
+      sessionId = (crypto.randomUUID ? crypto.randomUUID() : null);
+      if (!sessionId) {
+        const bytes = new Uint8Array(16);
+        crypto.getRandomValues(bytes);
+        bytes[6] = (bytes[6] & 15) | 64;
+        bytes[8] = (bytes[8] & 63) | 128;
+        sessionId = Array.from(bytes, (b, i) => ([4,6,8,10].includes(i) ? '-' : '') + b.toString(16).padStart(2,'0')).join('');
+      }
+      sessionStorage.setItem(SESSION_KEY, sessionId);
+    }
+  } catch (_) { return; }
+
+  let ended = false;
+  async function record(type, key, keepalive) {
+    try {
+      await fetch(SUPABASE_URL + '/rest/v1/rpc/record_site_analytics', {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ p_session_id: sessionId, p_event_type: type, p_event_key: key || null }),
+        keepalive: !!keepalive,
+        credentials: 'omit'
+      });
+    } catch (_) { /* Analytics must never interrupt the site. */ }
+  }
+
+  record('session_start', 'home');
+  record('page_view', 'home');
+  const heartbeat = window.setInterval(() => {
+    if (!ended && document.visibilityState === 'visible') record('heartbeat', 'home');
+  }, 60000);
+
+  document.addEventListener('click', function (event) {
+    const target = event.target && event.target.closest
+      ? event.target.closest('button, a, [role="button"]')
+      : null;
+    if (!target || target.disabled || target.closest('[contenteditable="true"]')) return;
+    if (target.matches('input, textarea, select') || target.closest('label')) return;
+    const raw = target.getAttribute('data-analytics') ||
+      target.getAttribute('aria-label') ||
+      target.innerText || target.textContent || '';
+    const label = String(raw).replace(/\s+/g, ' ').trim().slice(0, 80);
+    if (label) record('click', label);
+  }, true);
+
+  function finish() {
+    if (ended) return;
+    ended = true;
+    window.clearInterval(heartbeat);
+    record('session_end', 'page_exit', true);
+  }
+  window.addEventListener('pagehide', finish, { once: true });
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden' && !ended) {
+      record('heartbeat', 'page_hidden');
+    }
+  });
+})();
+</script>
+
 </body></html>
